@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from unittest import TestCase
 
-from purefp import Effect
+from .effect import Effect
 
 
 class PureTests(TestCase):
