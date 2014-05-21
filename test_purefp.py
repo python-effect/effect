@@ -2,55 +2,59 @@ from __future__ import print_function
 
 from unittest import TestCase
 
-from purefp import IO
+from purefp import Effect
 
 
 class PureTests(TestCase):
-    def test_perform_io_method_dispatch(self):
-        """perform_io invokes a method on the IOp."""
-        io = IO(SelfContainedIO())
-        self.assertEqual(io.perform_io({}), "Self-result")
+    def test_perform_effect_method_dispatch(self):
+        """Effect.perform invokes 'perform_effect' on the effect request."""
+        effect = Effect(SelfContainedEffect())
+        self.assertEqual(effect.perform({}), "Self-result")
 
-    def test_perform_io_registry_dispatch(self):
-        """perform_io invokes a function from the handler registry."""
-        def handle_io(iop, handlers):
+    def test_perform_effect_registry_dispatch(self):
+        """Effect.perform invokes a function from the handler registry."""
+        def handle_effect(effect, handlers):
             return "dispatched"
-        io = IO(POPOIO())
+        effect = Effect(POPORequest())
         self.assertEqual(
-            io.perform_io({POPOIO: handle_io}),
+            effect.perform({POPORequest: handle_effect}),
             "dispatched")
 
     def test_callback(self):
         """
-        Callbacks can wrap IOs, will be passed the IO's result, and are
-        able to return a new value.
+        Callbacks can wrap Effects, will be passed the Effect's result, and
+        are able to return a new value.
         """
-        io = IO(SelfContainedIO())
-        io = io.on_success(lambda x: x + ": amended!")
+        effect = Effect(SelfContainedEffect())
+        effect = effect.on_success(lambda x: x + ": amended!")
         self.assertEqual(
-            io.perform_io({}),
+            effect.perform({}),
             "Self-result: amended!")
 
     def test_callback_chain(self):
         """
         Callbacks can be wrapped in more callbacks.
         """
-        io = IO(SelfContainedIO())
-        io = io.on_success(lambda x: x + ": amended!")
-        io = io.on_success(lambda x: x + " Again!")
+        effect = Effect(SelfContainedEffect())
+        effect = effect.on_success(lambda x: x + ": amended!")
+        effect = effect.on_success(lambda x: x + " Again!")
         self.assertEqual(
-            io.perform_io({}),
+            effect.perform({}),
             "Self-result: amended! Again!")
 
 
-class SelfContainedIO(object):
-    """An example IO object which implements its own perform_io."""
+class SelfContainedEffect(object):
+    """An example effect request which implements its own perform_effect."""
 
-    def perform_io(self, handlers):
+    def perform_effect(self, handlers):
         return "Self-result"
 
-class POPOIO(object):
-    """An example IO object which doesn't implement its own perform_io."""
+
+class POPORequest(object):
+    """
+    An example effect request which doesn't implement its own
+    perform_effect.
+    """
 
 
 
@@ -58,6 +62,7 @@ class POPOIO(object):
 # tests:
 # - basic "after"
 # - basic "on"
-# - callbacks returning instances of IO
+# - chain with error/after/on.
+# - callbacks returning instances of effect
 # - gather
 # - Deferred support (I think this is broken but not sure).
