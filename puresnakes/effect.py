@@ -179,13 +179,13 @@ class Errback(object):
 
     def perform_effect(self, handlers):
         try:
-            result = perform(self.effect, handlers)
+            result = self.effect.perform(handlers)
 #             if hasattr(result, 'addErrback'):
 #                 result.addErrback(self.callback)
 #             else:
             self.callback(result)
         except:
-            self.callback(sys.exc_info())
+            return self.callback(sys.exc_info())
 
 
 class After(object):
@@ -199,7 +199,7 @@ class After(object):
 
     def perform_effect(self, handlers):
         try:
-            result = perform(self.effect, handlers)
+            result = self.effect.perform(handlers)
 #             if hasattr(result, 'addBoth'):
 #                 result.addErrback(self.callback)
 #             else:

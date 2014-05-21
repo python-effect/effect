@@ -1,6 +1,7 @@
 from __future__ import print_function
 
-from unittest import TestCase
+from testtools import TestCase
+from testtools.matchers import MatchesListwise, Is, Equals, MatchesAny, MatchesException, raises
 
 from .effect import Effect
 
@@ -8,42 +9,84 @@ from .effect import Effect
 class PureTests(TestCase):
     def test_perform_effect_method_dispatch(self):
         """Effect.perform invokes 'perform_effect' on the effect request."""
-        effect = Effect(SelfContainedEffect())
-        self.assertEqual(effect.perform({}), "Self-result")
+        self.assertEqual(
+            Effect(SelfContainedRequest())
+                .perform({}),
+            "Self-result")
 
     def test_perform_effect_registry_dispatch(self):
         """Effect.perform invokes a function from the handler registry."""
-        def handle_effect(effect, handlers):
-            return "dispatched"
-        effect = Effect(POPORequest())
         self.assertEqual(
-            effect.perform({POPORequest: handle_effect}),
+            Effect(POPORequest())
+                .perform({POPORequest: lambda e, h: "dispatched"}),
             "dispatched")
 
-    def test_callback(self):
+    def test_success(self):
         """
         Callbacks can wrap Effects, will be passed the Effect's result, and
         are able to return a new value.
         """
-        effect = Effect(SelfContainedEffect())
-        effect = effect.on_success(lambda x: x + ": amended!")
         self.assertEqual(
-            effect.perform({}),
+            Effect(SelfContainedRequest())
+                .on_success(lambda x: x + ": amended!")
+                .perform({}),
             "Self-result: amended!")
 
-    def test_callback_chain(self):
+    def test_success_chain(self):
         """
         Callbacks can be wrapped in more callbacks.
         """
-        effect = Effect(SelfContainedEffect())
-        effect = effect.on_success(lambda x: x + ": amended!")
-        effect = effect.on_success(lambda x: x + " Again!")
         self.assertEqual(
-            effect.perform({}),
+            Effect(SelfContainedRequest())
+                .on_success(lambda x: x + ": amended!")
+                .on_success(lambda x: x + " Again!")
+                .perform({}),
             "Self-result: amended! Again!")
 
+    def test_error(self):
+        self.assertThat(
+            Effect(ErrorRequest())
+                .on_error(lambda x: ("handled", x))
+                .perform({}),
+            MatchesListwise([
+                Equals('handled'),
+                MatchesException(ValueError('oh dear'))]))
 
-class SelfContainedEffect(object):
+    def test_error_recovery(self):
+        self.assertEqual(
+            Effect(ErrorRequest())
+                .on_error(lambda x: "handled")
+                .on_success(lambda x: ("chained", x))
+                .perform({}),
+            ('chained', 'handled'))
+
+    def test_error_bubbles_up(self):
+        self.assertThat(
+            lambda:
+                Effect(ErrorRequest())
+                    .on_error(lambda x: raise_(ValueError("eb error")))
+                    .perform({}),
+            raises(ValueError('eb error')))
+
+    def test_error_error_recovery(self):
+        self.assertThat(
+            Effect(ErrorRequest())
+                .on_error(lambda x: raise_(ValueError("eb error")))
+                .on_error(lambda x: ("handled", x))
+                .perform({}),
+            MatchesListwise([
+                Equals('handled'),
+                MatchesException(ValueError('eb error'))]))
+
+    def test_success_error_recovery(self):
+        pass
+
+
+def raise_(e):
+    raise e
+
+
+class SelfContainedRequest(object):
     """An example effect request which implements its own perform_effect."""
 
     def perform_effect(self, handlers):
@@ -57,6 +100,9 @@ class POPORequest(object):
     """
 
 
+class ErrorRequest(object):
+    def perform_effect(self, handlers):
+        raise ValueError("oh dear")
 
 
 # tests:
