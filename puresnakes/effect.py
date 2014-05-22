@@ -63,6 +63,29 @@ a Deferred will seamlessly integrate with on_success, on_error etc callbacks.
 
 Support for AsyncIO tasks, and other callback-oriented frameworks, is to be
 done, but should be trivial.
+
+UNFORTUNATE:
+
+- In general, callbacks should not need to care about the implementation
+  of the effect handlers. However, currently error conditions are passed to
+  error handlers in an implementation-bound way: when Deferreds are involved,
+  Failures are passed, whereas when synchronous exceptions are raised, a
+  sys.exc_info() tuple is passed. This should be fixed somehow, maybe by
+  relying on a split-out version of Twisted's Failures.
+- It's unclear whether the handler-table approach to effect dispatching is
+  flexible enough for all cases. For example, a system which mixes
+  asynchronous and synchronous IO (because multiple libraries that do things
+  in different ways are both in use) won't have a way to differentiate an
+  asynchronous HTTPRequest from a synchronous HTTPRequest in the same call to
+  Effect.perform. Likewise, a threaded implementation of parallel should only
+  be used when in the context of Deferred-returning effects.
+- Actually testing code that uses this framework may still be tedious
+  sometimes, since effects can be wrapped within dozens of levels of
+  indirections of callbacks, parallels, and so on.
+- Maybe allowing requests to provide their own implementations of
+  perform_effect is a bad idea; if users don't get used to constructing their
+  own set of handlers, then when they need to customize an effect handler it
+  may require an unfortunately large refactoring.
 """
 
 from __future__ import print_function
@@ -155,16 +178,6 @@ class Effect(object):
         return Effect(Callbacks(self, success, error))
 
 
-def gather(effects):
-    """
-    Given multiple Effects, return one Effect that represents the aggregate of
-    all of their effects.
-    The result of the aggregate Effect will be a list of their results, in
-    the same order as the input to this function.
-    """
-    return
-
-
 class Callbacks(object):
     """
     A representation of the fact that a call should be made after some Effect is
@@ -190,6 +203,9 @@ class Callbacks(object):
             else:
                 raise
         else:
+            # Consider separating this implementation out to a dispatch table
+            # based on the return value's type, to support AsyncIO,
+            # concurrent.futures, etc.
             if hasattr(result, 'addCallbacks'):
                 callback = (self.callback
                             if self.callback is not None
@@ -202,3 +218,34 @@ class Callbacks(object):
                 return self.callback(result)
             else:
                 return result
+
+
+class ParallelEffects(object):
+    """
+    An effect request that asks for a number of effects to be run in parallel,
+    and for their results to be gathered up into a sequence.
+
+    The default implementation of this effect relies on Twisted's Deferreds.
+    An alternative implementation can run the child effects in threads, or
+    just cop out and run them in sequence. Of course, the implementation
+    strategy for this effect will need to cooperate with the effects being
+    parallelized -- there's not much use running a Deferred-returning effect
+    in a thread, for example.
+    """
+    def __init__(self, effects):
+        self.effects = effects
+
+    def perform_effect(self, handlers):
+        from twisted.internet.defer import gatherResults, maybeDeferred
+        return gatherResults(
+            [maybeDeferred(e.perform, handlers) for e in self.effects])
+
+
+def parallel(effects):
+    """
+    Given multiple Effects, return one Effect that represents the aggregate of
+    all of their effects.
+    The result of the aggregate Effect will be a list of their results, in
+    the same order as the input to this function.
+    """
+    return Effect(ParallelEffects(effects))
