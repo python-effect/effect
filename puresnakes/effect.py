@@ -57,6 +57,12 @@ behaviors synergize with:
   is producing the correct kind of effect requests. Separate unit tests for
   your effect *handlers* are the only tests that potentially need mocking,
   stubbing, or otherwise concern itself with true effects.
+
+Twisted's Deferreds are supported directly; any effect handler that returns
+a Deferred will seamlessly integrate with on_success, on_error etc callbacks.
+
+Support for AsyncIO tasks, and other callback-oriented frameworks, is to be
+done, but should be trivial.
 """
 
 from __future__ import print_function
@@ -178,12 +184,21 @@ class Callbacks(object):
     def perform_effect(self, handlers):
         try:
             result = self.effect.perform(handlers)
-            if self.callback is not None:
-                return self.callback(result)
-            else:
-                return result
         except:
             if self.errback is not None:
                 return self.errback(sys.exc_info())
             else:
                 raise
+        else:
+            if hasattr(result, 'addCallbacks'):
+                callback = (self.callback
+                            if self.callback is not None
+                            else lambda x: x)
+                errback = (self.errback
+                           if self.errback is not None
+                           else lambda x: x)
+                return result.addCallbacks(callback, errback)
+            elif self.callback is not None:
+                return self.callback(result)
+            else:
+                return result

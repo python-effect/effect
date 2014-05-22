@@ -1,11 +1,44 @@
 from __future__ import print_function
 
 from testtools import TestCase
-from testtools.matchers import (MatchesListwise, Is, Equals,
-                                MatchesException, raises)
+from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
+                                raises, MatchesPredicateWithParams)
+
+from twisted.internet.defer import Deferred
 
 from .effect import Effect, NoEffectHandlerError
 
+
+## Fun testing objects
+
+class DeferredRequest(object):
+    def __init__(self, deferred):
+        self.deferred = deferred
+
+    def perform_effect(self, handlers):
+        return self.deferred
+
+
+class SelfContainedRequest(object):
+    """An example effect request which implements its own perform_effect."""
+
+    def perform_effect(self, handlers):
+        return "Self-result", handlers
+
+
+class POPORequest(object):
+    """
+    An example effect request which doesn't implement its own
+    perform_effect.
+    """
+
+
+class ErrorRequest(object):
+    def perform_effect(self, handlers):
+        raise ValueError("oh dear")
+
+
+## The test cases
 
 class EffectPerformTests(TestCase):
     """Tests for Effect.perform."""
@@ -77,7 +110,7 @@ class CallbackTests(TestCase):
 
     def test_success(self):
         """
-        Callback.perform_effect
+        Callbacks.perform_effect
         - performs the wrapped effect, passing the handlers,
         - passes the result of that to the callback,
         - returns the result of the callback.
@@ -95,8 +128,8 @@ class CallbackTests(TestCase):
 
     def test_success_propagates_effect_exception(self):
         """
-        Callback.perform_effect propagates exceptions from performing
-        the inner effect.
+        Callbacks.perform_effect propagates exceptions from performing
+        the inner effect when there is no errback.
         """
         self.assertThat(
             lambda:
@@ -107,7 +140,7 @@ class CallbackTests(TestCase):
 
     def test_error_success(self):
         """
-        Errback.perform_effect
+        Callbacks.perform_effect
         - performs the wrapped effect, passing the handlers,
         - returns the result (assuming there is no exception).
         """
@@ -122,10 +155,10 @@ class CallbackTests(TestCase):
 
     def test_error(self):
         """
-        Errback.perform_effect
+        Callbacks.perform_effect
         - performs the wrapped effect,
-        - in the case of an exception, invokes the callback with exc_info,
-        - returns the result of the callback.
+        - in the case of an exception, invokes the errback with exc_info,
+        - returns the result of the errback.
         """
         self.assertThat(
             Effect(ErrorRequest())
@@ -137,7 +170,7 @@ class CallbackTests(TestCase):
 
     def test_error_propagates_callback_exceptions(self):
         """
-        Errback.perform_effect does _not_ catch errors from callbacks.
+        Callbacks.perform_effect does _not_ catch errors from callbacks.
         """
         self.assertThat(
             lambda:
@@ -147,29 +180,58 @@ class CallbackTests(TestCase):
             raises(ValueError('eb error')))
 
 
+class DeferredSupportTests(TestCase):
+    def test_asynchronous_callback(self):
+        """
+        When a callback is wrapped around an effect that results in a Deferred,
+        - the callback is attached to that Deferred, instead of being invoked
+          synchronously,
+        - such that the callback will receive the Deferred's ultimate result,
+        - and the Deferred will be returned from perform_effect.
+        """
+        d = Deferred()
+        calls = []
+        self.assertIs(
+            Effect(DeferredRequest(d))
+                .on_success(calls.append)
+                .perform({}),
+            d)
+        self.assertEqual(calls, [])
+        d.callback("stuff")
+        self.assertEqual(calls, ["stuff"])
+
+    def test_asynchronous_errback(self):
+        """
+        When an errback is wrapped around an effect that results in a Deferred,
+        - the errback is attached to that Deferred, instead of being invoked
+          synchronously,
+        - such that the errback will receive the Deferred's ultimate Failure,
+        - and the Deferred will be returned from perform_effect.
+        """
+        d = Deferred()
+        calls = []
+        self.assertIs(
+            Effect(DeferredRequest(d))
+                .on_error(calls.append)
+                .perform({}),
+            d)
+        self.assertEqual(calls, [])
+        d.errback(ValueError("stuff"))
+        self.assertThat(
+            calls,
+            MatchesListwise([
+                MatchesBasicFailure(ValueError("stuff"))]))
+
+## Boring test utilities
+
+def _failure_matches_exception(a, b):
+    return type(a.value) is type(b) and a.value.args == b.args
+
+
+MatchesBasicFailure = MatchesPredicateWithParams(
+    _failure_matches_exception,
+    "{0} is not an exception similar to {1}.")
+
+
 def raise_(e):
     raise e
-
-
-class SelfContainedRequest(object):
-    """An example effect request which implements its own perform_effect."""
-
-    def perform_effect(self, handlers):
-        return "Self-result", handlers
-
-
-class POPORequest(object):
-    """
-    An example effect request which doesn't implement its own
-    perform_effect.
-    """
-
-
-class ErrorRequest(object):
-    def perform_effect(self, handlers):
-        raise ValueError("oh dear")
-
-
-# tests:
-# - gather
-# - Deferred support (I think this is broken but not sure).
