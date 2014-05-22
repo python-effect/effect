@@ -48,11 +48,15 @@ behaviors synergize with:
   - This allows the effect-code to be *small* and *replaceable*. Using these
     conventions, it's trivial to switch out the implementation of e.g. your
     HTTP client, and even to use either a blocking or non-blocking
-    interface, or to configure a threading policy.
-
-In fact, Twisted is supported out of the box: any Effect handlers that
-return Deferreds will work seamlessly [describe this more -radix]. Other
-asynchronous frameworks can be trivially added.
+    interface, or to configure a threading policy. This is only possible if
+    effect requests expose everything necessary via a public API to
+    alternative implementations.
+- To spell it out clearly: do not call Effect.perform() on Effects produced by
+  your code under test: there's no point. Just grab the 'effect_request'
+  attribute and look at its public attributes to determine if your code
+  is producing the correct kind of effect requests. Separate unit tests for
+  your effect *handlers* are the only tests that potentially need mocking,
+  stubbing, or otherwise concern itself with true effects.
 """
 
 from __future__ import print_function
@@ -109,7 +113,7 @@ class Effect(object):
             raise NoEffectHandlerError(self.effect_request)
         result = func(handlers)
         if type(result) is Effect:
-            return result.perform_effect(result)
+            return result.perform(handlers)
         return result
 
     def on_success(self, callback):
@@ -117,28 +121,32 @@ class Effect(object):
         Return a new Effect that will invoke the associated callback when this
         Effect completes succesfully.
         """
-        return Effect(Callback(self, callback))
+        return Effect(Callbacks(self, callback, None))
 
     def on_error(self, callback):
         """
         Return a new Effect that will invoke the associated callback when this
         Effect fails.
+
+        The callback will be invoked with the sys.exc_info() exception tuple as its
+        only argument.
         """
-        return Effect(Errback(self, callback))
+        return Effect(Callbacks(self, None, callback))
 
     def after(self, callback):
         """
         Return a new Effect that will invoke the associated callback when this
         Effect completes, whether successfully or in error.
         """
-        return Effect(After(self, callback))
+        return Effect(Callbacks(self, callback, callback))
 
     def on(self, success, error):
         """
-        Return a new Effect that will invoke either the success or error callbacks
-        provided based on whether this Effect completes sucessfully or in error.
+        Return a new Effect that will invoke either the success or error
+        callbacks provided based on whether this Effect completes sucessfully
+        or in error.
         """
-
+        return Effect(Callbacks(self, success, error))
 
 
 def gather(effects):
@@ -151,58 +159,31 @@ def gather(effects):
     return
 
 
-class Callback(object):
+class Callbacks(object):
     """
-    A representation of the fact that a call should be made after some Effect is performed.
+    A representation of the fact that a call should be made after some Effect is
+    performed.
+
+    This supports both handling of successful results (normal return values)
+    and failing results (exceptions raised from the inner effect), by invoking
+    either a "callback" or "errback".
 
     Hint: This is kinda like bind (>>=).
     """
-    def __init__(self, effect, callback):
+    def __init__(self, effect, callback, errback):
         self.effect = effect
         self.callback = callback
-
-    def perform_effect(self, handlers):
-        result = self.effect.perform(handlers)
-#         if hasattr(result, 'addCallback'):
-#             result.addCallback(self.callback)
-#         else:
-        return self.callback(result)
-
-
-class Errback(object):
-    """
-    A representation of the fact that a call should be made after some Effect fails.
-    """
-    def __init__(self, effect, callback):
-        self.effect = effect
-        self.callback = callback
+        self.errback = errback
 
     def perform_effect(self, handlers):
         try:
             result = self.effect.perform(handlers)
-#             if hasattr(result, 'addErrback'):
-#                 result.addErrback(self.callback)
-#             else:
-            self.callback(result)
+            if self.callback is not None:
+                return self.callback(result)
+            else:
+                return result
         except:
-            return self.callback(sys.exc_info())
-
-
-class After(object):
-    """
-    A representation of the fact that a call should be made after some Effect is
-    performed, whether it succeeds or fails.
-    """
-    def __init__(self, effect, callback):
-        self.effect = effect
-        self.callback = callback
-
-    def perform_effect(self, handlers):
-        try:
-            result = self.effect.perform(handlers)
-#             if hasattr(result, 'addBoth'):
-#                 result.addErrback(self.callback)
-#             else:
-            self.callback(result)
-        except:
-            self.callback(sys.exc_info())
+            if self.errback is not None:
+                return self.errback(sys.exc_info())
+            else:
+                raise
