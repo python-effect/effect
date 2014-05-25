@@ -177,6 +177,23 @@ class Effect(object):
         """
         return Effect(Callbacks(self, success, error))
 
+    def __repr__(self):
+        return "Effect(%r)" % (self.effect_request,)
+
+    def serialize(self):
+        """
+        A simple debugging tool that serializes a tree of effects into basic
+        Python data structures that are useful for pretty-printing.
+
+        If the effect request has a "serialize" method, it will be invoked to
+        represent itself in the resulting structure.
+        """
+        if hasattr(self.effect_request, 'serialize'):
+            request = self.effect_request.serialize()
+        else:
+            request = self.effect_request
+        return {"type": type(self), "request": request}
+
 
 class Callbacks(object):
     """
@@ -193,6 +210,15 @@ class Callbacks(object):
         self.effect = effect
         self.callback = callback
         self.errback = errback
+
+    def __repr__(self):
+        return "Callbacks(%r, %r, %r)" % (self.effect, self.callback, self.errback)
+
+    def serialize(self):
+        return {"type": type(self),
+                "effect": self.effect.serialize(),
+                "callback": self.callback,
+                "errback": self.errback}
 
     def perform_effect(self, handlers):
         try:
@@ -226,14 +252,20 @@ class ParallelEffects(object):
     and for their results to be gathered up into a sequence.
 
     The default implementation of this effect relies on Twisted's Deferreds.
-    An alternative implementation can run the child effects in threads, or
-    just cop out and run them in sequence. Of course, the implementation
-    strategy for this effect will need to cooperate with the effects being
-    parallelized -- there's not much use running a Deferred-returning effect
-    in a thread, for example.
+    An alternative implementation can run the child effects in threads, for
+    example. Of course, the implementation strategy for this effect will need
+    to cooperate with the effects being parallelized -- there's not much use
+    running a Deferred-returning effect in a thread.
     """
     def __init__(self, effects):
         self.effects = effects
+
+    def __repr__(self):
+        return "ParallelEffects(%r)" % (self.effects,)
+
+    def serialize(self):
+        return {"type": type(self),
+                "effects": [e.serialize() for e in self.effects]}
 
     def perform_effect(self, handlers):
         from twisted.internet.defer import gatherResults, maybeDeferred
