@@ -14,23 +14,26 @@ I want to make all of these properties hold
 - The implementations of effects should be replaceable; async vs sync should not matter.
 
 
-##Story
+## A Story
+
+Whenever I write software, I often have a feeling in the back of my head that I'm doing things in a hacky way.
 
 Let's say we want a function that fetches the twitter followers of a user, given that user's name. The function should basically be defined like this (in pseudo-code):
 
     get-followers(name) ->
       HTTP.GET http://twitter.com/$name/followers
 
-This is pretty much the ideal level of abstraction for this function; something else takes care of HTTP and IO. The only thing it needs to do is describe the HTTP request to make.
+This is pretty much the ideal level of abstraction for this function; something else (HTTP.GET) takes care of HTTP and IO. The only thing it needs to do is describe the HTTP request to make.
 
-What's the ideal *test* for this function? Well, a lot of times we go to mocks:
+What's the ideal *test* for this function? Well, we in the Python community often resort to mocking:
 
     test get-followers ->
-      mock out HTTP
+      replace the HTTP module with a mock object
       expect a call to HTTP.GET with arguments http://twitter.com/radix/followers
-      get-followers('radix')
+        returning a dummy value
+      assert get-followers('radix') returns the dummy value
 
-This isn't too bad, but it is unfortunate that we have to patch the HTTP library to test our function. We could extend our implementation:
+This isn't too bad as far as our layers of abstractions are concerned, but it is unfortunate that we have to patch the HTTP library to test our function. We could extend our implementation to parameterize the library:
 
     get-followers(name, http) ->
       $http.GET http://twitter.com/$name/followers
@@ -38,16 +41,17 @@ This isn't too bad, but it is unfortunate that we have to patch the HTTP library
 and then our test at least doesn't need to mutate global state to test the function; it can just pass in a stub.
 
     test get-followers ->
-      http = stub() with GET method
+      http = stub object with GET method
       expect a call to http.GET with arguments http://twitter.com/radix/followers
-      get-followers(http, 'radix)
+        returning a dummy value
+      assert get-followers(http, 'radix') returns the dummy value
 
-This is a little bit better, but it still has to be concerned about state and time. We can solve this problem; let's go back to our original implementation, but assume that instead of *performing* the IO, HTTP.GET *returns* an object describing the request. Purely functional; no state manipulation or IO or any other effects going on here.
+This is a little bit better, but it's still concerned about state and time, which is an unnecessary complection with our main goal of describing an HTTP request. We can solve this problem! Let's go back to our original implementation, but assume that instead of *performing* the IO, HTTP.GET *returns* an object describing the request. Purely functional; no state manipulation or IO or any other effects going on here.
 
     get-followers(name) ->
       HTTP.GET http://twitter.com/$name/followers
 
-Given that, our test can be extremely simple:
+Given that, our test can be extremely simple, and only concerned with _values_.
 
     test get-followers ->
       request = get-followers('radix')
@@ -58,21 +62,23 @@ That's really concise and to the point! Writing our implementation this way has 
 
 This smells like a pretty powerful pattern. Let's explore it some more.
 
-How would we actually perform this IO? Well, the caller would do it.
+Of course we need to actually _perform_ this IO. The caller would do it, with a general-purpose function:
 
     main() ->
       request = get-followers('radix')
       result = perform-io(request)
       print json.decode(result)
 
-Right now our get-followers function is not as convenient as it should be. Presumably, the Twitter API returns the followers as a string, with some JSON-encoded data. That's not a very good result for this operation to have; we don't want our users receiving a string, we would like for them to receive, say, a list of strings of usernames. Usually, these kinds of abstractions rely on *performing* the IO, receiving the result, and then further processing it. We can follow the lead of asynchronous systems, though, and use callbacks to improve this abstraction, while leaving it purely functional.
+perform-io will be covered more later.
+
+Right now our get-followers function is not as convenient as it should be. Presumably, the Twitter API returns the followers as a string, with some JSON-encoded data. That's not a very good result for this operation to have; we don't want our users receiving a string, we would like for them to receive, say, a list of strings of usernames. Usually, these kinds of abstractions rely on *performing* the IO, receiving the result, and then further processing it. However, we want to keep the IO separate, so we need a way to specify how to process the result of the IO without actually doing the IO. We can follow the lead of asynchronous systems and use callbacks to improve this abstraction, while leaving it purely functional.
 
     get-followers(name) ->
       request = HTTP.GET http://twitter.com/$name/followers
       attach callback to request with result ->
         [x['name'] for x in json.decode(result)]
 
-Now, get-followers is returning a composition of the HTTP request and the function to call when the result is available. Now our main function doesn't need to concern itself with the decoding:
+Now, get-followers is returning a composition of the HTTP request and the function to call when the result is available. perform-io will be implemented to invoke callbacks after performing the request they're bound to. Now our main function doesn't need to concern itself with the decoding:
 
     main() ->
       request = get-followers('radix')
@@ -87,7 +93,7 @@ This pattern should allow us to create further pure functions that use get-follo
       attach callback to request with result ->
         get-followers(result[0])
 
-Here we've created a callback that returns another request. Our perform-io function, up until now undescribed, can be extended to watch for these "request" objects as the result of a callback, and if one is returned, it will be performed immediately. That way our caller still only needs to call it once:
+Here we've created a callback that returns another IO request. Our perform-io function can be implemented to check if the result of a callback is another "request" object and perform it immediately. That way our main function still only needs to call it once:
 
     main() ->
       request = get-first-followers-followers(name)
@@ -96,9 +102,9 @@ Here we've created a callback that returns another request. Our perform-io funct
       result = perform-io(request)
       print result
 
-Let's figure out how w ecould test our new get-first-followers-followers function. Ideally, we should _not_ be concerned with the details of HTTP requests in this test -- we are taking advantage of the get-followers abstraction for that, so why should our tests need to care about it if our implementation doesn't? What we want to ensure is that:
+Let's figure out how we could test our new get-first-followers-followers function. Again, we want to test it without actually performing an HTTP request. Ideally, we should not even be concerned that HTTP is involved -- the implementation is taking advantage of the get-followers abstraction for that, so why should our tests need to care about it if our implementation doesn't? What we want to ensure is that:
 
-- the name we passed is used to look up twitter followers
+- the name we pass is used to look up twitter followers
 - the first name returned from that lookup is used to look up more twitter followers
 - those twitter followers are the ultimate result
 
@@ -112,4 +118,4 @@ Typically, when we want to avoid concerning ourselves with the implementation de
       result = resolve(request)
       assert result is ['bill', 'sue']
 
-Can we avoid mocking? It would be lovely if our unit tests could be as purely functional as our implementation. Not to mention avoiding the other problems with mocking that crop up, especially when testing more complex methods.
+Can we avoid mocking? Not to mention avoiding the other problems with mocking that crop up, especially when testing more complex methods.
