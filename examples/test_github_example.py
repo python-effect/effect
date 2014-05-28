@@ -1,35 +1,57 @@
-# Run these tests with "trial example.test_twitter_example"
+# Run these tests with "trial example.test_github_example"
+
+import json
 
 from testtools import TestCase
 
 from puresnakes.effect import Effect
 from puresnakes.testing import StubRequest, succeed
-import twitter_example
+import github_example
 
 
-class TwitterTests(TestCase):
-    def test_get_followers_request(self):
+class GithubTests(TestCase):
+    def test_get_orgs_request(self):
         """
-        The first thing get_followers does is make a request to the Twitter
-        API.
+        get_orgs returns an effect that makes an HTTP request to
+        the GitHub API to look up organizations for a user.
         """
-        req = twitter_example.get_followers('radix')
+        req = github_example.get_orgs('radix')
         http = req.effect_request.effect.effect_request
         self.assertEqual(http.method, 'get')
-        self.assertEqual(http.url, 'http://twitter.com/radix/followers')
+        self.assertEqual(http.url, 'https://api.github.com/users/radix/orgs')
 
-    def test_get_followers_success(self):
-        """get_followers extracts the result into a simple list of names."""
-        req = twitter_example.get_followers('radix')
+    def test_get_orgs_success(self):
+        """get_orgs extracts the result into a simple list of orgs."""
+        req = github_example.get_orgs('radix')
         callbacks = req.effect_request
         self.assertEqual(
-            callbacks.callback([{'name': 'bob'}, {'name': 'jane'}]),
-            ['bob', 'jane'])
+            callbacks.callback(json.dumps([{'login': 'twisted'},
+                                           {'login': 'rackerlabs'}])),
+            ['twisted', 'rackerlabs'])
 
-    def test_get_followers_followers(self):
+    def test_get_org_repos_request(self):
         """
-        The first thing get_followers_followers does is make a request
-        for the passed user's followers.
+        get_org_repos returns an effect that makes an HTTP request to
+        the GitHub API to look up repos in an org.
+        """
+        req = github_example.get_org_repos('twisted')
+        http = req.effect_request.effect.effect_request
+        self.assertEqual(http.method, 'get')
+        self.assertEqual(http.url, 'https://api.github.com/orgs/twisted/repos')
+
+    def test_get_org_repos_success(self):
+        """get_org_repos extracts the result into a simple list of repos."""
+        req = github_example.get_org_repos('radix')
+        callbacks = req.effect_request
+        self.assertEqual(
+            callbacks.callback(json.dumps([{'name': 'twisted'},
+                                           {'name': 'txstuff'}])),
+            ['twisted', 'txstuff'])
+
+    def test_get_first_org_repos(self):
+        """
+        get_first_org_repos returns an Effect which results in the repositories
+        of the *first* organization returned for the specified user.
         """
         # A very primitive mocking is actually Not Evil (I know, it's hard to
         # believe) when you're just mocking out pure functions.
@@ -37,15 +59,10 @@ class TwitterTests(TestCase):
         # - behavior based on non-argument state is not an issue
         # - repeated calls are not an issue
         # so don't freak out, patching is ok :)
-        mocks = {'radix': Effect(StubRequest(['sally', 'raph'])),
-                 'sally': Effect(StubRequest(['tim', 'bob']))}
-        self.patch(twitter_example, 'get_followers', mocks.get)
-        req = twitter_example.get_first_followers_followers('radix')
-        self.assertEqual(req.perform({}), ['tim', 'bob'])
-
-    def test_main(self):
-        effect = twitter_example.main_effect()
-        self.assertIsInstance(effect.effect_request.effect.effect_request,
-                              twitter_example.ReadLine)
-        next_effect = succeed(effect, "radix")
-        next_effect = succeed(next_effect, ["bob", "cindy"])
+        get_orgs = {'radix': Effect(StubRequest(['twisted', 'rackerlabs']))}
+        get_org_repos = {'twisted': Effect(StubRequest(['twisted',
+                                                        'txstuff']))}
+        self.patch(github_example, 'get_orgs', get_orgs.get)
+        self.patch(github_example, 'get_org_repos', get_org_repos.get)
+        req = github_example.get_first_org_repos('radix')
+        self.assertEqual(req.perform({}), ['twisted', 'txstuff'])
