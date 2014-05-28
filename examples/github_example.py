@@ -1,3 +1,5 @@
+# python -m examples.github_example
+
 # An example that shows
 # - usage of HTTP effects
 # - chaining effects with callbacks that return more effects
