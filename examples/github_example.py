@@ -11,7 +11,7 @@ from __future__ import print_function
 import operator
 import json
 
-from puresnakes.effect import Effect
+from effect import Effect
 from http_example import HTTPRequest
 
 

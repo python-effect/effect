@@ -7,7 +7,7 @@ from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
 from twisted.internet.defer import Deferred, succeed
 from twisted.trial.unittest import SynchronousTestCase
 
-from .effect import Effect, NoEffectHandlerError, parallel
+from . import Effect, NoEffectHandlerError, parallel
 from .testing import StubRequest
 
 

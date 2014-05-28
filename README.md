@@ -1,9 +1,9 @@
-# Pure Snakes
+# Effect
 
-puresnakes is a library for helping you write purely functional code by
+Effect is a library for helping you write purely functional code by
 isolating the effects (that is, state manipulation and IO) in your code.
 
-You'll want to check out [puresnakes.effect](puresnakes/effect.py).
+You can read the code at [effect/__init__.py](effect/__init__.py).
 
 # Thanks
 
@@ -13,7 +13,7 @@ Thanks to Rackspace for allowing me to work on this project, and having an
 
 # License
 
-puresnakes is licensed under the MIT license:
+Effect is licensed under the MIT license:
 
 Copyright (C) 2014 Christopher Armstrong
 

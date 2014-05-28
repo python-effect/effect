@@ -4,8 +4,8 @@ import json
 
 from testtools import TestCase
 
-from puresnakes.effect import Effect
-from puresnakes.testing import StubRequest, succeed_stub
+from effect import Effect
+from effect.testing import StubRequest, succeed_stub
 import github_example
 
 
