@@ -8,6 +8,7 @@ from twisted.internet.defer import Deferred
 from twisted.trial.unittest import SynchronousTestCase
 
 from .effect import Effect, NoEffectHandlerError, parallel
+from .testing import StubRequest
 
 
 ## Fun testing objects
@@ -25,14 +26,6 @@ class SelfContainedRequest(object):
 
     def perform_effect(self, handlers):
         return "Self-result", handlers
-
-
-class CannedRequest(object):
-    def __init__(self, result):
-        self.result = result
-
-    def perform_effect(self, handlers):
-        return self.result
 
 
 class POPORequest(object):
@@ -239,8 +232,8 @@ class ParallelTests(SynchronousTestCase):
         parallel results in a list of results of effects, in the same
         order that they were passed to parallel.
         """
-        d = parallel([Effect(CannedRequest('a')),
-                      Effect(CannedRequest('b'))]).perform({})
+        d = parallel([Effect(StubRequest('a')),
+                      Effect(StubRequest('b'))]).perform({})
         self.assertEqual(self.successResultOf(d), ['a', 'b'])
 
     # - handlers is passed through to child effects
