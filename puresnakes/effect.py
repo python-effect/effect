@@ -11,7 +11,7 @@ The core behavior is as follows:
   will hereafter be referred to as "effect requests". These objects should be
   wrapped in an instance of :class:`Effect`.
 - This library has almost no expectation of effect requests: it's up to users
-  to with them what they will[1].
+  to do with them what they will[1].
 - In most cases where you'd perform effects in your code, you should instead
   return an Effect wrapping the effect request.
 - Separately, some function should exist that takes an effect request
@@ -40,23 +40,22 @@ behaviors synergize with:
   should be unchanging data structures that fully describe the behavior to be
   performed with public members. This serves two purposes:
   - First, and most importantly, it makes unit-testing your code trivial.
-    No longer will you need to use mocks or stubs to fake out parts of your
-    system for the majority of your tests. The tests will simply invoke the
-    function, inspect the Effect-wrapped object for correctness, and manually
-    resolve the effect to execute any callbacks in order to test the
-    post-Effect behavior. No more need to mock out effects in your unit tests!
+    The tests will simply invoke the function, inspect the Effect-wrapped
+    object for correctness, and manually resolve the effect to execute any
+    callbacks in order to test the post-Effect behavior. No more need to mock
+    out effects in your unit tests!
   - This allows the effect-code to be *small* and *replaceable*. Using these
     conventions, it's trivial to switch out the implementation of e.g. your
-    HTTP client, and even to use either a blocking or non-blocking
-    interface, or to configure a threading policy. This is only possible if
-    effect requests expose everything necessary via a public API to
-    alternative implementations.
+    HTTP client, using a blocking or non-blocking network library, or
+    configure a threading policy. This is only possible if effect requests
+    expose everything necessary via a public API to alternative
+    implementation.
 - To spell it out clearly: do not call Effect.perform() on Effects produced by
   your code under test: there's no point. Just grab the 'request'
   attribute and look at its public attributes to determine if your code
   is producing the correct kind of effect requests. Separate unit tests for
-  your effect *handlers* are the only tests that potentially need mocking,
-  stubbing, or otherwise concern itself with true effects.
+  your effect *handlers* are the only tests that need concern themselves with
+  true effects.
 
 Twisted's Deferreds are supported directly; any effect handler that returns
 a Deferred will seamlessly integrate with on_success, on_error etc callbacks.
@@ -73,7 +72,7 @@ UNFORTUNATE:
   sys.exc_info() tuple is passed. This should be fixed somehow, maybe by
   relying on a split-out version of Twisted's Failures.
 - It's unclear whether the handler-table approach to effect dispatching is
-  flexible enough for all cases. For example, a system which mixes
+  flexible enough for all/common cases. For example, a system which mixes
   asynchronous and synchronous IO (because multiple libraries that do things
   in different ways are both in use) won't have a way to differentiate an
   asynchronous HTTPRequest from a synchronous HTTPRequest in the same call to
@@ -81,7 +80,8 @@ UNFORTUNATE:
   be used when in the context of Deferred-returning effects.
 - Actually testing code that uses this framework may still be tedious
   sometimes, since effects can be wrapped within dozens of levels of
-  indirections of callbacks, parallels, and so on.
+  indirections of callbacks, parallels, and so on. Careful use of mocking may
+  help.
 - Maybe allowing requests to provide their own implementations of
   perform_effect is a bad idea; if users don't get used to constructing their
   own set of handlers, then when they need to customize an effect handler it

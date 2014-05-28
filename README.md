@@ -1,10 +1,9 @@
 # Pure Snakes
 
-puresnakes is a library for helping you write purely functional code.
+puresnakes is a library for helping you write purely functional code by
+isolating the effects (that is, state manipulation and IO) in your code.
 
-Primarily it is a container for [puresnakes.effect](puresnakes/effect.py),
-which is a way to write purely functional code which deals with effects
-in an isolated way.
+You'll want to check out [puresnakes.effect](puresnakes/effect.py).
 
 # Thanks
 
