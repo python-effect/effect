@@ -50,8 +50,8 @@ class GithubTests(TestCase):
 
     def test_get_first_org_repos(self):
         """
-        get_first_org_repos returns an Effect which results in the repositories
-        of the *first* organization returned for the specified user.
+        get_first_org_repos returns an Effect returned by looking up the
+        repositories of the first organization of the specified user.
         """
         # A very primitive mocking is actually Not Evil (I know, it's hard to
         # believe) when you're just mocking out pure functions.
