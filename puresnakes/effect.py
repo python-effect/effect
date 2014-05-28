@@ -52,7 +52,7 @@ behaviors synergize with:
     effect requests expose everything necessary via a public API to
     alternative implementations.
 - To spell it out clearly: do not call Effect.perform() on Effects produced by
-  your code under test: there's no point. Just grab the 'effect_request'
+  your code under test: there's no point. Just grab the 'request'
   attribute and look at its public attributes to determine if your code
   is producing the correct kind of effect requests. Separate unit tests for
   your effect *handlers* are the only tests that potentially need mocking,
@@ -109,12 +109,12 @@ class Effect(object):
      You probably want to subclass this.
      Don't.)
     """
-    def __init__(self, effect_request):
+    def __init__(self, request):
         """
-        :param effect_request: An object that describes an effect to be
+        :param request: An object that describes an effect to be
             performed. Optionally has a perform_effect(handlers) method.
         """
-        self.effect_request = effect_request
+        self.request = request
 
     def perform(self, handlers):
         """
@@ -133,13 +133,13 @@ class Effect(object):
             request.
         """
         func = None
-        if type(self.effect_request) in handlers:
-            func = partial(handlers[type(self.effect_request)],
-                           self.effect_request)
+        if type(self.request) in handlers:
+            func = partial(handlers[type(self.request)],
+                           self.request)
         if func is None:
-            func = getattr(self.effect_request, 'perform_effect', None)
+            func = getattr(self.request, 'perform_effect', None)
         if func is None:
-            raise NoEffectHandlerError(self.effect_request)
+            raise NoEffectHandlerError(self.request)
         result = func(handlers)
         # Not happy about this Twisted knowledge being in perform...
         if hasattr(result, 'addCallback'):
@@ -185,7 +185,7 @@ class Effect(object):
         return Effect(Callbacks(self, success, error))
 
     def __repr__(self):
-        return "Effect(%r)" % (self.effect_request,)
+        return "Effect(%r)" % (self.request,)
 
     def serialize(self):
         """
@@ -195,10 +195,10 @@ class Effect(object):
         If the effect request has a "serialize" method, it will be invoked to
         represent itself in the resulting structure.
         """
-        if hasattr(self.effect_request, 'serialize'):
-            request = self.effect_request.serialize()
+        if hasattr(self.request, 'serialize'):
+            request = self.request.serialize()
         else:
-            request = self.effect_request
+            request = self.request
         return {"type": type(self), "request": request}
 
 

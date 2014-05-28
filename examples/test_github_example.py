@@ -15,15 +15,15 @@ class GithubTests(TestCase):
         get_orgs returns an effect that makes an HTTP request to
         the GitHub API to look up organizations for a user.
         """
-        req = github_example.get_orgs('radix')
-        http = req.effect_request.effect.effect_request
+        eff = github_example.get_orgs('radix')
+        http = eff.request.effect.request
         self.assertEqual(http.method, 'get')
         self.assertEqual(http.url, 'https://api.github.com/users/radix/orgs')
 
     def test_get_orgs_success(self):
         """get_orgs extracts the result into a simple list of orgs."""
-        req = github_example.get_orgs('radix')
-        callbacks = req.effect_request
+        eff = github_example.get_orgs('radix')
+        callbacks = eff.request
         self.assertEqual(
             callbacks.callback(json.dumps([{'login': 'twisted'},
                                            {'login': 'rackerlabs'}])),
@@ -34,15 +34,15 @@ class GithubTests(TestCase):
         get_org_repos returns an effect that makes an HTTP request to
         the GitHub API to look up repos in an org.
         """
-        req = github_example.get_org_repos('twisted')
-        http = req.effect_request.effect.effect_request
+        eff = github_example.get_org_repos('twisted')
+        http = eff.request.effect.request
         self.assertEqual(http.method, 'get')
         self.assertEqual(http.url, 'https://api.github.com/orgs/twisted/repos')
 
     def test_get_org_repos_success(self):
         """get_org_repos extracts the result into a simple list of repos."""
-        req = github_example.get_org_repos('radix')
-        callbacks = req.effect_request
+        eff = github_example.get_org_repos('radix')
+        callbacks = eff.request
         self.assertEqual(
             callbacks.callback(json.dumps([{'name': 'twisted'},
                                            {'name': 'txstuff'}])),
@@ -64,5 +64,8 @@ class GithubTests(TestCase):
                                                         'txstuff']))}
         self.patch(github_example, 'get_orgs', get_orgs.get)
         self.patch(github_example, 'get_org_repos', get_org_repos.get)
-        req = github_example.get_first_org_repos('radix')
-        self.assertEqual(req.perform({}), ['twisted', 'txstuff'])
+        eff = github_example.get_first_org_repos('radix')
+        self.assertEqual(eff.perform({}), ['twisted', 'txstuff'])
+
+    # These tests don't have 100% coverage, but they should teach you
+    # everything you need to know to extend to testing any type of effect.
