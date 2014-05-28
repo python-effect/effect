@@ -6,7 +6,7 @@ from testtools import TestCase
 
 from effect import Effect
 from effect.testing import StubRequest, succeed_stub
-import github_example
+from . import github_example
 
 
 class GithubTests(TestCase):
