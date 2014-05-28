@@ -3,8 +3,15 @@
 Effect is a library for helping you write purely functional code by
 isolating the effects (that is, state manipulation and IO) in your code.
 
-You can [read the code](effect/__init__.py). Right now Effect is in alpha,
-is likely to change incompatibly.
+You can [read the code](effect/__init__.py).
+
+
+# Status
+
+Right now Effect is in alpha, and is likely to change incompatibly.
+
+- Twisted support may be factored out.
+- The way effect implementations are specified is likely to change.
 
 # Thanks
 
