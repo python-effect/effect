@@ -2,11 +2,17 @@
 Testing helpers for effects.
 """
 
-def succeed(effect, result):
+from effect import Callbacks
+
+def succeed_stub(effect):
     """
-    Cause an effect's outermost callback to succeed with the given value.
+    Invoke a Callbacks effect with the canned result already available in the
+    StubRequest.
     """
-    return effect.effect_request.callback(result)
+    assert type(effect.request) is Callbacks, "{!r} is not a Callbacks!".format(effect.request)
+    stub = effect.request.effect.request
+    assert type(stub) is StubRequest, "{!r} is not a StubRequest!".format(stub)
+    return effect.request.callback(stub.result)
 
 
 class StubRequest(object):

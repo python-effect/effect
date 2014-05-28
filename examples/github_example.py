@@ -9,8 +9,7 @@ from __future__ import print_function
 import operator
 import json
 
-from puresnakes.effect import Effect, parallel
-from puresnakes.testing import succeed
+from puresnakes.effect import Effect
 from http_example import HTTPRequest
 
 

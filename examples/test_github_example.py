@@ -5,7 +5,7 @@ import json
 from testtools import TestCase
 
 from puresnakes.effect import Effect
-from puresnakes.testing import StubRequest, succeed
+from puresnakes.testing import StubRequest, succeed_stub
 import github_example
 
 
@@ -65,7 +65,7 @@ class GithubTests(TestCase):
         self.patch(github_example, 'get_orgs', get_orgs.get)
         self.patch(github_example, 'get_org_repos', get_org_repos.get)
         eff = github_example.get_first_org_repos('radix')
-        self.assertEqual(eff.perform({}), ['twisted', 'txstuff'])
+        self.assertIs(succeed_stub(eff), get_org_repos['twisted'])
 
     # These tests don't have 100% coverage, but they should teach you
     # everything you need to know to extend to testing any type of effect.
