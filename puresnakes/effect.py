@@ -141,6 +141,13 @@ class Effect(object):
         if func is None:
             raise NoEffectHandlerError(self.effect_request)
         result = func(handlers)
+        # Not happy about this Twisted knowledge being in perform...
+        if hasattr(result, 'addCallback'):
+            return result.addCallback(self._maybe_chain, handlers)
+        else:
+            return self._maybe_chain(result, handlers)
+
+    def _maybe_chain(self, result, handlers):
         if type(result) is Effect:
             return result.perform(handlers)
         return result

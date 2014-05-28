@@ -4,7 +4,7 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
                                 raises, MatchesPredicateWithParams)
 
-from twisted.internet.defer import Deferred
+from twisted.internet.defer import Deferred, succeed
 from twisted.trial.unittest import SynchronousTestCase
 
 from .effect import Effect, NoEffectHandlerError, parallel
@@ -12,15 +12,6 @@ from .testing import StubRequest
 
 
 ## Fun testing objects
-
-class DeferredRequest(object):
-    def __init__(self, deferred):
-        self.deferred = deferred
-
-    def perform_effect(self, handlers):
-        return self.deferred
-
-
 class SelfContainedRequest(object):
     """An example effect request which implements its own perform_effect."""
 
@@ -194,7 +185,7 @@ class DeferredSupportTests(TestCase):
         d = Deferred()
         calls = []
         self.assertIs(
-            Effect(DeferredRequest(d))
+            Effect(StubRequest(d))
                 .on_success(calls.append)
                 .perform({}),
             d)
@@ -213,7 +204,7 @@ class DeferredSupportTests(TestCase):
         d = Deferred()
         calls = []
         self.assertIs(
-            Effect(DeferredRequest(d))
+            Effect(StubRequest(d))
                 .on_error(calls.append)
                 .perform({}),
             d)
@@ -223,6 +214,17 @@ class DeferredSupportTests(TestCase):
             calls,
             MatchesListwise([
                 MatchesBasicFailure(ValueError("stuff"))]))
+
+
+class DeferredPerformTests(SynchronousTestCase):
+    def test_perform_deferred_chaining(self):
+        """
+        When the top-level callback returns a Deferred that fires with an
+        Effect, Effect.perform will perform that effect.
+        """
+        d = succeed(Effect(StubRequest('foo')))
+        result = Effect(StubRequest(d)).perform({})
+        self.assertEqual(self.successResultOf(result), 'foo')
 
 
 class ParallelTests(SynchronousTestCase):
