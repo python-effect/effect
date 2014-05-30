@@ -56,6 +56,8 @@ behaviors synergize with:
   is producing the correct kind of effect requests. Separate unit tests for
   your effect *handlers* are the only tests that need concern themselves with
   true effects.
+- When testing, use the utilities in the effect.testing module: they will help
+  a lot.
 
 Twisted's Deferreds are supported directly; any effect handler that returns
 a Deferred will seamlessly integrate with on_success, on_error etc callbacks.
@@ -78,14 +80,18 @@ UNFORTUNATE:
   asynchronous HTTPRequest from a synchronous HTTPRequest in the same call to
   Effect.perform. Likewise, a threaded implementation of parallel should only
   be used when in the context of Deferred-returning effects.
-- Actually testing code that uses this framework may still be tedious
-  sometimes, since effects can be wrapped within dozens of levels of
-  indirections of callbacks, parallels, and so on. Careful use of mocking may
-  help.
 - Maybe allowing requests to provide their own implementations of
   perform_effect is a bad idea; if users don't get used to constructing their
   own set of handlers, then when they need to customize an effect handler it
   may require an unfortunately large refactoring.
+
+TODO:
+- further consider "generic function" style dispatching to effect
+  handlers. https://pypi.python.org/pypi/singledispatch
+- consider rewriting callbacks to be an ordered list attached to the effect,
+  instead of effect wrappers. This could help performance and reduce stack
+  size, but more importantly it can simplify a lot of code in the testing
+  module.
 """
 
 from __future__ import print_function
