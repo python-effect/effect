@@ -5,7 +5,7 @@ import json
 from testtools import TestCase
 
 from effect import Effect
-from effect.testing import StubRequest, succeed_stub
+from effect.testing import StubRequest, resolve_stub, get_request
 from . import github_example
 
 
@@ -65,7 +65,8 @@ class GithubTests(TestCase):
         self.patch(github_example, 'get_orgs', get_orgs.get)
         self.patch(github_example, 'get_org_repos', get_org_repos.get)
         eff = github_example.get_first_org_repos('radix')
-        self.assertIs(succeed_stub(eff), get_org_repos['twisted'])
+        self.assertIs(get_request(resolve_stub(eff)),
+                      get_org_repos['twisted'].request)
 
     # These tests don't have 100% coverage, but they should teach you
     # everything you need to know to extend to testing any type of effect.
