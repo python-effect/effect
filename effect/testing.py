@@ -87,10 +87,9 @@ def resolve_effect(effect, result):
     for i, callback in enumerate(sequence[1:]):
         result = callback.callback(result)
         if type(result) is Effect:
-            # We want to return a new effect with all the remaining callbacks
-            # attached to it, so it can naturally be passed to resolve_effect.
-            # unfortunately this means we need to rebuild the partial callback
-            # chain.
+            # Wrap all the remaining callbacks around the new effect we just
+            # found, so that resolving it will run everything, and not just
+            # the nested ones.
             eff = result
             for callback in sequence[i + 2:]:
                 eff = eff.on(success=callback.callback,
