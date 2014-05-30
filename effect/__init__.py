@@ -170,8 +170,8 @@ class Effect(object):
         Return a new Effect that will invoke the associated callback when this
         Effect fails.
 
-        The callback will be invoked with the sys.exc_info() exception tuple as its
-        only argument.
+        The callback will be invoked with the sys.exc_info() exception tuple
+        as its only argument.
         """
         return Effect(Callbacks(self, None, callback))
 
@@ -210,8 +210,8 @@ class Effect(object):
 
 class Callbacks(object):
     """
-    A representation of the fact that a call should be made after some Effect is
-    performed.
+    A representation of the fact that a call should be made after some Effect
+    is performed.
 
     This supports both handling of successful results (normal return values)
     and failing results (exceptions raised from the inner effect), by invoking
@@ -225,7 +225,8 @@ class Callbacks(object):
         self.errback = errback
 
     def __repr__(self):
-        return "Callbacks(%r, %r, %r)" % (self.effect, self.callback, self.errback)
+        return "Callbacks(%r, %r, %r)" % (self.effect, self.callback,
+                                          self.errback)
 
     def serialize(self):
         return {"type": type(self),

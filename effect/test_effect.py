@@ -11,7 +11,6 @@ from . import Effect, NoEffectHandlerError, parallel
 from .testing import StubRequest
 
 
-## Fun testing objects
 class SelfContainedRequest(object):
     """An example effect request which implements its own perform_effect."""
 
@@ -30,8 +29,6 @@ class ErrorRequest(object):
     def perform_effect(self, handlers):
         raise ValueError("oh dear")
 
-
-## The test cases
 
 class EffectPerformTests(TestCase):
     """Tests for Effect.perform."""
@@ -117,7 +114,7 @@ class CallbackTests(TestCase):
                 MatchesListwise([
                     Equals("Self-result"),
                     Is(table)]),
-            Equals("amended!")]))
+                    Equals("amended!")]))
 
     def test_success_propagates_effect_exception(self):
         """
@@ -241,7 +238,6 @@ class ParallelTests(SynchronousTestCase):
     # - handlers is passed through to child effects
     # - what happens with errors?
 
-## Boring test utilities
 
 def _failure_matches_exception(a, b):
     return type(a.value) is type(b) and a.value.args == b.args

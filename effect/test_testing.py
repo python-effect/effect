@@ -5,7 +5,7 @@ Tests for the effect.testing module.
 from unittest import TestCase
 
 from effect import Effect, Callbacks
-from effect.testing import resolve_effect, StubRequest
+from effect.testing import resolve_effect
 
 
 class ResolveEffectTests(TestCase):
@@ -22,7 +22,9 @@ class ResolveEffectTests(TestCase):
         """
         Callbacks of the effect are invoked successfully.
         """
-        def add1(n): return n + 1
+
+        def add1(n):
+            return n + 1
         eff = Effect(None).on_success(add1).on_success(add1)
         self.assertEqual(resolve_effect(eff, 0), 2)
 
@@ -46,8 +48,10 @@ class ResolveEffectTests(TestCase):
         the returned effect.
         """
         nested_effect = Effect("nested")
+
         def a(r):
             return nested_effect
+
         def b(r):
             return "hello"
         eff = Effect("orig").on_success(a).on_success(b)
@@ -62,10 +66,13 @@ class ResolveEffectTests(TestCase):
         callbacks remaining on the outer effect.
         """
         nested_effect = Effect("nested")
+
         def a(r):
             return nested_effect.on_success(nested_b)
+
         def nested_b(r):
             return "nested-b result"
+
         def c(r):
             return "c-result"
         eff = Effect("orig").on_success(a).on_success(c)
