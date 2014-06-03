@@ -5,7 +5,7 @@ import json
 from testtools import TestCase
 
 from effect import Effect
-from effect.testing import StubIntent, resolve_stub
+from effect.testing import StubIntent, resolve_stub, resolve_effect
 from . import github_example
 
 
@@ -16,17 +16,16 @@ class GithubTests(TestCase):
         the GitHub API to look up organizations for a user.
         """
         eff = github_example.get_orgs('radix')
-        http = eff.intent.effect.intent
+        http = eff.intent
         self.assertEqual(http.method, 'get')
         self.assertEqual(http.url, 'https://api.github.com/users/radix/orgs')
 
     def test_get_orgs_success(self):
         """get_orgs extracts the result into a simple list of orgs."""
         eff = github_example.get_orgs('radix')
-        callbacks = eff.intent
         self.assertEqual(
-            callbacks.callback(json.dumps([{'login': 'twisted'},
-                                           {'login': 'rackerlabs'}])),
+            resolve_effect(eff, json.dumps([{'login': 'twisted'},
+                                            {'login': 'rackerlabs'}])),
             ['twisted', 'rackerlabs'])
 
     def test_get_org_repos_request(self):
@@ -35,17 +34,16 @@ class GithubTests(TestCase):
         the GitHub API to look up repos in an org.
         """
         eff = github_example.get_org_repos('twisted')
-        http = eff.intent.effect.intent
+        http = eff.intent
         self.assertEqual(http.method, 'get')
         self.assertEqual(http.url, 'https://api.github.com/orgs/twisted/repos')
 
     def test_get_org_repos_success(self):
         """get_org_repos extracts the result into a simple list of repos."""
         eff = github_example.get_org_repos('radix')
-        callbacks = eff.intent
         self.assertEqual(
-            callbacks.callback(json.dumps([{'name': 'twisted'},
-                                           {'name': 'txstuff'}])),
+            resolve_effect(eff, json.dumps([{'name': 'twisted'},
+                                            {'name': 'txstuff'}])),
             ['twisted', 'txstuff'])
 
     def test_get_first_org_repos(self):
