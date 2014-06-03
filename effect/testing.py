@@ -63,4 +63,4 @@ def resolve_stub(effect):
     Like resolve_effect, but automatically uses the result available in a
     StubRequest.
     """
-    return resolve_effect(effect, effect.request)
+    return resolve_effect(effect, effect.request.result)
