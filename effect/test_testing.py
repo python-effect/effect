@@ -6,8 +6,8 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Equals, MatchesException,
                                 raises)
 
-from effect import Effect
-from effect.testing import resolve_effect, fail_effect
+from . import Effect
+from .testing import resolve_effect, fail_effect
 
 
 class ResolveEffectTests(TestCase):

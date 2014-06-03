@@ -68,19 +68,13 @@ UNFORTUNATE:
   sys.exc_info() tuple is passed. This should be fixed somehow, maybe by
   relying on a split-out version of Twisted's Failures.
 
-TODO:
-- further consider "generic function" style dispatching to effect
-  handlers. https://pypi.python.org/pypi/singledispatch
-- consider rewriting callbacks to be an ordered list attached to the effect,
-  instead of effect wrappers. This could help performance and reduce stack
-  size, but more importantly it can simplify a lot of code in the testing
-  module.
 """
 
 from __future__ import print_function
 
 import sys
-from functools import partial
+
+import six
 
 
 class NoEffectHandlerError(Exception):
@@ -178,7 +172,7 @@ class Effect(object):
                 # callbacks on the Deferred instead of the effect.
                 return self._chain_deferred(result, remaining, dispatcher)
         if is_error:
-            raise result[1:]
+            six.reraise(*result)
         return result
 
     def _chain_deferred(self, deferred, callbacks, dispatcher):
@@ -291,4 +285,4 @@ def parallel(effects):
     The result of the aggregate Effect will be a list of their results, in
     the same order as the input to this function.
     """
-    return Effect(ParallelEffects(effects))
+    return Effect(ParallelEffects(list(effects)))

@@ -1,4 +1,5 @@
-# Run these tests with "trial example.test_github_example"
+# Run these tests with "trial examples.test_github_example"
+# or "python -m testtools.run examples.test_github_example"
 
 import json
 

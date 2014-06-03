@@ -6,13 +6,17 @@
 # - a custom effect that reads from the console
 # - very simple Twisted-based usage
 
+# Unfortunately python3 is not yet supported by this example since treq
+# has not been ported.
+
 from __future__ import print_function
 
 import operator
 import json
+from functools import reduce
 
 from effect import Effect, parallel
-from http_example import HTTPRequest
+from .http_example import HTTPRequest
 
 
 def get_orgs(name):

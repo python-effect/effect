@@ -4,7 +4,9 @@ Various functions for inspecting and restructuring effects.
 
 import sys
 
-from effect import Effect
+from . import Effect
+
+import six
 
 
 class StubIntent(object):
@@ -71,7 +73,7 @@ def resolve_effect(effect, result, is_error=False):
                 result.intent,
                 result.callbacks + effect.callbacks[i + 1:])
     if is_error:
-        raise result[1:]
+        six.reraise(*result)
     return result
 
 

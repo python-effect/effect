@@ -17,4 +17,5 @@ setuptools.setup(
         'Programming Language :: Python :: 3',
         ],
     packages=['effect'],
+    install_requires=['six'],
     )
