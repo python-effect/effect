@@ -88,11 +88,21 @@ class EffectPerformTests(TestCase):
         - that effect is immediately performed with the same handler table,
         - the result of that is returned.
         """
-        table = {POPOIntent: lambda r, h: Effect(SelfContainedIntent())}
         self.assertEqual(
-            Effect(POPOIntent())
-                .perform(table),
-            ("Self-result", table))
+            Effect(StubIntent(Effect(StubIntent("foo"))))
+                .perform({}),
+            "foo")
+
+    def test_effects_returning_effects_returning_effects(self):
+        """
+        If an effect returns an effect which immediately returns an effect
+        with no callbacks in between, the result of the innermost effect is
+        returned from the outermost effect's perform.
+        """
+        self.assertEqual(
+            Effect(StubIntent(Effect(StubIntent(Effect(StubIntent("foo"))))))
+                .perform({}),
+            "foo")
 
 
 class CallbackTests(TestCase):
@@ -217,14 +227,46 @@ class DeferredSupportTests(TestCase):
 
 
 class DeferredPerformTests(SynchronousTestCase):
+
+    def test_perform_deferred_result(self):
+        """
+        An effect which results in a Deferred will have that Deferred returned
+        from its perform method.
+        """
+        result = Effect(StubIntent(succeed("hello"))).perform({})
+        self.assertEqual(self.successResultOf(result), 'hello')
+
     def test_perform_deferred_chaining(self):
         """
-        When the top-level callback returns a Deferred that fires with an
+        When the top-level effect returns a Deferred that fires with an
         Effect, Effect.perform will perform that effect.
         """
-        d = succeed(Effect(StubIntent('foo')))
-        result = Effect(StubIntent(d)).perform({})
+        result = Effect(StubIntent(succeed(Effect(StubIntent('foo'))))).perform({})
         self.assertEqual(self.successResultOf(result), 'foo')
+
+    def test_deferred_callback_effect(self):
+        """
+        If a callback on a Deferred-wrapped Effect returns an Effect, that
+        effect's result becomes the outer effect's result.
+        """
+        d = succeed('deferred-result')
+        nested_effect = Effect(StubIntent('nested-effect-result'))
+        eff = Effect(StubIntent(d)).on_success(lambda x: nested_effect)
+        self.assertEqual(self.successResultOf(eff.perform({})),
+                         'nested-effect-result')
+
+    def test_intermediate_deferred_callback_returning_effect(self):
+        """
+        If a callback on a Deferred-wrapped Effect returns an Effect, that
+        effect's result becomes the outer effect's result.
+        """
+        d = succeed('deferred-result')
+        nested_effect = Effect(StubIntent('nested-effect-result'))
+        eff = (Effect(StubIntent(d))
+                   .on_success(lambda x: nested_effect)
+                   .on_success(lambda x: (x, 'finally')))
+        self.assertEqual(self.successResultOf(eff.perform({})),
+                         ('nested-effect-result', 'finally'))
 
 
 class ParallelTests(SynchronousTestCase):

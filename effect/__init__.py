@@ -99,6 +99,14 @@ class NoEffectHandlerError(Exception):
     No Effect handler could be found for the given Effect-wrapped object.
     """
 
+def iter_recursive(seq):
+    """
+    Generate (head, tail) tuples so you can iterate in a way that feels like
+    a typical recursive function over a seq.
+    """
+    for i in range(len(seq)):
+        yield seq[i], seq[i+1:]
+
 
 class Effect(object):
     """
@@ -149,41 +157,47 @@ class Effect(object):
 
         return self._dispatch_callback_chain(self.callbacks, func, handlers)
 
-    def _maybe_chain(self, result, handlers):
-        # Not happy about this Twisted knowledge being in Effect...
-        if hasattr(result, 'addCallback'):
-            return result.addCallback(self._maybe_chain, handlers)
-        if type(result) is Effect:
-            return result.perform(handlers)
-        return result
-
     def _dispatch_callback_chain(self, chain, init_func, handlers):
         result = handlers
         is_error = False
-        for callback_index, (success, error) in enumerate([(init_func, None)]
+        for (success, error), remaining in iter_recursive([(init_func, None)]
                                                           + self.callbacks):
             cb = success if not is_error else error
             if cb is None:
                 continue
             is_error, result = self._dispatch_callback(cb, result)
-            result = self._maybe_chain(result, handlers)
+            result = self._maybe_recurse_effect(result, handlers)
+
+            # Not happy about this Twisted knowledge being in Effect...
             if hasattr(result, 'addCallbacks'):
                 # short circuit all the rest of the callbacks; they become
                 # callbacks on the Deferred instead of the effect.
-                return self._chain_deferred(result,
-                                            self.callbacks[callback_index:])
+                return self._chain_deferred(result, remaining, handlers)
         if is_error:
             raise result[1:]
         return result
 
-    def _chain_deferred(self, deferred, callbacks):
+    def _chain_deferred(self, deferred, callbacks, handlers):
+        """Attach the remaining callbacks to the Deferred."""
+        deferred.addCallback(self._maybe_recurse_effect, handlers)
         for cb, eb in callbacks:
             if cb is None:
                 cb = lambda r: r
             deferred.addCallbacks(cb, eb)
+            deferred.addCallback(self._maybe_recurse_effect, handlers)
         return deferred
 
+    def _maybe_recurse_effect(self, result, handlers):
+        """If the result is an effect, recursively perform it."""
+        if type(result) is Effect:
+            return result.perform(handlers)
+        return result
+
     def _dispatch_callback(self, callback, argument):
+        """
+        Invoke a function and return a two-tuple of (bool success, result).
+        Result will be an exc_info if the function raised an exception.
+        """
         try:
             return (False, callback(argument))
         except:
