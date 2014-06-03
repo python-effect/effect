@@ -35,7 +35,7 @@ class ResolveEffectTests(TestCase):
         stub_effect = Effect('inner')
         eff = Effect(None).on_success(lambda r: stub_effect)
         result = resolve_effect(eff, 'foo')
-        self.assertEqual(result.request, 'inner')
+        self.assertEqual(result.intent, 'inner')
         self.assertEqual(resolve_effect(result, 'next-result'),
                          'next-result')
 

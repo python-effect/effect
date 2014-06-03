@@ -51,7 +51,7 @@ def get_first_org_repos(name):
 
 
 class ReadLine(object):
-    """An effect request for getting input from the user."""
+    """An effect intent for getting input from the user."""
 
     def __init__(self, prompt):
         self.prompt = prompt

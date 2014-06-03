@@ -5,7 +5,7 @@ import json
 from testtools import TestCase
 
 from effect import Effect
-from effect.testing import StubRequest, resolve_stub, get_request
+from effect.testing import StubIntent, resolve_stub
 from . import github_example
 
 
@@ -16,14 +16,14 @@ class GithubTests(TestCase):
         the GitHub API to look up organizations for a user.
         """
         eff = github_example.get_orgs('radix')
-        http = eff.request.effect.request
+        http = eff.intent.effect.intent
         self.assertEqual(http.method, 'get')
         self.assertEqual(http.url, 'https://api.github.com/users/radix/orgs')
 
     def test_get_orgs_success(self):
         """get_orgs extracts the result into a simple list of orgs."""
         eff = github_example.get_orgs('radix')
-        callbacks = eff.request
+        callbacks = eff.intent
         self.assertEqual(
             callbacks.callback(json.dumps([{'login': 'twisted'},
                                            {'login': 'rackerlabs'}])),
@@ -35,14 +35,14 @@ class GithubTests(TestCase):
         the GitHub API to look up repos in an org.
         """
         eff = github_example.get_org_repos('twisted')
-        http = eff.request.effect.request
+        http = eff.intent.effect.intent
         self.assertEqual(http.method, 'get')
         self.assertEqual(http.url, 'https://api.github.com/orgs/twisted/repos')
 
     def test_get_org_repos_success(self):
         """get_org_repos extracts the result into a simple list of repos."""
         eff = github_example.get_org_repos('radix')
-        callbacks = eff.request
+        callbacks = eff.intent
         self.assertEqual(
             callbacks.callback(json.dumps([{'name': 'twisted'},
                                            {'name': 'txstuff'}])),
@@ -59,14 +59,14 @@ class GithubTests(TestCase):
         # - behavior based on non-argument state is not an issue
         # - repeated calls are not an issue
         # so don't freak out, patching is ok :)
-        get_orgs = {'radix': Effect(StubRequest(['twisted', 'rackerlabs']))}
-        get_org_repos = {'twisted': Effect(StubRequest(['twisted',
+        get_orgs = {'radix': Effect(StubIntent(['twisted', 'rackerlabs']))}
+        get_org_repos = {'twisted': Effect(StubIntent(['twisted',
                                                         'txstuff']))}
         self.patch(github_example, 'get_orgs', get_orgs.get)
         self.patch(github_example, 'get_org_repos', get_org_repos.get)
         eff = github_example.get_first_org_repos('radix')
-        self.assertIs(get_request(resolve_stub(eff)),
-                      get_org_repos['twisted'].request)
+        self.assertIs(resolve_stub(eff).intent,
+                      get_org_repos['twisted'].intent)
 
     # These tests don't have 100% coverage, but they should teach you
     # everything you need to know to extend to testing any type of effect.

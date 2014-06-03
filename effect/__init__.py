@@ -8,14 +8,14 @@ Keywords: monad, IO, stateless.
 
 The core behavior is as follows:
 - Effectful operations should be represented as plain Python objects which
-  will hereafter be referred to as "effect requests". These objects should be
+  will hereafter be referred to as "effect intents". These objects should be
   wrapped in an instance of :class:`Effect`.
-- This library has almost no expectation of effect requests: it's up to users
+- This library has almost no expectation of effect intents: it's up to users
   to do with them what they will[1].
 - In most cases where you'd perform effects in your code, you should instead
-  return an Effect wrapping the effect request.
-- Separately, some function should exist that takes an effect request
-  and performs the requested effect.
+  return an Effect wrapping the effect intent.
+- Separately, some function should exist that takes an effect intent
+  and performs the intended effect.
 - To represent work to be done *after* an effect, use Effect.on_success,
   .on_error, etc.
 - Near the top level of your code, invoke Effect.perform on the Effect you
@@ -47,13 +47,13 @@ behaviors synergize with:
   - This allows the effect-code to be *small* and *replaceable*. Using these
     conventions, it's trivial to switch out the implementation of e.g. your
     HTTP client, using a blocking or non-blocking network library, or
-    configure a threading policy. This is only possible if effect requests
+    configure a threading policy. This is only possible if effect intents
     expose everything necessary via a public API to alternative
     implementation.
 - To spell it out clearly: do not call Effect.perform() on Effects produced by
-  your code under test: there's no point. Just grab the 'request'
+  your code under test: there's no point. Just grab the 'intent'
   attribute and look at its public attributes to determine if your code
-  is producing the correct kind of effect requests. Separate unit tests for
+  is producing the correct kind of effect intents. Separate unit tests for
   your effect *handlers* are the only tests that need concern themselves with
   true effects.
 - When testing, use the utilities in the effect.testing module: they will help
@@ -80,7 +80,7 @@ UNFORTUNATE:
   asynchronous HTTPRequest from a synchronous HTTPRequest in the same call to
   Effect.perform. Likewise, a threaded implementation of parallel should only
   be used when in the context of Deferred-returning effects.
-- Maybe allowing requests to provide their own implementations of
+- Maybe allowing intents to provide their own implementations of
   perform_effect is a bad idea; if users don't get used to constructing their
   own set of handlers, then when they need to customize an effect handler it
   may require an unfortunately large refactoring.
@@ -109,23 +109,23 @@ class NoEffectHandlerError(Exception):
 class Effect(object):
     """
     Wrap an object that describes how to perform some effect (called an
-    "effect request"), and offer a way to actually perform that effect.
+    "effect intent"), and offer a way to actually perform that effect.
 
     (You're an object-oriented programmer.
      You probably want to subclass this.
      Don't.)
     """
-    def __init__(self, request):
+    def __init__(self, intent):
         """
-        :param request: An object that describes an effect to be
+        :param intent: An object that describes an effect to be
             performed. Optionally has a perform_effect(handlers) method.
         """
-        self.request = request
+        self.intent = intent
         self.callbacks = []
 
     @classmethod
-    def with_callbacks(klass, request, callbacks):
-        eff = klass(request)
+    def with_callbacks(klass, intent, callbacks):
+        eff = klass(intent)
         eff.callbacks = callbacks
         return eff
 
@@ -133,25 +133,25 @@ class Effect(object):
         """
         Perform an effect by dispatching to the appropriate handler.
 
-        If the type of the effect request is in ``handlers``, that handler
+        If the type of the effect intent is in ``handlers``, that handler
         will be invoked. Otherwise a ``perform_effect`` method will be invoked
-        on the effect request.
+        on the effect intent.
 
         If an effect handler returns another :class:`Effect` instance, that
         effect will be performed immediately before returning.
 
-        :param handlers: A dictionary mapping types of effect requests
+        :param handlers: A dictionary mapping types of effect intents
             to handler functions.
         :raise NoEffectHandlerError: When no handler was found for the effect
-            request.
+            intent.
         """
         func = None
-        if type(self.request) in handlers:
-            func = partial(handlers[type(self.request)], self.request)
+        if type(self.intent) in handlers:
+            func = partial(handlers[type(self.intent)], self.intent)
         if func is None:
-            func = getattr(self.request, 'perform_effect', None)
+            func = getattr(self.intent, 'perform_effect', None)
         if func is None:
-            raise NoEffectHandlerError(self.request)
+            raise NoEffectHandlerError(self.intent)
 
         return self._dispatch_callback_chain(self.callbacks, func, handlers)
 
@@ -225,29 +225,29 @@ class Effect(object):
         callbacks provided based on whether this Effect completes sucessfully
         or in error.
         """
-        return Effect.with_callbacks(self.request, self.callbacks + [(success, error)])
+        return Effect.with_callbacks(self.intent, self.callbacks + [(success, error)])
 
     def __repr__(self):
-        return "Effect.with_callbacks(%r, %s)" % (self.request, self.callbacks)
+        return "Effect.with_callbacks(%r, %s)" % (self.intent, self.callbacks)
 
     def serialize(self):
         """
         A simple debugging tool that serializes a tree of effects into basic
         Python data structures that are useful for pretty-printing.
 
-        If the effect request has a "serialize" method, it will be invoked to
+        If the effect intent has a "serialize" method, it will be invoked to
         represent itself in the resulting structure.
         """
-        if hasattr(self.request, 'serialize'):
-            request = self.request.serialize()
+        if hasattr(self.intent, 'serialize'):
+            intent = self.intent.serialize()
         else:
-            request = self.request
-        return {"type": type(self), "request": request, "callbacks": self.callbacks}
+            intent = self.intent
+        return {"type": type(self), "intent": intent, "callbacks": self.callbacks}
 
 
 class ParallelEffects(object):
     """
-    An effect request that asks for a number of effects to be run in parallel,
+    An effect intent that asks for a number of effects to be run in parallel,
     and for their results to be gathered up into a sequence.
 
     The default implementation of this effect relies on Twisted's Deferreds.

@@ -5,13 +5,13 @@ Various functions for inspecting and restructuring effects.
 from effect import Effect
 
 
-class StubRequest(object):
+class StubIntent(object):
     """An effect that returns a pre-specified result."""
     def __init__(self, result):
         self.result = result
 
     def __repr__(self):
-        return "StubRequest(%r)" % (self.result,)
+        return "StubIntent(%r)" % (self.result,)
 
     def perform_effect(self, handlers):
         return self.result
@@ -53,7 +53,7 @@ def resolve_effect(effect, result):
             # found, so that resolving it will run everything, and not just
             # the nested ones.
             return Effect.with_callbacks(
-                result.request,
+                result.intent,
                 result.callbacks + effect.callbacks[i + 1:])
     return result
 
@@ -61,6 +61,6 @@ def resolve_effect(effect, result):
 def resolve_stub(effect):
     """
     Like resolve_effect, but automatically uses the result available in a
-    StubRequest.
+    StubIntent.
     """
-    return resolve_effect(effect, effect.request.result)
+    return resolve_effect(effect, effect.intent.result)
