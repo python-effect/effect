@@ -3,8 +3,8 @@ Tests for the effect.testing module.
 """
 
 from testtools import TestCase
-from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
-                                raises, MatchesPredicateWithParams)
+from testtools.matchers import (MatchesListwise, Equals, MatchesException,
+                                raises)
 
 from effect import Effect
 from effect.testing import resolve_effect, fail_effect
@@ -83,8 +83,8 @@ class ResolveEffectTests(TestCase):
 
     def test_resolve_effect_cb_exception(self):
         """
-        When a callback raises an exception, the next error handler is called with the
-        exception info.
+        When a callback raises an exception, the next error handler is called
+        with the exception info.
         """
         self.assertThat(
             resolve_effect(

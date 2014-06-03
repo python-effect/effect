@@ -99,13 +99,14 @@ class NoEffectHandlerError(Exception):
     No Effect handler could be found for the given Effect-wrapped object.
     """
 
+
 def iter_recursive(seq):
     """
     Generate (head, tail) tuples so you can iterate in a way that feels like
     a typical recursive function over a seq.
     """
     for i in range(len(seq)):
-        yield seq[i], seq[i+1:]
+        yield seq[i], seq[i + 1:]
 
 
 class Effect(object):
@@ -158,10 +159,11 @@ class Effect(object):
         return self._dispatch_callback_chain(
             [(func, None)] + self.callbacks, handlers, handlers)
 
-    def _dispatch_callback_chain(self, chain, init_arg, handlers, is_error=False):
+    def _dispatch_callback_chain(self, chain, init_arg, handlers,
+                                 is_error=False):
         """
-        Run a series of callbacks in sequence, passing the result of each callback
-        as an argument to the next one.
+        Run a series of callbacks in sequence, passing the result of each
+        callback as an argument to the next one.
 
         If any callback returns an effect, that effect will be recursively
         performed.
@@ -177,7 +179,8 @@ class Effect(object):
             is_error, result = self._dispatch_callback(cb, result)
             if not is_error:
                 is_error, result = self._dispatch_callback(
-                    lambda result: self._maybe_recurse_effect(result, handlers),
+                    lambda result: self._maybe_recurse_effect(result,
+                                                              handlers),
                     result)
 
             # Not happy about this Twisted knowledge being in Effect...
@@ -194,7 +197,8 @@ class Effect(object):
         deferred.addCallback(self._maybe_recurse_effect, handlers)
         return deferred.addCallbacks(
             lambda r: self._dispatch_callback_chain(callbacks, r, handlers),
-            lambda f: self._dispatch_callback_chain(callbacks, f, handlers, is_error=True))
+            lambda f: self._dispatch_callback_chain(callbacks, f, handlers,
+                                                    is_error=True))
 
     def _maybe_recurse_effect(self, result, handlers):
         """If the result is an effect, recursively perform it."""
@@ -242,7 +246,8 @@ class Effect(object):
         callbacks provided based on whether this Effect completes sucessfully
         or in error.
         """
-        return Effect.with_callbacks(self.intent, self.callbacks + [(success, error)])
+        return Effect.with_callbacks(self.intent,
+                                     self.callbacks + [(success, error)])
 
     def __repr__(self):
         return "Effect.with_callbacks(%r, %s)" % (self.intent, self.callbacks)
@@ -259,7 +264,8 @@ class Effect(object):
             intent = self.intent.serialize()
         else:
             intent = self.intent
-        return {"type": type(self), "intent": intent, "callbacks": self.callbacks}
+        return {"type": type(self), "intent": intent,
+                "callbacks": self.callbacks}
 
 
 class ParallelEffects(object):

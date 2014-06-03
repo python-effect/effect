@@ -252,7 +252,11 @@ class DeferredPerformTests(SynchronousTestCase):
         When the top-level effect returns a Deferred that fires with an
         Effect, Effect.perform will perform that effect.
         """
-        result = Effect(StubIntent(succeed(Effect(StubIntent('foo'))))).perform({})
+        result = Effect(
+            StubIntent(
+                succeed(
+                    Effect(
+                        StubIntent('foo'))))).perform({})
         self.assertEqual(self.successResultOf(result), 'foo')
 
     def test_deferred_callback_effect(self):
