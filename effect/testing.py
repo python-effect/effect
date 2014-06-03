@@ -15,7 +15,7 @@ class StubIntent(object):
     def __repr__(self):
         return "StubIntent(%r)" % (self.result,)
 
-    def perform_effect(self, handlers):
+    def perform_effect(self, dispatcher):
         return self.result
 
 

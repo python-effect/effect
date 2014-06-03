@@ -67,17 +67,6 @@ UNFORTUNATE:
   Failures are passed, whereas when synchronous exceptions are raised, a
   sys.exc_info() tuple is passed. This should be fixed somehow, maybe by
   relying on a split-out version of Twisted's Failures.
-- It's unclear whether the handler-table approach to effect dispatching is
-  flexible enough for all/common cases. For example, a system which mixes
-  asynchronous and synchronous IO (because multiple libraries that do things
-  in different ways are both in use) won't have a way to differentiate an
-  asynchronous HTTPRequest from a synchronous HTTPRequest in the same call to
-  Effect.perform. Likewise, a threaded implementation of parallel should only
-  be used when in the context of Deferred-returning effects.
-- Maybe allowing intents to provide their own implementations of
-  perform_effect is a bad idea; if users don't get used to constructing their
-  own set of handlers, then when they need to customize an effect handler it
-  may require an unfortunately large refactoring.
 
 TODO:
 - further consider "generic function" style dispatching to effect
@@ -109,6 +98,16 @@ def iter_recursive(seq):
         yield seq[i], seq[i + 1:]
 
 
+def default_effect_perform(intent):
+    """
+    If the intent has a 'perform_effect' method, invoke it with this
+    function as an argument. Otherwise raise NoEffectHandlerError.
+    """
+    if hasattr(intent, 'perform_effect'):
+        return intent.perform_effect(default_effect_perform)
+    raise NoEffectHandlerError(intent)
+
+
 class Effect(object):
     """
     Wrap an object that describes how to perform some effect (called an
@@ -121,7 +120,7 @@ class Effect(object):
     def __init__(self, intent):
         """
         :param intent: An object that describes an effect to be
-            performed. Optionally has a perform_effect(handlers) method.
+            performed. Optionally has a perform_effect(dispatcher) method.
         """
         self.intent = intent
         self.callbacks = []
@@ -132,34 +131,24 @@ class Effect(object):
         eff.callbacks = callbacks
         return eff
 
-    def perform(self, handlers):
+    def perform(self, dispatcher=default_effect_perform):
         """
-        Perform an effect by dispatching to the appropriate handler.
+        Perform an effect by running the dispatcher, and then passing the
+        result through all the callbacks.
 
-        If the type of the effect intent is in ``handlers``, that handler
-        will be invoked. Otherwise a ``perform_effect`` method will be invoked
-        on the effect intent.
-
-        If an effect handler returns another :class:`Effect` instance, that
+        If the dispatcher returns another :class:`Effect` instance, that
         effect will be performed immediately before returning.
 
-        :param handlers: A dictionary mapping types of effect intents
-            to handler functions.
+        :param dispatcher: A function that accepts an intent and performs it.
+            This must raise NoEffectHandlerError if no strategy for performing
+            the intent can be found.
         :raise NoEffectHandlerError: When no handler was found for the effect
             intent.
         """
-        func = None
-        if type(self.intent) in handlers:
-            func = partial(handlers[type(self.intent)], self.intent)
-        if func is None:
-            func = getattr(self.intent, 'perform_effect', None)
-        if func is None:
-            raise NoEffectHandlerError(self.intent)
-
         return self._dispatch_callback_chain(
-            [(func, None)] + self.callbacks, handlers, handlers)
+            [(dispatcher, None)] + self.callbacks, self.intent, dispatcher)
 
-    def _dispatch_callback_chain(self, chain, init_arg, handlers,
+    def _dispatch_callback_chain(self, chain, init_arg, dispatcher,
                                  is_error=False):
         """
         Run a series of callbacks in sequence, passing the result of each
@@ -180,30 +169,30 @@ class Effect(object):
             if not is_error:
                 is_error, result = self._dispatch_callback(
                     lambda result: self._maybe_recurse_effect(result,
-                                                              handlers),
+                                                              dispatcher),
                     result)
 
             # Not happy about this Twisted knowledge being in Effect...
             if hasattr(result, 'addCallbacks'):
                 # short circuit all the rest of the callbacks; they become
                 # callbacks on the Deferred instead of the effect.
-                return self._chain_deferred(result, remaining, handlers)
+                return self._chain_deferred(result, remaining, dispatcher)
         if is_error:
             raise result[1:]
         return result
 
-    def _chain_deferred(self, deferred, callbacks, handlers):
+    def _chain_deferred(self, deferred, callbacks, dispatcher):
         """Attach the remaining callbacks to the Deferred."""
-        deferred.addCallback(self._maybe_recurse_effect, handlers)
+        deferred.addCallback(self._maybe_recurse_effect, dispatcher)
         return deferred.addCallbacks(
-            lambda r: self._dispatch_callback_chain(callbacks, r, handlers),
-            lambda f: self._dispatch_callback_chain(callbacks, f, handlers,
+            lambda r: self._dispatch_callback_chain(callbacks, r, dispatcher),
+            lambda f: self._dispatch_callback_chain(callbacks, f, dispatcher,
                                                     is_error=True))
 
-    def _maybe_recurse_effect(self, result, handlers):
+    def _maybe_recurse_effect(self, result, dispatcher):
         """If the result is an effect, recursively perform it."""
         if type(result) is Effect:
-            return result.perform(handlers)
+            return result.perform(dispatcher)
         return result
 
     def _dispatch_callback(self, callback, argument):
@@ -289,10 +278,10 @@ class ParallelEffects(object):
         return {"type": type(self),
                 "effects": [e.serialize() for e in self.effects]}
 
-    def perform_effect(self, handlers):
+    def perform_effect(self, dispatcher):
         from twisted.internet.defer import gatherResults, maybeDeferred
         return gatherResults(
-            [maybeDeferred(e.perform, handlers) for e in self.effects])
+            [maybeDeferred(e.perform, dispatcher) for e in self.effects])
 
 
 def parallel(effects):
