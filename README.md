@@ -11,7 +11,7 @@ You can [read the code](effect/__init__.py).
 Right now Effect is in alpha, and is likely to change incompatibly.
 
 - Twisted support may be factored out.
-- The way effect implementations are specified is likely to change.
+- names may change
 
 # Thanks
 

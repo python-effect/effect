@@ -89,10 +89,10 @@ class NoEffectHandlerError(Exception):
     """
 
 
-def iter_recursive(seq):
+def _iter_conses(seq):
     """
     Generate (head, tail) tuples so you can iterate in a way that feels like
-    a typical recursive function over a seq.
+    a typical recursive function over a linked list.
     """
     for i in range(len(seq)):
         yield seq[i], seq[i + 1:]
@@ -161,7 +161,7 @@ class Effect(object):
         run when that Deferred's result is available.
         """
         result = init_arg
-        for (success, error), remaining in iter_recursive(chain):
+        for (success, error), remaining in _iter_conses(chain):
             cb = success if not is_error else error
             if cb is None:
                 continue
