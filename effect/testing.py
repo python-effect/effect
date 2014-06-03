@@ -2,7 +2,7 @@
 Various functions for inspecting and restructuring effects.
 """
 
-from effect import Callbacks, Effect
+from effect import Effect
 
 
 class StubRequest(object):
@@ -15,44 +15,6 @@ class StubRequest(object):
 
     def perform_effect(self, handlers):
         return self.result
-
-
-def get_request(effect):
-    """
-    Given an effect, get the first actual effect request it represents.
-
-    Note that this function can only traverse effects that it knows about;
-    if there's some custom effect that wraps another effect, it won't be able
-    to find the inner effect.
-
-    NOTE: Currently, parallel effects are not supported.
-    """
-    return serialize(effect)[0]
-
-
-def serialize(effect):
-    """
-    Return a list of effect requests, in order that callbacks will be run.
-
-    In other words, if you have an effect like this:
-
-        do_thing().on_success(foo).on_error(bar)
-
-    This will return:
-
-        [do_thing().request, Callbacks success=foo, Callbacks error=bar]
-
-    NOTE: Currently, parallel effects are not supported.
-    """
-    result = []
-    while True:
-        result.append(effect.request)
-        if type(effect.request) is Callbacks:
-            effect = effect.request.effect
-        else:
-            break
-    result.reverse()
-    return result
 
 
 def resolve_effect(effect, result):
@@ -82,19 +44,17 @@ def resolve_effect(effect, result):
             third_result)
 
     NOTE: Currently, parallel effects are not supported.
+    NOTE: Currently, error handlers are not supported.
     """
-    sequence = serialize(effect)
-    for i, callback in enumerate(sequence[1:]):
-        result = callback.callback(result)
+    for i, (callback, errback) in enumerate(effect.callbacks):
+        result = callback(result)
         if type(result) is Effect:
             # Wrap all the remaining callbacks around the new effect we just
             # found, so that resolving it will run everything, and not just
             # the nested ones.
-            eff = result
-            for callback in sequence[i + 2:]:
-                eff = eff.on(success=callback.callback,
-                             error=callback.errback)
-            return eff
+            return Effect.with_callbacks(
+                result.request,
+                result.callbacks + effect.callbacks[i + 1:])
     return result
 
 
@@ -103,4 +63,4 @@ def resolve_stub(effect):
     Like resolve_effect, but automatically uses the result available in a
     StubRequest.
     """
-    return resolve_effect(effect, get_request(effect).result)
+    return resolve_effect(effect, effect.request)

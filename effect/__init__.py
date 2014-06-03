@@ -121,6 +121,13 @@ class Effect(object):
             performed. Optionally has a perform_effect(handlers) method.
         """
         self.request = request
+        self.callbacks = []
+
+    @classmethod
+    def with_callbacks(klass, request, callbacks):
+        eff = klass(request)
+        eff.callbacks = callbacks
+        return eff
 
     def perform(self, handlers):
         """
@@ -140,30 +147,60 @@ class Effect(object):
         """
         func = None
         if type(self.request) in handlers:
-            func = partial(handlers[type(self.request)],
-                           self.request)
+            func = partial(handlers[type(self.request)], self.request)
         if func is None:
             func = getattr(self.request, 'perform_effect', None)
         if func is None:
             raise NoEffectHandlerError(self.request)
-        result = func(handlers)
-        # Not happy about this Twisted knowledge being in perform...
-        if hasattr(result, 'addCallback'):
-            return result.addCallback(self._maybe_chain, handlers)
-        else:
-            return self._maybe_chain(result, handlers)
+
+        return self._dispatch_callback_chain(self.callbacks, func, handlers)
 
     def _maybe_chain(self, result, handlers):
+        # Not happy about this Twisted knowledge being in Effect...
+        if hasattr(result, 'addCallback'):
+            return result.addCallback(self._maybe_chain, handlers)
         if type(result) is Effect:
             return result.perform(handlers)
         return result
+
+    def _dispatch_callback_chain(self, chain, init_func, handlers):
+        result = handlers
+        is_error = False
+        for callback_index, (success, error) in enumerate([(init_func, None)]
+                                                          + self.callbacks):
+            cb = success if not is_error else error
+            if cb is None:
+                continue
+            is_error, result = self._dispatch_callback(cb, result)
+            result = self._maybe_chain(result, handlers)
+            if hasattr(result, 'addCallbacks'):
+                # short circuit all the rest of the callbacks; they become
+                # callbacks on the Deferred instead of the effect.
+                return self._chain_deferred(result,
+                                            self.callbacks[callback_index:])
+        if is_error:
+            raise result[1:]
+        return result
+
+    def _chain_deferred(self, deferred, callbacks):
+        for cb, eb in callbacks:
+            if cb is None:
+                cb = lambda r: r
+            deferred.addCallbacks(cb, eb)
+        return deferred
+
+    def _dispatch_callback(self, callback, argument):
+        try:
+            return (False, callback(argument))
+        except:
+            return (True, sys.exc_info())
 
     def on_success(self, callback):
         """
         Return a new Effect that will invoke the associated callback when this
         Effect completes succesfully.
         """
-        return Effect(Callbacks(self, callback, None))
+        return self.on(success=callback, error=None)
 
     def on_error(self, callback):
         """
@@ -173,14 +210,14 @@ class Effect(object):
         The callback will be invoked with the sys.exc_info() exception tuple
         as its only argument.
         """
-        return Effect(Callbacks(self, None, callback))
+        return self.on(success=None, error=callback)
 
     def after(self, callback):
         """
         Return a new Effect that will invoke the associated callback when this
         Effect completes, whether successfully or in error.
         """
-        return Effect(Callbacks(self, callback, callback))
+        return self.on(success=callback, error=callback)
 
     def on(self, success, error):
         """
@@ -188,10 +225,10 @@ class Effect(object):
         callbacks provided based on whether this Effect completes sucessfully
         or in error.
         """
-        return Effect(Callbacks(self, success, error))
+        return Effect.with_callbacks(self.request, self.callbacks + [(success, error)])
 
     def __repr__(self):
-        return "Effect(%r)" % (self.request,)
+        return "Effect.with_callbacks(%r, %s)" % (self.request, self.callbacks)
 
     def serialize(self):
         """
@@ -205,59 +242,7 @@ class Effect(object):
             request = self.request.serialize()
         else:
             request = self.request
-        return {"type": type(self), "request": request}
-
-
-class Callbacks(object):
-    """
-    A representation of the fact that a call should be made after some Effect
-    is performed.
-
-    This supports both handling of successful results (normal return values)
-    and failing results (exceptions raised from the inner effect), by invoking
-    either a "callback" or "errback".
-
-    Hint: This is kinda like bind (>>=).
-    """
-    def __init__(self, effect, callback, errback):
-        self.effect = effect
-        self.callback = callback
-        self.errback = errback
-
-    def __repr__(self):
-        return "Callbacks(%r, %r, %r)" % (self.effect, self.callback,
-                                          self.errback)
-
-    def serialize(self):
-        return {"type": type(self),
-                "effect": self.effect.serialize(),
-                "callback": self.callback,
-                "errback": self.errback}
-
-    def perform_effect(self, handlers):
-        try:
-            result = self.effect.perform(handlers)
-        except:
-            if self.errback is not None:
-                return self.errback(sys.exc_info())
-            else:
-                raise
-        else:
-            # Consider separating this implementation out to a dispatch table
-            # based on the return value's type, to support AsyncIO,
-            # concurrent.futures, etc.
-            if hasattr(result, 'addCallbacks'):
-                callback = (self.callback
-                            if self.callback is not None
-                            else lambda x: x)
-                errback = (self.errback
-                           if self.errback is not None
-                           else lambda x: x)
-                return result.addCallbacks(callback, errback)
-            elif self.callback is not None:
-                return self.callback(result)
-            else:
-                return result
+        return {"type": type(self), "request": request, "callbacks": self.callbacks}
 
 
 class ParallelEffects(object):

@@ -100,8 +100,8 @@ class CallbackTests(TestCase):
 
     def test_success(self):
         """
-        Callbacks.perform_effect
-        - performs the wrapped effect, passing the handlers,
+        An Effect with callbacks
+        - performs the wrapped request, passing the handlers,
         - passes the result of that to the callback,
         - returns the result of the callback.
         """
@@ -118,7 +118,7 @@ class CallbackTests(TestCase):
 
     def test_success_propagates_effect_exception(self):
         """
-        Callbacks.perform_effect propagates exceptions from performing
+        An Effect with callbacks propagates exceptions from performing
         the inner effect when there is no errback.
         """
         self.assertThat(
@@ -130,9 +130,11 @@ class CallbackTests(TestCase):
 
     def test_error_success(self):
         """
-        Callbacks.perform_effect
+        An Effect with callbacks
         - performs the wrapped effect, passing the handlers,
         - returns the result (assuming there is no exception).
+
+        In other words, the error handler is skipped when there's no error.
         """
         table = {}
         self.assertThat(
@@ -145,7 +147,7 @@ class CallbackTests(TestCase):
 
     def test_error(self):
         """
-        Callbacks.perform_effect
+        An Effect with callbacks
         - performs the wrapped effect,
         - in the case of an exception, invokes the errback with exc_info,
         - returns the result of the errback.
@@ -160,7 +162,8 @@ class CallbackTests(TestCase):
 
     def test_error_propagates_callback_exceptions(self):
         """
-        Callbacks.perform_effect does _not_ catch errors from callbacks.
+        An Effect with callbacks does _not_ catch errors from effect
+        implementations.
         """
         self.assertThat(
             lambda:
