@@ -8,14 +8,12 @@ Keywords: monad, IO, stateless.
 
 The core behavior is as follows:
 - Effectful operations should be represented as plain Python objects which
-  will hereafter be referred to as "effect intents". These objects should be
-  wrapped in an instance of :class:`Effect`.
-- This library has almost no expectation of effect intents: it's up to users
-  to do with them what they will[1].
+  we will call the *intent* of an effect. These objects should be wrapped
+  in an instance of :class:`Effect`.
+- Intent objects can implement a 'perform_effect' method to actually perform
+  the effect. This method should _not_ be called directly.
 - In most cases where you'd perform effects in your code, you should instead
   return an Effect wrapping the effect intent.
-- Separately, some function should exist that takes an effect intent
-  and performs the intended effect.
 - To represent work to be done *after* an effect, use Effect.on_success,
   .on_error, etc.
 - Near the top level of your code, invoke Effect.perform on the Effect you
@@ -23,10 +21,6 @@ The core behavior is as follows:
   the wrapped object, and invoke callbacks as necessary.
 - If the callbacks return another instance of Effect, that Effect will be
   performed before continuing back down the callback chain.
-
-[1] Actually, as a convenience, perform_effect can be implemented as a method
-    on the wrapped object, but the implementation can also be specified in a
-    separate handlers table.
 
 On top of the implemented behaviors, there are some conventions that these
 behaviors synergize with:

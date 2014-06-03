@@ -46,6 +46,10 @@ def resolve_effect(effect, result):
     NOTE: Currently, parallel effects are not supported.
     NOTE: Currently, error handlers are not supported.
     """
+    # It would be _cool_ if this could be implemented in terms of the Effect's
+    # own machinery for running through callbacks, but the main difference
+    # here is that we stop when we reach a new effect, instead of performing
+    # recursively.
     for i, (callback, errback) in enumerate(effect.callbacks):
         result = callback(result)
         if type(result) is Effect:
