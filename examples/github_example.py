@@ -70,7 +70,7 @@ class ReadLine(object):
     def __init__(self, prompt):
         self.prompt = prompt
 
-    def perform_effect(self, handlers):
+    def perform_effect(self, dispatcher):
         return raw_input(self.prompt)
 
 
@@ -85,7 +85,7 @@ def main_effect_2():
 
 
 def main(reactor):
-    return main_effect_2().perform({}).addCallback(print)
+    return main_effect_2().perform().addCallback(print)
 
 if __name__ == '__main__':
     from twisted.internet.task import react
