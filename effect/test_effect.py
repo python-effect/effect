@@ -182,6 +182,17 @@ class CallbackTests(TestCase):
                     .perform({}),
             raises(ValueError('eb error')))
 
+    def test_nested_effect_exception_passes_to_outer_error_handler(self):
+        """
+        If an inner effect raises an exception, it bubbles up and the
+        exc_info is passed to the outer effect's error handlers.
+        """
+        self.assertThat(
+            Effect(StubIntent(Effect(ErrorIntent())))
+                .on_error(lambda x: x)
+                .perform({}),
+            MatchesException(ValueError('oh dear')))
+
 
 class DeferredSupportTests(TestCase):
     def test_asynchronous_callback(self):

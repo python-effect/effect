@@ -155,18 +155,30 @@ class Effect(object):
         if func is None:
             raise NoEffectHandlerError(self.intent)
 
-        return self._dispatch_callback_chain(self.callbacks, func, handlers)
+        return self._dispatch_callback_chain(
+            [(func, None)] + self.callbacks, handlers, handlers)
 
-    def _dispatch_callback_chain(self, chain, init_func, handlers):
-        result = handlers
-        is_error = False
-        for (success, error), remaining in iter_recursive([(init_func, None)]
-                                                          + self.callbacks):
+    def _dispatch_callback_chain(self, chain, init_arg, handlers, is_error=False):
+        """
+        Run a series of callbacks in sequence, passing the result of each callback
+        as an argument to the next one.
+
+        If any callback returns an effect, that effect will be recursively
+        performed.
+
+        If any callback returns a Deferred, the remaining callbacks will be
+        run when that Deferred's result is available.
+        """
+        result = init_arg
+        for (success, error), remaining in iter_recursive(chain):
             cb = success if not is_error else error
             if cb is None:
                 continue
             is_error, result = self._dispatch_callback(cb, result)
-            result = self._maybe_recurse_effect(result, handlers)
+            if not is_error:
+                is_error, result = self._dispatch_callback(
+                    lambda result: self._maybe_recurse_effect(result, handlers),
+                    result)
 
             # Not happy about this Twisted knowledge being in Effect...
             if hasattr(result, 'addCallbacks'):
@@ -180,12 +192,9 @@ class Effect(object):
     def _chain_deferred(self, deferred, callbacks, handlers):
         """Attach the remaining callbacks to the Deferred."""
         deferred.addCallback(self._maybe_recurse_effect, handlers)
-        for cb, eb in callbacks:
-            if cb is None:
-                cb = lambda r: r
-            deferred.addCallbacks(cb, eb)
-            deferred.addCallback(self._maybe_recurse_effect, handlers)
-        return deferred
+        return deferred.addCallbacks(
+            lambda r: self._dispatch_callback_chain(callbacks, r, handlers),
+            lambda f: self._dispatch_callback_chain(callbacks, f, handlers, is_error=True))
 
     def _maybe_recurse_effect(self, result, handlers):
         """If the result is an effect, recursively perform it."""
