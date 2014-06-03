@@ -11,7 +11,7 @@ from __future__ import print_function
 import operator
 import json
 
-from effect import Effect
+from effect import Effect, parallel
 from http_example import HTTPRequest
 
 
@@ -39,6 +39,20 @@ def get_org_repos(name):
                     "https://api.github.com/orgs/{}/repos".format(name)))
     return req.on_success(lambda x: [repo['name'] for repo in json.loads(x)])
 
+
+def get_orgs_repos(name):
+    """
+    Fetch ALL of the repos that a user has access to, in any organization.
+    """
+    req = get_orgs(name)
+    req = req.on_success(
+        lambda org_names:
+            parallel(map(get_org_repos, org_names)))
+    req = req.on_success(
+        lambda repo_lists: reduce(operator.add, repo_lists))
+    return req
+
+
 def get_first_org_repos(name):
     """
     A silly function that fetches the repositories that belong to the
@@ -65,8 +79,13 @@ def main_effect():
         get_first_org_repos)
 
 
+def main_effect_2():
+    return Effect(ReadLine("Enter GitHub Username> ")).on_success(
+        get_orgs_repos)
+
+
 def main(reactor):
-    return main_effect().perform({}).addCallback(print)
+    return main_effect_2().perform({}).addCallback(print)
 
 if __name__ == '__main__':
     from twisted.internet.task import react

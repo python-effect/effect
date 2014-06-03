@@ -4,7 +4,7 @@ import json
 
 from testtools import TestCase
 
-from effect import Effect
+from effect import Effect, ParallelEffects
 from effect.testing import StubIntent, resolve_stub, resolve_effect
 from . import github_example
 
@@ -58,13 +58,39 @@ class GithubTests(TestCase):
         # - repeated calls are not an issue
         # so don't freak out, patching is ok :)
         get_orgs = {'radix': Effect(StubIntent(['twisted', 'rackerlabs']))}
-        get_org_repos = {'twisted': Effect(StubIntent(['twisted',
-                                                        'txstuff']))}
+        get_org_repos = {'twisted': Effect(StubIntent(['twisted', 'txstuff']))}
         self.patch(github_example, 'get_orgs', get_orgs.get)
         self.patch(github_example, 'get_org_repos', get_org_repos.get)
         eff = github_example.get_first_org_repos('radix')
         self.assertIs(resolve_stub(eff).intent,
                       get_org_repos['twisted'].intent)
+
+    def test_get_orgs_repos(self):
+        """
+        get_orgs_repos returns an Effect which looks up the organizations for
+        a user, and then looks up all of the repositories of those orgs in
+        parallel, and returns a single flat list of all repos.
+        """
+        # Here I'll avoid mocking, just to show that it can be done either way.
+        effect = github_example.get_orgs_repos('radix')
+        self.assertEqual(effect.intent.method, 'get')
+        self.assertEqual(effect.intent.url,
+                         'https://api.github.com/users/radix/orgs')
+        next_effect = resolve_effect(
+            effect,
+            json.dumps([{'login': 'twisted'}, {'login': 'rackerlabs'}]))
+        self.assertIsInstance(next_effect.intent, ParallelEffects)
+        # Get each parallel effect
+        effects = next_effect.intent.effects
+        self.assertEqual(effects[0].intent.method, 'get')
+        self.assertEqual(effects[0].intent.url,
+                         'https://api.github.com/orgs/twisted/repos')
+        self.assertEqual(effects[1].intent.method, 'get')
+        self.assertEqual(effects[1].intent.url,
+                         'https://api.github.com/orgs/rackerlabs/repos')
+        self.assertEqual(resolve_effect(next_effect, [['twisted', 'txstuff'],
+                                                      ['otter', 'nova']]),
+                         ['twisted', 'txstuff', 'otter', 'nova'])
 
     # These tests don't have 100% coverage, but they should teach you
     # everything you need to know to extend to testing any type of effect.
