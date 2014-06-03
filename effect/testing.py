@@ -2,6 +2,8 @@
 Various functions for inspecting and restructuring effects.
 """
 
+import sys
+
 from effect import Effect
 
 
@@ -17,7 +19,7 @@ class StubIntent(object):
         return self.result
 
 
-def resolve_effect(effect, result):
+def resolve_effect(effect, result, is_error=False):
     """
     Supply a result for an effect, allowing its callbacks to run.
 
@@ -43,15 +45,24 @@ def resolve_effect(effect, result):
                 second_result),
             third_result)
 
-    NOTE: Currently, parallel effects are not supported.
-    NOTE: Currently, error handlers are not supported.
+    NOTE: parallel effects have no special support. They can be resolved with
+    a sequence, and if they're returned from another effect's callback they
+    will be returned just like any other effect.
     """
     # It would be _cool_ if this could be implemented in terms of the Effect's
     # own machinery for running through callbacks, but the main difference
     # here is that we stop when we reach a new effect, instead of performing
     # recursively.
     for i, (callback, errback) in enumerate(effect.callbacks):
-        result = callback(result)
+        cb = errback if is_error else callback
+        if cb is None:
+            continue
+        try:
+            is_error = False
+            result = cb(result)
+        except:
+            is_error = True
+            result = sys.exc_info()
         if type(result) is Effect:
             # Wrap all the remaining callbacks around the new effect we just
             # found, so that resolving it will run everything, and not just
@@ -59,7 +70,18 @@ def resolve_effect(effect, result):
             return Effect.with_callbacks(
                 result.intent,
                 result.callbacks + effect.callbacks[i + 1:])
+    if is_error:
+        raise result[1:]
     return result
+
+
+def fail_effect(effect, exception):
+    """
+    """
+    try:
+        raise exception
+    except:
+        return resolve_effect(effect, sys.exc_info(), is_error=True)
 
 
 def resolve_stub(effect):

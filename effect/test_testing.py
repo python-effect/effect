@@ -2,10 +2,12 @@
 Tests for the effect.testing module.
 """
 
-from unittest import TestCase
+from testtools import TestCase
+from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
+                                raises, MatchesPredicateWithParams)
 
 from effect import Effect
-from effect.testing import resolve_effect
+from effect.testing import resolve_effect, fail_effect
 
 
 class ResolveEffectTests(TestCase):
@@ -78,3 +80,48 @@ class ResolveEffectTests(TestCase):
         result = resolve_effect(eff, "foo")
         self.assertEqual(resolve_effect(result, 'next-result'),
                          ('c-result', ('nested-b-result', 'next-result')))
+
+    def test_resolve_effect_cb_exception(self):
+        """
+        When a callback raises an exception, the next error handler is called with the
+        exception info.
+        """
+        self.assertThat(
+            resolve_effect(
+                Effect("orig")
+                    .on_success(lambda r: 1 / 0)
+                    .on_error(lambda exc: ('handled', exc)),
+                'result'),
+            MatchesListwise([
+                Equals('handled'),
+                MatchesException(ZeroDivisionError)]))
+
+    def test_raise_if_final_result_is_error(self):
+        """
+        If the last callback raises an error, that error is raised from
+        resolve_effect.
+        """
+        self.assertThat(
+            lambda:
+                resolve_effect(
+                    Effect('orig')
+                        .on_success(
+                            lambda r: _raise(ValueError('oh goodness'))),
+                    'result'),
+            raises(ValueError('oh goodness')))
+
+    def test_fail_effect(self):
+        """
+        fail_effect allows failing an effect directly, so its first error
+        handler is invoked.
+        """
+        self.assertThat(
+            lambda:
+                fail_effect(
+                    Effect('orig'),
+                    ValueError('oh deary me')),
+            raises(ValueError('oh deary me')))
+
+
+def _raise(e):
+    raise e
