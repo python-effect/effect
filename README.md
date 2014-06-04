@@ -1,5 +1,7 @@
 # Effect
 
+[![Build Status](https://travis-ci.org/radix/effect.svg?branch=master)](https://travis-ci.org/radix/effect)
+
 Effect is a library for helping you write purely functional code by
 isolating the effects (that is, state manipulation and IO) in your code.
 
