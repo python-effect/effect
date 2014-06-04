@@ -6,6 +6,7 @@ python:
     - "pypy"
 install:
     - pip install -r dev-requirements.txt --use-mirrors
+    - pip install six --use-mirrors
 script:
     - make lint
     - trial effect
