@@ -30,7 +30,7 @@ def get_orgs(name):
     """
     req = Effect(
         HTTPRequest("get",
-                    "https://api.github.com/users/{}/orgs".format(name)))
+                    "https://api.github.com/users/{0}/orgs".format(name)))
     return req.on_success(lambda x: [org['login'] for org in json.loads(x)])
 
 
@@ -42,7 +42,7 @@ def get_org_repos(name):
     """
     req = Effect(
         HTTPRequest("get",
-                    "https://api.github.com/orgs/{}/repos".format(name)))
+                    "https://api.github.com/orgs/{0}/repos".format(name)))
     return req.on_success(lambda x: [repo['name'] for repo in json.loads(x)])
 
 
