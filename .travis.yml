@@ -7,6 +7,7 @@ python:
 install:
     - pip install -r dev-requirements.txt --use-mirrors
     - pip install six --use-mirrors
+    - pip install discover --use-mirrors
 script:
     - make lint
     - python -mtesttools.run discover --list
