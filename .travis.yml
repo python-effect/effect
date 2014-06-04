@@ -9,6 +9,5 @@ install:
     - pip install six --use-mirrors
 script:
     - make lint
-    - trial effect
-    - trial examples
-
+    - python -mtesttools.run discover --list
+    - python -mtesttools.run discover
