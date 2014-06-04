@@ -5,9 +5,9 @@ python:
     - "3.4"
     - "pypy"
 install:
-    - pip install -r dev-requirements.txt --use-mirrors
-    - pip install six --use-mirrors
-    - pip install discover --use-mirrors
+    - pip install -r dev-requirements.txt
+    - pip install six
+    - pip install discover
 script:
     - make lint
     - python -mtesttools.run discover --list
