@@ -273,9 +273,10 @@ class DeferredPerformTests(SynchronousTestCase):
         """
         d = succeed('deferred-result')
         nested_effect = Effect(StubIntent('nested-effect-result'))
-        eff = (Effect(StubIntent(d))
-                   .on_success(lambda x: nested_effect)
-                   .on_success(lambda x: (x, 'finally')))
+        eff = (
+            Effect(StubIntent(d))
+                .on_success(lambda x: nested_effect)
+                .on_success(lambda x: (x, 'finally')))
         self.assertEqual(self.successResultOf(eff.perform()),
                          ('nested-effect-result', 'finally'))
 
