@@ -15,6 +15,8 @@ import operator
 import json
 from functools import reduce
 
+from six.moves import input
+
 from effect import Effect, parallel
 from .http_example import HTTPRequest
 
@@ -75,7 +77,7 @@ class ReadLine(object):
         self.prompt = prompt
 
     def perform_effect(self, dispatcher):
-        return raw_input(self.prompt)
+        return input(self.prompt)
 
 
 def main_effect():
