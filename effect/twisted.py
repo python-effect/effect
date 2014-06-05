@@ -11,7 +11,7 @@ from functools import wraps
 from twisted.internet.defer import Deferred, maybeDeferred
 from twisted.python.failure import Failure
 
-from . import default_effect_perform, perform as base_perform
+from . import default_effect_perform, perform as base_perform, Effect
 
 
 def perform(effect, dispatcher=default_effect_perform):

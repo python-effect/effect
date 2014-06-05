@@ -201,17 +201,20 @@ def perform(effect, dispatcher=default_effect_perform):
     """
 
     def _run_callbacks(continuation, chain, result):
-        print("running callbacks", chain, result)
-        is_error, result = result
-        if type(result) is Effect:
-            print("oh snap lol I got an effect", result)
-            continuation.more(_perform, Effect.with_callbacks(result.intent, result.callbacks + chain))
+        print()
+        print("running callbacks", chain, "\n\twith:", result)
+        is_error, value = result
+        if type(value) is Effect:
+            print("oh snap lol I got an effect", value)
+            continuation.more(_perform, Effect.with_callbacks(value.intent, value.callbacks + chain))
             return
         if not chain:
             continuation.done("lol!")
             return
         cb = chain[0][is_error]
-        result = dispatch(cb, result)
+        if cb is not None:
+            result = dispatch(cb, value)
+            print("cb", cb, "result was", result)
         chain = chain[1:]
         continuation.more(_run_callbacks, chain, result)
 

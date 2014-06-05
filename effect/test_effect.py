@@ -4,11 +4,7 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
                                 raises, MatchesPredicateWithParams)
 
-from twisted.internet.defer import Deferred, succeed
-from twisted.trial.unittest import SynchronousTestCase
-
 from . import Effect, NoEffectHandlerError, default_effect_perform, synchronous_performer
-from .twisted import parallel
 from .testing import StubIntent, sync_perform
 
 
@@ -116,18 +112,14 @@ class CallbackTests(TestCase):
                 Effect(SelfContainedIntent())
                 .on_success(lambda x: (x, "amended!"))),
             MatchesListwise([
-                MatchesListwise([
-                    Equals("Self-result"),
-                    Is(default_effect_perform)]),
-                    Equals("amended!")]))
+                Equals("Self-result"),
+                Equals("amended!")]))
 
     def test_success_propagates_effect_exception(self):
         """
         An Effect with callbacks propagates exceptions from performing
         the inner effect when there is no errback.
         """
-        sync_perform(Effect(ErrorIntent())
-                    .on_success(lambda x: 'nope'))
         self.assertThat(
             lambda:
                 sync_perform(Effect(ErrorIntent())
@@ -142,13 +134,11 @@ class CallbackTests(TestCase):
 
         In other words, the error handler is skipped when there's no error.
         """
-        self.assertThat(
-            Effect(SelfContainedIntent())
-                .on_error(lambda x: (x, "recovered!"))
-                .perform(),
-            MatchesListwise([
-                Equals("Self-result"),
-                Is(default_effect_perform)]))
+        self.assertEqual(
+            sync_perform(
+                Effect(SelfContainedIntent())
+                .on_error(lambda x: (x, "recovered!"))),
+            "Self-result")
 
     def test_error(self):
         """
@@ -158,9 +148,9 @@ class CallbackTests(TestCase):
         - returns the result of the errback.
         """
         self.assertThat(
-            Effect(ErrorIntent())
-                .on_error(lambda x: ("handled", x))
-                .perform(),
+            sync_perform(
+                Effect(ErrorIntent())
+                    .on_error(lambda x: ("handled", x))),
             MatchesListwise([
                 Equals('handled'),
                 MatchesException(ValueError('oh dear'))]))
@@ -172,9 +162,9 @@ class CallbackTests(TestCase):
         """
         self.assertThat(
             lambda:
-                Effect(ErrorIntent())
-                    .on_error(lambda x: raise_(ValueError('eb error')))
-                    .perform(),
+                sync_perform(
+                    Effect(ErrorIntent())
+                        .on_error(lambda x: raise_(ValueError('eb error')))),
             raises(ValueError('eb error')))
 
     def test_nested_effect_exception_passes_to_outer_error_handler(self):
@@ -183,116 +173,10 @@ class CallbackTests(TestCase):
         exc_info is passed to the outer effect's error handlers.
         """
         self.assertThat(
-            Effect(StubIntent(Effect(ErrorIntent())))
-                .on_error(lambda x: x)
-                .perform(),
+            sync_perform(
+                Effect(StubIntent(Effect(ErrorIntent())))
+                    .on_error(lambda x: x)),
             MatchesException(ValueError('oh dear')))
-
-
-class DeferredSupportTests(TestCase):
-    def test_asynchronous_callback(self):
-        """
-        When a callback is wrapped around an effect that results in a Deferred,
-        - the callback is attached to that Deferred, instead of being invoked
-          synchronously,
-        - such that the callback will receive the Deferred's ultimate result,
-        - and the Deferred will be returned from perform_effect.
-        """
-        d = Deferred()
-        calls = []
-        self.assertIs(
-            Effect(StubIntent(d))
-                .on_success(calls.append)
-                .perform(),
-            d)
-        self.assertEqual(calls, [])
-        d.callback("stuff")
-        self.assertEqual(calls, ["stuff"])
-
-    def test_asynchronous_errback(self):
-        """
-        When an errback is wrapped around an effect that results in a Deferred,
-        - the errback is attached to that Deferred, instead of being invoked
-          synchronously,
-        - such that the errback will receive the Deferred's ultimate Failure,
-        - and the Deferred will be returned from perform_effect.
-        """
-        d = Deferred()
-        calls = []
-        self.assertIs(
-            Effect(StubIntent(d))
-                .on_error(calls.append)
-                .perform(),
-            d)
-        self.assertEqual(calls, [])
-        d.errback(ValueError("stuff"))
-        self.assertThat(
-            calls,
-            MatchesListwise([
-                MatchesBasicFailure(ValueError("stuff"))]))
-
-
-class DeferredPerformTests(SynchronousTestCase):
-
-    def test_perform_deferred_result(self):
-        """
-        An effect which results in a Deferred will have that Deferred returned
-        from its perform method.
-        """
-        result = Effect(StubIntent(succeed("hello"))).perform()
-        self.assertEqual(self.successResultOf(result), 'hello')
-
-    def test_perform_deferred_chaining(self):
-        """
-        When the top-level effect returns a Deferred that fires with an
-        Effect, Effect.perform will perform that effect.
-        """
-        result = Effect(
-            StubIntent(
-                succeed(
-                    Effect(
-                        StubIntent('foo'))))).perform()
-        self.assertEqual(self.successResultOf(result), 'foo')
-
-    def test_deferred_callback_effect(self):
-        """
-        If a callback on a Deferred-wrapped Effect returns an Effect, that
-        effect's result becomes the outer effect's result.
-        """
-        d = succeed('deferred-result')
-        nested_effect = Effect(StubIntent('nested-effect-result'))
-        eff = Effect(StubIntent(d)).on_success(lambda x: nested_effect)
-        self.assertEqual(self.successResultOf(eff.perform()),
-                         'nested-effect-result')
-
-    def test_intermediate_deferred_callback_returning_effect(self):
-        """
-        If a callback on a Deferred-wrapped Effect returns an Effect, that
-        effect's result becomes the outer effect's result.
-        """
-        d = succeed('deferred-result')
-        nested_effect = Effect(StubIntent('nested-effect-result'))
-        eff = (
-            Effect(StubIntent(d))
-                .on_success(lambda x: nested_effect)
-                .on_success(lambda x: (x, 'finally')))
-        self.assertEqual(self.successResultOf(eff.perform()),
-                         ('nested-effect-result', 'finally'))
-
-
-class ParallelTests(SynchronousTestCase):
-    """Tests for :func:`parallel`."""
-    def test_parallel(self):
-        """
-        parallel results in a list of results of effects, in the same
-        order that they were passed to parallel.
-        """
-        d = parallel([Effect(StubIntent('a')),
-                      Effect(StubIntent('b'))]).perform()
-        self.assertEqual(self.successResultOf(d), ['a', 'b'])
-
-    # - handlers is passed through to child effects
-    # - what happens with errors?
 
 
 def _failure_matches_exception(a, b):

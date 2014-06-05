@@ -14,13 +14,15 @@ import six
 def sync_perform(effect, dispatcher=default_effect_perform):
     successes = []
     errors = []
-    effect = effect.on(success=successes.append,
-                       error=errors.append)
+    def SUCC(x): successes.append(x)
+    def ERR(x): errors.append(x)
+    effect = effect.on(success=SUCC, error=ERR)
     perform(effect, dispatcher=dispatcher)
     if successes:
         return successes[0]
     elif errors:
-        raise errors[0][1:]
+        print("reraising *", errors[0])
+        six.reraise(*errors[0])
     else:
         raise AssertionError("Performing %r was not synchronous!" % (effect,))
 
