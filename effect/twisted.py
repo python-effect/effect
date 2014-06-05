@@ -11,7 +11,7 @@ from functools import wraps
 from twisted.internet.defer import Deferred, maybeDeferred, gatherResults
 from twisted.python.failure import Failure
 
-from . import dispatch_method, perform as base_perform, Effect
+from . import dispatch_method, perform as base_perform
 from effect import ParallelEffects
 
 
@@ -32,6 +32,7 @@ def deferred_performer(func):
     @wraps(func)
     def perform_effect(self, dispatcher, box):
         d = maybeDeferred(func, self, dispatcher)
+        deferred_to_box(d, box)
     return perform_effect
 
 

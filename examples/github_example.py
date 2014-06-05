@@ -17,7 +17,8 @@ from functools import reduce
 
 from six.moves import input
 
-from effect import Effect, parallel
+from effect import Effect, parallel, synchronous_performer
+from effect.twisted import perform
 from .http_example import HTTPRequest
 
 
@@ -76,6 +77,7 @@ class ReadLine(object):
     def __init__(self, prompt):
         self.prompt = prompt
 
+    @synchronous_performer
     def perform_effect(self, dispatcher):
         return input(self.prompt)
 
@@ -89,9 +91,9 @@ def main_effect_2():
     return Effect(ReadLine("Enter GitHub Username> ")).on_success(
         get_orgs_repos)
 
-
+# Only the code below here depends on Twisted.
 def main(reactor):
-    return main_effect_2().perform().addCallback(print)
+    return perform(main_effect_2()).addCallback(print)
 
 if __name__ == '__main__':
     from twisted.internet.task import react

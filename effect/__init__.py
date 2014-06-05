@@ -143,6 +143,7 @@ class Effect(object):
         return {"type": type(self), "intent": intent,
                 "callbacks": self.callbacks}
 
+
 def dispatch_method(intent, dispatcher, box):
     if hasattr(intent, 'perform_effect'):
         return intent.perform_effect(default_dispatcher, box)

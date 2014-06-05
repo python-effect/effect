@@ -1,3 +1,6 @@
+from effect.twisted import deferred_performer
+
+
 class HTTPRequest(object):
     """
     An HTTP effect request. Default implementation uses treq.
@@ -13,6 +16,7 @@ class HTTPRequest(object):
         return "HTTPRequest(%r, %r, headers=%r, data=%r)" % (
             self.method, self.url, self.headers, self.data)
 
+    @deferred_performer
     def perform_effect(self, handlers):
         import treq
         func = getattr(treq, self.method.lower())
