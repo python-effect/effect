@@ -79,7 +79,13 @@ import sys
 
 import six
 
-# XXX What happens when an inner effect has no effect implementation?
+from functools import wraps
+
+from .continuation import Continuation, trampoline
+
+__all__ = ['Effect', 'perform', 'parallel', 'ParallelEffects']
+
+# XXX What happens when an inner effect has no effect implementation (and thus raises NoEffectHandlerError)
 # Are its error handlers invoked?
 
 
@@ -105,63 +111,6 @@ class Effect(object):
         eff = klass(intent)
         eff.callbacks = callbacks
         return eff
-
-    def _dispatch_callback_chain(self, chain, init_arg, dispatcher,
-                                 is_error=False):
-        """
-        Run a series of callbacks in sequence, passing the result of each
-        callback as an argument to the next one.
-
-        If any callback returns an effect, that effect will be recursively
-        performed.
-        """
-        # The implementation of this method is made unfortunately complex
-        # because we try to do some optimizations. The fundamental design
-        # is to use something like CPS (Continuation-Passing Style), but
-        # unfortunately the Python VM makes this difficult to do in the
-        # "pure" way -- a too-long chain of callbacks will blow the stack.
-
-        # Therefore, in the case of the continuation being *synchronously*
-        # invoked (that is, invoked before the return of the handler function),
-        # we special-case it to be iterative instead of recursive.
-
-        # Exception handling *also* makes it more complex; we must interpret
-        # an exception raised from the handler function identically to the
-        # continuation being invoked with is_error = True.
-        result = init_arg
-        for (success, error), remaining in _iter_conses(chain):
-            cb = success if not is_error else error
-            if cb is None:
-                continue
-            is_error, result = self._dispatch_callback(cb, result)
-            if continuation.result is not None:
-
-                if not is_error:
-                    is_error, result = self._dispatch_callback(
-                        lambda result: self._maybe_recurse_effect(result,
-                                                                  dispatcher),
-                        result)
-            else:
-                # We're waiting for the continuation to be invoked.
-                # Let us hope that it will be, eventually :-)
-                continuation._still_synchronous = False
-                return
-
-    def _maybe_recurse_effect(self, result, dispatcher):
-        """If the result is an effect, recursively perform it."""
-        if type(result) is Effect:
-            return result.perform(dispatcher)
-        return result
-
-    def _dispatch_callback(self, callback, argument):
-        """
-        Invoke a function and return a two-tuple of (bool success, result).
-        Result will be an exc_info if the function raised an exception.
-        """
-        try:
-            return (False, callback(argument))
-        except:
-            return (True, sys.exc_info())
 
     def on_success(self, callback):
         """
@@ -215,14 +164,29 @@ class Effect(object):
                 "callbacks": self.callbacks}
 
 
-def default_effect_perform(intent, continuation):
+def default_effect_perform(intent, box):
     """
     If the intent has a 'perform_effect' method, invoke it with this
     function as an argument. Otherwise raise NoEffectHandlerError.
     """
     if hasattr(intent, 'perform_effect'):
-        return intent.perform_effect(default_effect_perform, continuation)
+        return intent.perform_effect(box)
     raise NoEffectHandlerError(intent)
+
+
+class Box(object):
+    """
+    An object into which an intent performer can place a result.
+    """
+    def __init__(self, continuation, more):
+        self.continuation = continuation
+        self.more = more
+
+    def succeed(self, result):
+        self.continuation.more(self.more, (False, result))
+
+    def fail(self, result):
+        self.continuation.more(self.more, (True, result))
 
 
 def perform(effect, dispatcher=default_effect_perform):
@@ -230,58 +194,56 @@ def perform(effect, dispatcher=default_effect_perform):
     Perform the intent of an effect by passing it to the dispatcher, and
     invoke callbacks associated with it.
 
-    Note that this function does _not_ block, or provide a way to be notified
-    when the process is complete. You probably shouldn't use this, but instead
-    something like effect.twisted.perform.
+    Note that this function does _not_ return the final result of the effect.
+    You may instead want to use effect.twisted.perform.
 
     :returns: None
     """
-    continuation = _Continuation(effect, effect.callbacks)
-    dispatcher(effect.intent, continuation)
-    # Dispatch the dispatcher with the continuation.
-    # When the continuation gets fired, the first callback should run.
-    # When that callback returns a value, the next callback should be run with that value.
-    # If a callback returns an Effect, the effect should be performed.
-    # That means a new continuation being created and passed to that effect's handler.
-    return effect._dispatch_callback_chain(
-        [(dispatcher, None)] + effect.callbacks, effect.intent, dispatcher)
+
+    def _run_callbacks(continuation, chain, result):
+        print("running callbacks", chain, result)
+        is_error, result = result
+        if type(result) is Effect:
+            print("oh snap lol I got an effect", result)
+            continuation.more(_perform, Effect.with_callbacks(result.intent, result.callbacks + chain))
+            return
+        if not chain:
+            continuation.done("lol!")
+            return
+        cb = chain[0][is_error]
+        result = dispatch(cb, result)
+        chain = chain[1:]
+        continuation.more(_run_callbacks, chain, result)
+
+    def _perform(cont, effect):
+        dispatcher(
+            effect.intent,
+            Box(cont,
+                lambda cont, result:
+                    _run_callbacks(cont, effect.callbacks, result)))
+
+    trampoline(lambda x: None, _perform, effect)
 
 
-class ParallelEffects(object):
+def dispatch(f, *args, **kwargs):
+    try:
+        return (False, f(*args, **kwargs))
+    except:
+        return (True, sys.exc_info())
+
+def synchronous_performer(func):
     """
-    An effect intent that asks for a number of effects to be run in parallel,
-    and for their results to be gathered up into a sequence.
-
-    The default implementation of this effect relies on Twisted's Deferreds.
-    An alternative implementation can run the child effects in threads, for
-    example. Of course, the implementation strategy for this effect will need
-    to cooperate with the effects being parallelized -- there's not much use
-    running a Deferred-returning effect in a thread.
+    A decorator that wraps a perform_effect function so it doesn't need to
+    care about the result box -- it just needs to return a value (or raise an
+    exception).
     """
-    def __init__(self, effects):
-        self.effects = effects
-
-    def __repr__(self):
-        return "ParallelEffects(%r)" % (self.effects,)
-
-    def serialize(self):
-        return {"type": type(self),
-                "effects": [e.serialize() for e in self.effects]}
-
-    def perform_effect(self, dispatcher):
-        from twisted.internet.defer import gatherResults, maybeDeferred
-        return gatherResults(
-            [maybeDeferred(e.perform, dispatcher) for e in self.effects])
-
-
-def parallel(effects):
-    """
-    Given multiple Effects, return one Effect that represents the aggregate of
-    all of their effects.
-    The result of the aggregate Effect will be a list of their results, in
-    the same order as the input to this function.
-    """
-    return Effect(ParallelEffects(list(effects)))
+    @wraps(func)
+    def perform_effect(self, box):
+        try:
+            box.succeed(func(self))
+        except:
+            box.fail(sys.exc_info())
+    return perform_effect
 
 
 def _iter_conses(seq):
@@ -299,37 +261,3 @@ class NoEffectHandlerError(Exception):
     """
 
 
-class _Continuation(object):
-    """
-    An object representing the continuation of the callbacks of an effect.
-
-    When an intent has been fulfilled by an effect handler, the 'success' or
-    'fail' method of this object should be invoked with the result.
-    """
-    # This object has state that changes over time. Watch out!
-
-    def __init__(self, effect, remaining):
-        self.effect = effect
-        self.result = None
-        self._still_synchronous = True
-        self.remaining = remaining
-
-    def succeed(self, result):
-        return self._continue(result, is_error=False)
-
-    def fail(self, result):
-        return self._continue(result, is_error=True)
-
-    def _continue(self, result, is_error):
-        if self._still_synchronous:
-            self.result = (is_error, result)
-        else:
-            self._effect._continue(self)
-
-def trampoline(f):
-    result = None
-    while True:
-        continuation = _Continuation()
-        result = f(result, continuation)
-        if continuation.result is not None:
-            f = continuation._continue()

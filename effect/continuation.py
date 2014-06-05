@@ -62,78 +62,74 @@ def trampoline(callback, f, *args, **kwargs):
         continuation = Continuation(callback)
         f(continuation, *args, **kwargs)
         if continuation.work is not None:
-            print "SYNC work", continuation.work
             f, args, kwargs = continuation.work
             continue
         if continuation.finished:
-            print "finished!"
             return
-        print "ohh! asynchronous!"
         def more(f, *args, **kwargs):
-            print "ASYNC work", f, args, kwargs
             trampoline(callback, f, *args, **kwargs)
         continuation.more = more
         return
 
 
-def rrange(continuation, n, counter=0, l=()):
-    if len(l) == n:
-        continuation.done(l)
-    else:
-        continuation.more(rrange, n, counter=counter + 1, l=l + (counter,))
+# def rrange(continuation, n, counter=0, l=()):
+#     if len(l) == n:
+#         continuation.done(l)
+#     else:
+#         continuation.more(rrange, n, counter=counter + 1, l=l + (counter,))
 
-print
-print "=== basic ==="
-l = []
-trampoline(l.append, rrange, 10)
-print l
+# print
+# print "=== basic ==="
+# l = []
+# trampoline(l.append, rrange, 10)
+# print l
 
-print
-print "=== asynchronous *done* ==="
-conts = []
-def async_bullshit(continuation):
-    conts.append(continuation)
+# print
+# print "=== asynchronous *done* ==="
+# conts = []
+# def async_bullshit(continuation):
+#     conts.append(continuation)
 
-l = []
-trampoline(l.append, async_bullshit)
-print "pre-done", l
-conts[0].done('lol')
-print "post-done", l
+# l = []
+# trampoline(l.append, async_bullshit)
+# print "pre-done", l
+# conts[0].done('lol')
+# print "post-done", l
 
-print
-print "=== asynchronous *more* ==="
-conts = []
-l = []
-trampoline(l.append, async_bullshit)
-print 'pre-more', l
-conts[0].more(lambda cont: cont.more(lambda cont: cont.more(lambda cont: cont.done('hey'))))
-print 'post-more'
-print l
+# print
+# print "=== asynchronous *more* ==="
+# conts = []
+# l = []
+# trampoline(l.append, async_bullshit)
+# print 'pre-more', l
+# conts[0].more(lambda cont: cont.more(lambda cont: cont.more(lambda cont: cont.done('hey'))))
+# print 'post-more'
+# print l
 
 
-print "=== callbacks! ==="
-def run_callbacks(chain, result):
-    if not chain:
-        return result
-    return run_callbacks(chain[1:], chain[0](result))
+# print "=== callbacks! ==="
+# def run_callbacks(chain, result):
+#     if not chain:
+#         return result
+#     return run_callbacks(chain[1:], chain[0](result))
 
-print 'recursive', run_callbacks([lambda thing: ('one', thing),
-                     lambda thing: ('two', thing),
-                     lambda thing: ('three', thing)],
-                   'initial result')
+# print 'recursive', run_callbacks([lambda thing: ('one', thing),
+#                      lambda thing: ('two', thing),
+#                      lambda thing: ('three', thing)],
+#                    'initial result')
 
-def run_callbacks(continuation, chain, result):
-    if not chain:
-        continuation.done(result)
-        return
-    continuation.more(run_callbacks, chain[1:], chain[0](result))
+# def run_callbacks(continuation, chain, result):
+#     if not chain:
+#         continuation.done(result)
+#         return
+#     continuation.more(run_callbacks, chain[1:], chain[0](result))
 
-l = []
-trampoline(l.append,
-           run_callbacks,
-           [lambda thing: ('one', thing),
-            lambda thing: ('two', thing),
-            lambda thing: ('three', thing)],
-           'initial result'
-          )
-print 'cps', l
+# l = []
+# trampoline(l.append,
+#            run_callbacks,
+#            [lambda thing: ('one', thing),
+#             lambda thing: ('two', thing),
+#             lambda thing: ('three', thing)],
+#            'initial result'
+#           )
+# print 'cps', l

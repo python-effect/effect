@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
@@ -7,15 +7,17 @@ from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
 from twisted.internet.defer import Deferred, succeed
 from twisted.trial.unittest import SynchronousTestCase
 
-from . import Effect, NoEffectHandlerError, parallel, default_effect_perform
-from .testing import StubIntent
+from . import Effect, NoEffectHandlerError, default_effect_perform, synchronous_performer
+from .twisted import parallel
+from .testing import StubIntent, sync_perform
 
 
 class SelfContainedIntent(object):
     """An example effect intent which implements its own perform_effect."""
 
-    def perform_effect(self, dispatcher):
-        return "Self-result", dispatcher
+    @synchronous_performer
+    def perform_effect(self):
+        return "Self-result"
 
 
 class POPOIntent(object):
@@ -26,7 +28,8 @@ class POPOIntent(object):
 
 
 class ErrorIntent(object):
-    def perform_effect(self, dispatcher):
+    @synchronous_performer
+    def perform_effect(self):
         raise ValueError("oh dear")
 
 
@@ -40,12 +43,9 @@ class EffectPerformTests(TestCase):
         - passes the default dispatcher to it
         - returns its result
         """
-        self.assertThat(
-            Effect(SelfContainedIntent())
-                .perform(),
-            MatchesListwise([
-                Equals("Self-result"),
-                Is(default_effect_perform)]))
+        self.assertEqual(
+            sync_perform(Effect(SelfContainedIntent())),
+            "Self-result")
 
     def test_perform_effect_function_dispatch(self):
         """Effect.perform
@@ -53,10 +53,10 @@ class EffectPerformTests(TestCase):
         - passes the effect intent to it
         - returns its result
         """
-        dispatcher = lambda i: (i, 'dispatched')
+        dispatcher = lambda i, box: box.succeed((i, 'dispatched'))
         intent = POPOIntent()
         self.assertThat(
-            Effect(intent).perform(dispatcher),
+            sync_perform(Effect(intent), dispatcher),
             MatchesListwise([
                 Is(intent),
                 Equals("dispatched")]))
@@ -67,7 +67,7 @@ class EffectPerformTests(TestCase):
         Effect.perform.
         """
         self.assertThat(
-            lambda: Effect(ErrorIntent()).perform(),
+            lambda: sync_perform(Effect(ErrorIntent())),
             raises(ValueError('oh dear')))
 
     def test_no_effect_handler(self):
@@ -77,7 +77,7 @@ class EffectPerformTests(TestCase):
         """
         intent = object()
         self.assertThat(
-            lambda: Effect(intent).perform(),
+            lambda: sync_perform(Effect(intent)),
             raises(NoEffectHandlerError(intent)))
 
     def test_effects_returning_effects(self):
@@ -87,8 +87,7 @@ class EffectPerformTests(TestCase):
         - the result of that is returned.
         """
         self.assertEqual(
-            Effect(StubIntent(Effect(StubIntent("foo"))))
-                .perform(),
+            sync_perform(Effect(StubIntent(Effect(StubIntent("foo"))))),
             "foo")
 
     def test_effects_returning_effects_returning_effects(self):
@@ -98,8 +97,7 @@ class EffectPerformTests(TestCase):
         returned from the outermost effect's perform.
         """
         self.assertEqual(
-            Effect(StubIntent(Effect(StubIntent(Effect(StubIntent("foo"))))))
-                .perform(),
+            sync_perform(Effect(StubIntent(Effect(StubIntent(Effect(StubIntent("foo"))))))),
             "foo")
 
 
@@ -114,9 +112,9 @@ class CallbackTests(TestCase):
         - returns the result of the callback.
         """
         self.assertThat(
-            Effect(SelfContainedIntent())
-                .on_success(lambda x: (x, "amended!"))
-                .perform(),
+            sync_perform(
+                Effect(SelfContainedIntent())
+                .on_success(lambda x: (x, "amended!"))),
             MatchesListwise([
                 MatchesListwise([
                     Equals("Self-result"),
@@ -128,11 +126,12 @@ class CallbackTests(TestCase):
         An Effect with callbacks propagates exceptions from performing
         the inner effect when there is no errback.
         """
+        sync_perform(Effect(ErrorIntent())
+                    .on_success(lambda x: 'nope'))
         self.assertThat(
             lambda:
-                Effect(ErrorIntent())
-                    .on_success(lambda x: 'nope')
-                    .perform(),
+                sync_perform(Effect(ErrorIntent())
+                    .on_success(lambda x: 'nope')),
             raises(ValueError('oh dear')))
 
     def test_error_success(self):

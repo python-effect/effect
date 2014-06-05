@@ -2,11 +2,27 @@
 Various functions for inspecting and restructuring effects.
 """
 
+from __future__ import print_function
+
 import sys
 
-from . import Effect
+from . import Effect, synchronous_performer, perform, default_effect_perform
 
 import six
+
+
+def sync_perform(effect, dispatcher=default_effect_perform):
+    successes = []
+    errors = []
+    effect = effect.on(success=successes.append,
+                       error=errors.append)
+    perform(effect, dispatcher=dispatcher)
+    if successes:
+        return successes[0]
+    elif errors:
+        raise errors[0][1:]
+    else:
+        raise AssertionError("Performing %r was not synchronous!" % (effect,))
 
 
 class StubIntent(object):
@@ -17,7 +33,8 @@ class StubIntent(object):
     def __repr__(self):
         return "StubIntent(%r)" % (self.result,)
 
-    def perform_effect(self, dispatcher):
+    @synchronous_performer
+    def perform_effect(self):
         return self.result
 
 
@@ -92,3 +109,4 @@ def resolve_stub(effect):
     StubIntent.
     """
     return resolve_effect(effect, effect.intent.result)
+
