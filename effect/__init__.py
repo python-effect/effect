@@ -170,7 +170,7 @@ def default_effect_perform(intent, box):
     function as an argument. Otherwise raise NoEffectHandlerError.
     """
     if hasattr(intent, 'perform_effect'):
-        return intent.perform_effect(box)
+        return intent.perform_effect(default_effect_perform, box)
     raise NoEffectHandlerError(intent)
 
 
@@ -241,9 +241,9 @@ def synchronous_performer(func):
     exception).
     """
     @wraps(func)
-    def perform_effect(self, box):
+    def perform_effect(self, dispatcher, box):
         try:
-            box.succeed(func(self))
+            box.succeed(func(self, dispatcher))
         except:
             box.fail(sys.exc_info())
     return perform_effect

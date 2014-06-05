@@ -42,8 +42,8 @@ def deferred_performer(func):
 
     """
     @wraps(func)
-    def perform_effect(self, box):
-        d = maybeDeferred(func, self)
+    def perform_effect(self, dispatcher, box):
+        d = maybeDeferred(func, self, dispatcher)
         d.addCallbacks(
             box.succeed,
             lambda f: box.fail((f.value, f.type, f.tb)))
@@ -72,10 +72,10 @@ class ParallelEffects(object):
                 "effects": [e.serialize() for e in self.effects]}
 
     @deferred_performer
-    def perform_effect(self):
+    def perform_effect(self, dispatcher):
         from twisted.internet.defer import gatherResults, maybeDeferred
         return gatherResults(
-            [maybeDeferred(e.perform, dispatcher) for e in self.effects])
+            [maybeDeferred(perform, e, dispatcher) for e in self.effects])
 
 
 def parallel(effects):

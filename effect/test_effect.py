@@ -12,7 +12,7 @@ class SelfContainedIntent(object):
     """An example effect intent which implements its own perform_effect."""
 
     @synchronous_performer
-    def perform_effect(self):
+    def perform_effect(self, dispatcher):
         return "Self-result"
 
 
@@ -25,7 +25,7 @@ class POPOIntent(object):
 
 class ErrorIntent(object):
     @synchronous_performer
-    def perform_effect(self):
+    def perform_effect(self, dispatcher):
         raise ValueError("oh dear")
 
 

@@ -23,3 +23,10 @@ class ParallelTests(SynchronousTestCase):
     # - handlers is passed through to child effects
     # - what happens with errors?
 
+
+
+class TwistedPerformTests(SynchronousTestCase):
+    def test_perform(self):
+        e = Effect(StubIntent("foo"))
+        d = perform(e)
+        self.assertEqual(self.successResultOf(d), 'foo')

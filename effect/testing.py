@@ -36,7 +36,7 @@ class StubIntent(object):
         return "StubIntent(%r)" % (self.result,)
 
     @synchronous_performer
-    def perform_effect(self):
+    def perform_effect(self, dispatcher):
         return self.result
 
 
