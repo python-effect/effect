@@ -5,7 +5,8 @@ import json
 
 from testtools import TestCase
 
-from effect import Effect, ParallelEffects
+from effect import Effect
+from effect.twisted import ParallelEffects
 from effect.testing import StubIntent, resolve_stub, resolve_effect
 from . import github_example
 
