@@ -77,16 +77,14 @@ from __future__ import print_function
 
 import sys
 
-import six
-
 from functools import wraps
 
-from .continuation import Continuation, trampoline
+from .continuation import trampoline
 
 __all__ = ['Effect', 'perform', 'parallel', 'ParallelEffects']
 
-# XXX What happens when an inner effect has no effect implementation (and thus raises NoEffectHandlerError)
-# Are its error handlers invoked?
+# XXX What happens when an inner effect has no effect implementation (and thus
+# raises NoEffectHandlerError). Are its error handlers invoked?
 
 
 class Effect(object):
@@ -242,8 +240,8 @@ def perform(effect, dispatcher=default_effect_perform):
         dispatcher(
             effect.intent,
             _Box(cont,
-                lambda cont, result:
-                    _run_callbacks(cont, effect.callbacks, result)))
+                 lambda cont, result:
+                     _run_callbacks(cont, effect.callbacks, result)))
 
     trampoline(_perform, effect)
 
@@ -274,5 +272,3 @@ class NoEffectHandlerError(Exception):
     """
     No Effect handler could be found for the given Effect-wrapped object.
     """
-
-

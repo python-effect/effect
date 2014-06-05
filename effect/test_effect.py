@@ -4,7 +4,7 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
                                 raises, MatchesPredicateWithParams)
 
-from . import Effect, NoEffectHandlerError, default_effect_perform, synchronous_performer
+from . import Effect, NoEffectHandlerError, synchronous_performer
 from .testing import StubIntent, sync_perform
 
 
@@ -93,7 +93,13 @@ class EffectPerformTests(TestCase):
         returned from the outermost effect's perform.
         """
         self.assertEqual(
-            sync_perform(Effect(StubIntent(Effect(StubIntent(Effect(StubIntent("foo"))))))),
+            sync_perform(
+                Effect(
+                    StubIntent(
+                        Effect(
+                            StubIntent(
+                                Effect(
+                                    StubIntent("foo"))))))),
             "foo")
 
 
@@ -122,8 +128,8 @@ class CallbackTests(TestCase):
         """
         self.assertThat(
             lambda:
-                sync_perform(Effect(ErrorIntent())
-                    .on_success(lambda x: 'nope')),
+                sync_perform(
+                    Effect(ErrorIntent()).on_success(lambda x: 'nope')),
             raises(ValueError('oh dear')))
 
     def test_error_success(self):

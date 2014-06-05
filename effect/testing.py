@@ -14,8 +14,13 @@ import six
 def sync_perform(effect, dispatcher=default_effect_perform):
     successes = []
     errors = []
-    def SUCC(x): successes.append(x)
-    def ERR(x): errors.append(x)
+
+    def SUCC(x):
+        successes.append(x)
+
+    def ERR(x):
+        errors.append(x)
+
     effect = effect.on(success=SUCC, error=ERR)
     perform(effect, dispatcher=dispatcher)
     if successes:
@@ -110,4 +115,3 @@ def resolve_stub(effect):
     StubIntent.
     """
     return resolve_effect(effect, effect.intent.result)
-

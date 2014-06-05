@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-from twisted.internet.defer import Deferred, succeed
 from twisted.trial.unittest import SynchronousTestCase
 
 from . import Effect
@@ -22,7 +21,6 @@ class ParallelTests(SynchronousTestCase):
 
     # - handlers is passed through to child effects
     # - what happens with errors?
-
 
 
 class TwistedPerformTests(SynchronousTestCase):
