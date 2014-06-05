@@ -53,24 +53,6 @@ behaviors synergize with:
 - When testing, use the utilities in the effect.testing module: they will help
   a lot.
 
-UNFORTUNATE:
-
-- In general, callbacks should not need to care about the implementation
-  of the effect handlers. However, currently error conditions are passed to
-  error handlers in an implementation-bound way: when Deferreds are involved,
-  Failures are passed, whereas when synchronous exceptions are raised, a
-  sys.exc_info() tuple is passed. This should be fixed somehow, maybe by
-  relying on a split-out version of Twisted's Failures. Unfortunately
-  splitting out Failure has a lot of blockers.
-
-TODO:
-- factor the Twisted bits out somehow. One way to do this is to make the
-  implementation of perform(), and perform_effect, fundamentally
-  asynchronous -- perhaps perform_effect should be passed a callback to
-  invoke when complete. But, at the same time we should ensure we don't blow
-  the stack on "infinite loops" of effects.
-- standardize what gets passed to error handlers.
-
 """
 
 from __future__ import print_function
@@ -161,15 +143,18 @@ class Effect(object):
         return {"type": type(self), "intent": intent,
                 "callbacks": self.callbacks}
 
+def dispatch_method(intent, dispatcher, box):
+    if hasattr(intent, 'perform_effect'):
+        return intent.perform_effect(default_dispatcher, box)
+    raise NoEffectHandlerError(intent)
 
-def default_effect_perform(intent, box):
+
+def default_dispatcher(intent, box):
     """
     If the intent has a 'perform_effect' method, invoke it with this
     function as an argument. Otherwise raise NoEffectHandlerError.
     """
-    if hasattr(intent, 'perform_effect'):
-        return intent.perform_effect(default_effect_perform, box)
-    raise NoEffectHandlerError(intent)
+    return dispatch_method(intent, default_dispatcher, box)
 
 
 def synchronous_performer(func):
@@ -209,7 +194,7 @@ class _Box(object):
         self._continuation.more(self._more, (True, result))
 
 
-def perform(effect, dispatcher=default_effect_perform):
+def perform(effect, dispatcher=default_dispatcher):
     """
     Perform the intent of an effect by passing it to the dispatcher, and
     invoke callbacks associated with it.
@@ -272,3 +257,35 @@ class NoEffectHandlerError(Exception):
     """
     No Effect handler could be found for the given Effect-wrapped object.
     """
+
+
+class ParallelEffects(object):
+    """
+    An effect intent that asks for a number of effects to be run in parallel,
+    and for their results to be gathered up into a sequence.
+
+    The default implementation of this effect relies on Twisted's Deferreds.
+    An alternative implementation can run the child effects in threads, for
+    example. Of course, the implementation strategy for this effect will need
+    to cooperate with the effects being parallelized -- there's not much use
+    running a Deferred-returning effect in a thread.
+    """
+    def __init__(self, effects):
+        self.effects = effects
+
+    def __repr__(self):
+        return "ParallelEffects(%r)" % (self.effects,)
+
+    def serialize(self):
+        return {"type": type(self),
+                "effects": [e.serialize() for e in self.effects]}
+
+
+def parallel(effects):
+    """
+    Given multiple Effects, return one Effect that represents the aggregate of
+    all of their effects.
+    The result of the aggregate Effect will be a list of their results, in
+    the same order as the input to this function.
+    """
+    return Effect(ParallelEffects(list(effects)))

@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 from twisted.trial.unittest import SynchronousTestCase
 
-from . import Effect
-from .twisted import parallel, perform
+from . import Effect, parallel
+from .twisted import perform
 from .testing import StubIntent
 
 

@@ -17,8 +17,7 @@ from functools import reduce
 
 from six.moves import input
 
-from effect import Effect
-from effect.twisted import parallel
+from effect import Effect, parallel
 from .http_example import HTTPRequest
 
 

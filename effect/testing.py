@@ -6,12 +6,23 @@ from __future__ import print_function
 
 import sys
 
-from . import Effect, synchronous_performer, perform, default_effect_perform
+from . import Effect, synchronous_performer, perform, default_dispatcher
 
 import six
 
 
-def sync_perform(effect, dispatcher=default_effect_perform):
+def sync_perform(effect, dispatcher=default_dispatcher):
+    """
+    Perform an effect, and return the value that its last callback or error
+    handler returns. If the final callback raises an exception, the exception
+    will be raised.
+
+    This requires that the effect (and all effects returned from any of its
+    callbacks) to be synchronous -- in other words, the effect performers
+    must pass the result to the box before returning.
+
+    If this is not the case, an AssertionError will be raised.
+    """
     successes = []
     errors = []
 
@@ -102,6 +113,7 @@ def resolve_effect(effect, result, is_error=False):
 
 def fail_effect(effect, exception):
     """
+    Resolve an effect with a failure, so its error handler will be run.
     """
     try:
         raise exception
