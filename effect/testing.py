@@ -21,7 +21,6 @@ def sync_perform(effect, dispatcher=default_effect_perform):
     if successes:
         return successes[0]
     elif errors:
-        print("reraising *", errors[0])
         six.reraise(*errors[0])
     else:
         raise AssertionError("Performing %r was not synchronous!" % (effect,))

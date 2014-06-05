@@ -174,19 +174,41 @@ def default_effect_perform(intent, box):
     raise NoEffectHandlerError(intent)
 
 
-class Box(object):
+def synchronous_performer(func):
+    """
+    A decorator that wraps a perform_effect function so it doesn't need to
+    care about the result box -- it just needs to return a value (or raise an
+    exception).
+    """
+    @wraps(func)
+    def perform_effect(self, dispatcher, box):
+        try:
+            box.succeed(func(self, dispatcher))
+        except:
+            box.fail(sys.exc_info())
+    return perform_effect
+
+
+class _Box(object):
     """
     An object into which an intent performer can place a result.
     """
     def __init__(self, continuation, more):
-        self.continuation = continuation
-        self.more = more
+        self._continuation = continuation
+        self._more = more
 
     def succeed(self, result):
-        self.continuation.more(self.more, (False, result))
+        """
+        Indicate that the effect has succeeded, and the result is available.
+        """
+        self._continuation.more(self._more, (False, result))
 
     def fail(self, result):
-        self.continuation.more(self.more, (True, result))
+        """
+        Indicate that the effect has failed to be met. result must be an
+        exc_info tuple.
+        """
+        self._continuation.more(self._more, (True, result))
 
 
 def perform(effect, dispatcher=default_effect_perform):
@@ -201,52 +223,42 @@ def perform(effect, dispatcher=default_effect_perform):
     """
 
     def _run_callbacks(continuation, chain, result):
-        print()
-        print("running callbacks", chain, "\n\twith:", result)
         is_error, value = result
         if type(value) is Effect:
-            print("oh snap lol I got an effect", value)
-            continuation.more(_perform, Effect.with_callbacks(value.intent, value.callbacks + chain))
+            continuation.more(
+                _perform,
+                Effect.with_callbacks(value.intent, value.callbacks + chain))
             return
         if not chain:
-            continuation.done("lol!")
+            continuation.done()
             return
         cb = chain[0][is_error]
         if cb is not None:
-            result = dispatch(cb, value)
-            print("cb", cb, "result was", result)
+            result = _guard(cb, value)
         chain = chain[1:]
         continuation.more(_run_callbacks, chain, result)
 
     def _perform(cont, effect):
         dispatcher(
             effect.intent,
-            Box(cont,
+            _Box(cont,
                 lambda cont, result:
                     _run_callbacks(cont, effect.callbacks, result)))
 
-    trampoline(lambda x: None, _perform, effect)
+    trampoline(_perform, effect)
 
 
-def dispatch(f, *args, **kwargs):
+def _guard(f, *args, **kwargs):
+    """
+    Run a function.
+
+    Return (is_error, result), where is_error is a boolean indicating whether
+    it raised an exception. In that case result will be sys.exc_info().
+    """
     try:
         return (False, f(*args, **kwargs))
     except:
         return (True, sys.exc_info())
-
-def synchronous_performer(func):
-    """
-    A decorator that wraps a perform_effect function so it doesn't need to
-    care about the result box -- it just needs to return a value (or raise an
-    exception).
-    """
-    @wraps(func)
-    def perform_effect(self, dispatcher, box):
-        try:
-            box.succeed(func(self, dispatcher))
-        except:
-            box.fail(sys.exc_info())
-    return perform_effect
 
 
 def _iter_conses(seq):
