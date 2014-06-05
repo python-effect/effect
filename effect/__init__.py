@@ -53,12 +53,6 @@ behaviors synergize with:
 - When testing, use the utilities in the effect.testing module: they will help
   a lot.
 
-Twisted's Deferreds are supported directly; any effect handler that returns
-a Deferred will seamlessly integrate with on_success, on_error etc callbacks.
-
-Support for AsyncIO tasks, and other callback-oriented frameworks, is to be
-done, but should be trivial.
-
 UNFORTUNATE:
 
 - In general, callbacks should not need to care about the implementation
@@ -66,7 +60,16 @@ UNFORTUNATE:
   error handlers in an implementation-bound way: when Deferreds are involved,
   Failures are passed, whereas when synchronous exceptions are raised, a
   sys.exc_info() tuple is passed. This should be fixed somehow, maybe by
-  relying on a split-out version of Twisted's Failures.
+  relying on a split-out version of Twisted's Failures. Unfortunately
+  splitting out Failure has a lot of blockers.
+
+TODO:
+- factor the Twisted bits out somehow. One way to do this is to make the
+  implementation of perform(), and perform_effect, fundamentally
+  asynchronous -- perhaps perform_effect should be passed a callback to
+  invoke when complete. But, at the same time we should ensure we don't blow
+  the stack on "infinite loops" of effects.
+- standardize what gets passed to error handlers.
 
 """
 
@@ -76,30 +79,8 @@ import sys
 
 import six
 
-
-class NoEffectHandlerError(Exception):
-    """
-    No Effect handler could be found for the given Effect-wrapped object.
-    """
-
-
-def _iter_conses(seq):
-    """
-    Generate (head, tail) tuples so you can iterate in a way that feels like
-    a typical recursive function over a linked list.
-    """
-    for i in range(len(seq)):
-        yield seq[i], seq[i + 1:]
-
-
-def default_effect_perform(intent):
-    """
-    If the intent has a 'perform_effect' method, invoke it with this
-    function as an argument. Otherwise raise NoEffectHandlerError.
-    """
-    if hasattr(intent, 'perform_effect'):
-        return intent.perform_effect(default_effect_perform)
-    raise NoEffectHandlerError(intent)
+# XXX What happens when an inner effect has no effect implementation?
+# Are its error handlers invoked?
 
 
 class Effect(object):
@@ -125,23 +106,6 @@ class Effect(object):
         eff.callbacks = callbacks
         return eff
 
-    def perform(self, dispatcher=default_effect_perform):
-        """
-        Perform an effect by running the dispatcher, and then passing the
-        result through all the callbacks.
-
-        If the dispatcher returns another :class:`Effect` instance, that
-        effect will be performed immediately before returning.
-
-        :param dispatcher: A function that accepts an intent and performs it.
-            This must raise NoEffectHandlerError if no strategy for performing
-            the intent can be found.
-        :raise NoEffectHandlerError: When no handler was found for the effect
-            intent.
-        """
-        return self._dispatch_callback_chain(
-            [(dispatcher, None)] + self.callbacks, self.intent, dispatcher)
-
     def _dispatch_callback_chain(self, chain, init_arg, dispatcher,
                                  is_error=False):
         """
@@ -150,38 +114,38 @@ class Effect(object):
 
         If any callback returns an effect, that effect will be recursively
         performed.
-
-        If any callback returns a Deferred, the remaining callbacks will be
-        run when that Deferred's result is available.
         """
+        # The implementation of this method is made unfortunately complex
+        # because we try to do some optimizations. The fundamental design
+        # is to use something like CPS (Continuation-Passing Style), but
+        # unfortunately the Python VM makes this difficult to do in the
+        # "pure" way -- a too-long chain of callbacks will blow the stack.
+
+        # Therefore, in the case of the continuation being *synchronously*
+        # invoked (that is, invoked before the return of the handler function),
+        # we special-case it to be iterative instead of recursive.
+
+        # Exception handling *also* makes it more complex; we must interpret
+        # an exception raised from the handler function identically to the
+        # continuation being invoked with is_error = True.
         result = init_arg
         for (success, error), remaining in _iter_conses(chain):
             cb = success if not is_error else error
             if cb is None:
                 continue
             is_error, result = self._dispatch_callback(cb, result)
-            if not is_error:
-                is_error, result = self._dispatch_callback(
-                    lambda result: self._maybe_recurse_effect(result,
-                                                              dispatcher),
-                    result)
+            if continuation.result is not None:
 
-            # Not happy about this Twisted knowledge being in Effect...
-            if hasattr(result, 'addCallbacks'):
-                # short circuit all the rest of the callbacks; they become
-                # callbacks on the Deferred instead of the effect.
-                return self._chain_deferred(result, remaining, dispatcher)
-        if is_error:
-            six.reraise(*result)
-        return result
-
-    def _chain_deferred(self, deferred, callbacks, dispatcher):
-        """Attach the remaining callbacks to the Deferred."""
-        deferred.addCallback(self._maybe_recurse_effect, dispatcher)
-        return deferred.addCallbacks(
-            lambda r: self._dispatch_callback_chain(callbacks, r, dispatcher),
-            lambda f: self._dispatch_callback_chain(callbacks, f, dispatcher,
-                                                    is_error=True))
+                if not is_error:
+                    is_error, result = self._dispatch_callback(
+                        lambda result: self._maybe_recurse_effect(result,
+                                                                  dispatcher),
+                        result)
+            else:
+                # We're waiting for the continuation to be invoked.
+                # Let us hope that it will be, eventually :-)
+                continuation._still_synchronous = False
+                return
 
     def _maybe_recurse_effect(self, result, dispatcher):
         """If the result is an effect, recursively perform it."""
@@ -251,6 +215,38 @@ class Effect(object):
                 "callbacks": self.callbacks}
 
 
+def default_effect_perform(intent, continuation):
+    """
+    If the intent has a 'perform_effect' method, invoke it with this
+    function as an argument. Otherwise raise NoEffectHandlerError.
+    """
+    if hasattr(intent, 'perform_effect'):
+        return intent.perform_effect(default_effect_perform, continuation)
+    raise NoEffectHandlerError(intent)
+
+
+def perform(effect, dispatcher=default_effect_perform):
+    """
+    Perform the intent of an effect by passing it to the dispatcher, and
+    invoke callbacks associated with it.
+
+    Note that this function does _not_ block, or provide a way to be notified
+    when the process is complete. You probably shouldn't use this, but instead
+    something like effect.twisted.perform.
+
+    :returns: None
+    """
+    continuation = _Continuation(effect, effect.callbacks)
+    dispatcher(effect.intent, continuation)
+    # Dispatch the dispatcher with the continuation.
+    # When the continuation gets fired, the first callback should run.
+    # When that callback returns a value, the next callback should be run with that value.
+    # If a callback returns an Effect, the effect should be performed.
+    # That means a new continuation being created and passed to that effect's handler.
+    return effect._dispatch_callback_chain(
+        [(dispatcher, None)] + effect.callbacks, effect.intent, dispatcher)
+
+
 class ParallelEffects(object):
     """
     An effect intent that asks for a number of effects to be run in parallel,
@@ -286,3 +282,54 @@ def parallel(effects):
     the same order as the input to this function.
     """
     return Effect(ParallelEffects(list(effects)))
+
+
+def _iter_conses(seq):
+    """
+    Generate (head, tail) tuples so you can iterate in a way that feels like
+    a typical recursive function over a linked list.
+    """
+    for i in range(len(seq)):
+        yield seq[i], seq[i + 1:]
+
+
+class NoEffectHandlerError(Exception):
+    """
+    No Effect handler could be found for the given Effect-wrapped object.
+    """
+
+
+class _Continuation(object):
+    """
+    An object representing the continuation of the callbacks of an effect.
+
+    When an intent has been fulfilled by an effect handler, the 'success' or
+    'fail' method of this object should be invoked with the result.
+    """
+    # This object has state that changes over time. Watch out!
+
+    def __init__(self, effect, remaining):
+        self.effect = effect
+        self.result = None
+        self._still_synchronous = True
+        self.remaining = remaining
+
+    def succeed(self, result):
+        return self._continue(result, is_error=False)
+
+    def fail(self, result):
+        return self._continue(result, is_error=True)
+
+    def _continue(self, result, is_error):
+        if self._still_synchronous:
+            self.result = (is_error, result)
+        else:
+            self._effect._continue(self)
+
+def trampoline(f):
+    result = None
+    while True:
+        continuation = _Continuation()
+        result = f(result, continuation)
+        if continuation.result is not None:
+            f = continuation._continue()
