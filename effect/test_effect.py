@@ -4,7 +4,7 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
                                 raises, MatchesPredicateWithParams)
 
-from . import Effect, NoEffectHandlerError, synchronous_performer
+from . import Effect, NoEffectHandlerError, synchronous_performer, perform
 from .testing import StubIntent, sync_perform
 
 
@@ -183,6 +183,20 @@ class CallbackTests(TestCase):
                 Effect(StubIntent(Effect(ErrorIntent())))
                     .on_error(lambda x: x)),
             MatchesException(ValueError('oh dear')))
+
+    def test_asynchronous_callback_invocation(self):
+        """
+        When an Effect that is returned by a callback is resolved
+        *asynchronously*, the callbacks will run.
+        """
+        results = []
+        boxes = []
+        dispatcher = lambda intent, box: boxes.append(box)
+        intent = POPOIntent()
+        eff = Effect(intent).on_success(results.append)
+        perform(eff, dispatcher)
+        boxes[0].succeed('foo')
+        self.assertEqual(results, ['foo'])
 
 
 def _failure_matches_exception(a, b):

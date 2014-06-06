@@ -177,22 +177,22 @@ class _Box(object):
     """
     An object into which an intent performer can place a result.
     """
-    def __init__(self, continuation, more):
-        self._continuation = continuation
+    def __init__(self, bouncer, more):
+        self._bouncer = bouncer
         self._more = more
 
     def succeed(self, result):
         """
         Indicate that the effect has succeeded, and the result is available.
         """
-        self._continuation.more(self._more, (False, result))
+        self._bouncer.bounce(self._more, (False, result))
 
     def fail(self, result):
         """
         Indicate that the effect has failed to be met. result must be an
         exc_info tuple.
         """
-        self._continuation.more(self._more, (True, result))
+        self._bouncer.bounce(self._more, (True, result))
 
 
 def perform(effect, dispatcher=default_dispatcher):
@@ -206,28 +206,27 @@ def perform(effect, dispatcher=default_dispatcher):
     :returns: None
     """
 
-    def _run_callbacks(continuation, chain, result):
+    def _run_callbacks(bouncer, chain, result):
         is_error, value = result
         if type(value) is Effect:
-            continuation.more(
+            bouncer.bounce(
                 _perform,
                 Effect.with_callbacks(value.intent, value.callbacks + chain))
             return
         if not chain:
-            continuation.done()
             return
         cb = chain[0][is_error]
         if cb is not None:
             result = _guard(cb, value)
         chain = chain[1:]
-        continuation.more(_run_callbacks, chain, result)
+        bouncer.bounce(_run_callbacks, chain, result)
 
-    def _perform(cont, effect):
+    def _perform(bouncer, effect):
         dispatcher(
             effect.intent,
-            _Box(cont,
-                 lambda cont, result:
-                     _run_callbacks(cont, effect.callbacks, result)))
+            _Box(bouncer,
+                 lambda bouncer, result:
+                     _run_callbacks(bouncer, effect.callbacks, result)))
 
     trampoline(_perform, effect)
 

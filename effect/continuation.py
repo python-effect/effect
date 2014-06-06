@@ -1,23 +1,27 @@
 """
-An "asynchronous" CPS trampoline.
+An "asynchronous" trampoline.
 """
 
 
-class Continuation(object):
+class Bouncer(object):
     work = None
-    finished = False
+    _asynchronous = False
 
-    def done(self):
-        if self.finished:
-            raise RuntimeError(
-                "Can't call done again, it's already been called.")
-        self.finished = True
+    def bounce(self, func, *args, **kwargs):
+        """
+        Bounce a function off the trampoline -- in other words, signal to the
+        trampoline that the given function should be run.
 
-    def more(self, func, *args, **kwargs):
+        If the calling trampoline has finished, the function will be run
+        synchronously in a new trampoline.
+        """
         if self.work is not None:
             raise RuntimeError(
                 "Already specified work %r, refusing to set to (%r %r %r)"
                 % (self.work, func, args, kwargs))
+        if self._asynchronous:
+            trampoline(func, *args, **kwargs)
+            return
         self.work = (func, args, kwargs)
 
 
@@ -26,24 +30,16 @@ def trampoline(f, *args, **kwargs):
     An asynchronous trampoline.
 
     Differences from a typical trampoline
-    - the continuation is an object with methods, not just a function you can
-      call.
-    - return values are unconditionally ignored
-    - you must register additional functions to "recurse" to with
-      continuation.work(f, *args, **kwargs)
-    - 'f' will be called with the continuation as the first argument, followed
-      by *args and **kwargs
-    - both normal results and exceptions are handled (TBD)
+    - return values disappear into the void. This is for intrinsically
+      side-effecting operations.
+    - To indicate more work to be done, call bouncer.bounce(f, *args, **kwargs)
     """
     while True:
-        continuation = Continuation()
-        f(continuation, *args, **kwargs)
-        if continuation.work is not None:
-            f, args, kwargs = continuation.work
+        bouncer = Bouncer()
+        f(bouncer, *args, **kwargs)
+        if bouncer.work is not None:
+            f, args, kwargs = bouncer.work
             continue
-        if continuation.finished:
+        else:
+            bouncer._asynchronous = True
             return
-
-        continuation.more = lambda f, *args, **kwargs: trampoline(
-            f, *args, **kwargs)
-        return
