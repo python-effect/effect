@@ -85,7 +85,7 @@ class Effect(object):
     def __init__(self, intent, callbacks=None):
         """
         :param intent: An object that describes an effect to be
-            performed. Optionally has a perform_effect(dispatcher) method.
+            performed. Optionally has a perform_effect(dispatcher, box) method.
         """
         self.intent = intent
         if callbacks is None:
@@ -105,7 +105,8 @@ class Effect(object):
         Effect fails.
 
         The callback will be invoked with the sys.exc_info() exception tuple
-        as its only argument.
+        as its only argument. Note that sometimes the third element in the
+        tuple, usually the traceback, may sometimes be None.
         """
         return self.on(success=None, error=callback)
 
@@ -127,21 +128,6 @@ class Effect(object):
     def __repr__(self):
         return "Effect(%r, callbacks=%s)" % (self.intent, self.callbacks)
 
-    def serialize(self):
-        """
-        A simple debugging tool that serializes a tree of effects into basic
-        Python data structures that are useful for pretty-printing.
-
-        If the effect intent has a "serialize" method, it will be invoked to
-        represent itself in the resulting structure.
-        """
-        if hasattr(self.intent, 'serialize'):
-            intent = self.intent.serialize()
-        else:
-            intent = self.intent
-        return {"type": type(self), "intent": intent,
-                "callbacks": self.callbacks}
-
 
 def dispatch_method(intent, dispatcher, box):
     if hasattr(intent, 'perform_effect'):
@@ -151,8 +137,20 @@ def dispatch_method(intent, dispatcher, box):
 
 def default_dispatcher(intent, box):
     """
+    This is the default dispatcher used by :func:`perform`.
+
     If the intent has a 'perform_effect' method, invoke it with this
-    function as an argument. Otherwise raise NoEffectHandlerError.
+    function as an argument, as well as an instance of :class:`_Box`.
+
+    The perform_effect method MUST call :func:`_Box.succeed` or
+    :func:`_Box.fail` with the successful result or exc_info tuple in the case
+    of a failure. To reduce this burden, please make use of decorators such as
+    :func:`synchronous_performer` or :func:`effect.twisted.deferred_performer`.
+
+    If the perform_effect method can't be found, raise NoEffectHandlerError.
+
+    If you're using Twisted Deferreds, you should look at
+    :func:`effect.twisted.twisted_dispatcher`.
     """
     return dispatch_method(intent, default_dispatcher, box)
 
@@ -274,10 +272,6 @@ class ParallelEffects(object):
 
     def __repr__(self):
         return "ParallelEffects(%r)" % (self.effects,)
-
-    def serialize(self):
-        return {"type": type(self),
-                "effects": [e.serialize() for e in self.effects]}
 
 
 def parallel(effects):
