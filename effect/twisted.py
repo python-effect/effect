@@ -2,6 +2,15 @@
 Twisted integration for the Effect library.
 
 This is largely concerned with bridging the gap between Effects and Deferreds.
+
+There are three useful functions:
+
+- deferred_performer, which is a decorator for writing effect handlers that
+  return Deferreds.
+- perform, which is like effect.perform except that it returns a Deferred
+  with the final result, and also sets up some Deferred-specific handlers.
+- perform_parallel, which is the Deferred-specific handler for the
+  ParallelEffects intent.
 """
 
 from __future__ import absolute_import
@@ -17,16 +26,16 @@ from effect import ParallelEffects
 
 def deferred_performer(func):
     """
-    Allows you to define your effect-performing functions to return Deferreds.
-    If you use this, you don't have to care about putting your results into
-    the result box -- Effect callbacks will automatically be invoked when the
-    Deferred's result is available.
+    A decorator which allows you to define your effect-performing functions to
+    return Deferreds. If you use this, you don't have to care about putting
+    your results into the result box -- Effect callbacks will automatically be
+    invoked when the Deferred's result is available.
 
     Usage:
 
         class MyIntent(object):
             @deferred_performer
-            def perform_effect(self):
+            def perform_effect(self, dispatcher):
                 return get_a_deferred()
     """
     @wraps(func)
@@ -37,6 +46,9 @@ def deferred_performer(func):
 
 
 def deferred_to_box(d, box):
+    """
+    Make a Deferred pass its success or fail events on to the given box.
+    """
     d.addCallbacks(box.succeed, lambda f: box.fail((f.value, f.type, f.tb)))
 
 

@@ -11,14 +11,17 @@ The core behavior is as follows:
   we will call the *intent* of an effect. These objects should be wrapped
   in an instance of :class:`Effect`.
 - Intent objects can implement a 'perform_effect' method to actually perform
-  the effect. This method should _not_ be called directly.
+  the effect. This method should _not_ be called directly. Note that you'll
+  usually want to use a decorator like @synchronous_performer or
+  @effect.twisted.deferred_performer.
 - In most cases where you'd perform effects in your code, you should instead
   return an Effect wrapping the effect intent.
 - To represent work to be done *after* an effect, use Effect.on_success,
   .on_error, etc.
-- Near the top level of your code, invoke Effect.perform on the Effect you
-  have produced. This will invoke the effect-performing handler specific to
-  the wrapped object, and invoke callbacks as necessary.
+- Near the top level of your code, invoke the 'perform' function on the Effect
+  you have produced. This will invoke the effect-performing handler specific to
+  the wrapped object, and invoke callbacks as necessary. (Note also that if
+  you're using Twisted, you should use effect.twisted.perform instead)
 - If the callbacks return another instance of Effect, that Effect will be
   performed before continuing back down the callback chain.
 
@@ -31,7 +34,7 @@ behaviors synergize with:
   - most commonly, logging.
   - generation of random numbers.
 - Effect-wrapped objects should be *inert* and *transparent*. That is, they
-  should be unchanging data structures that fully describe the behavior to be
+  should be immutable data structures that fully describe the behavior to be
   performed with public members. This serves two purposes:
   - First, and most importantly, it makes unit-testing your code trivial.
     The tests will simply invoke the function, inspect the Effect-wrapped
@@ -44,7 +47,7 @@ behaviors synergize with:
     configure a threading policy. This is only possible if effect intents
     expose everything necessary via a public API to alternative
     implementation.
-- To spell it out clearly: do not call Effect.perform() on Effects produced by
+- To spell it out clearly: do not call perform() on Effects produced by
   your code under test: there's no point. Just grab the 'intent'
   attribute and look at its public attributes to determine if your code
   is producing the correct kind of effect intents. Separate unit tests for

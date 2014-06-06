@@ -11,37 +11,6 @@ from . import Effect, synchronous_performer, perform, default_dispatcher
 import six
 
 
-def sync_perform(effect, dispatcher=default_dispatcher):
-    """
-    Perform an effect, and return the value that its last callback or error
-    handler returns. If the final callback raises an exception, the exception
-    will be raised.
-
-    This requires that the effect (and all effects returned from any of its
-    callbacks) to be synchronous -- in other words, the effect performers
-    must pass the result to the box before returning.
-
-    If this is not the case, an AssertionError will be raised.
-    """
-    successes = []
-    errors = []
-
-    def SUCC(x):
-        successes.append(x)
-
-    def ERR(x):
-        errors.append(x)
-
-    effect = effect.on(success=SUCC, error=ERR)
-    perform(effect, dispatcher=dispatcher)
-    if successes:
-        return successes[0]
-    elif errors:
-        six.reraise(*errors[0])
-    else:
-        raise AssertionError("Performing %r was not synchronous!" % (effect,))
-
-
 class StubIntent(object):
     """An effect that returns a pre-specified result."""
     def __init__(self, result):
@@ -127,3 +96,34 @@ def resolve_stub(effect):
     StubIntent.
     """
     return resolve_effect(effect, effect.intent.result)
+
+
+def sync_perform(effect, dispatcher=default_dispatcher):
+    """
+    Perform an effect, and return the value that its last callback or error
+    handler returns. If the final callback raises an exception, the exception
+    will be raised.
+
+    This requires that the effect (and all effects returned from any of its
+    callbacks) to be synchronous -- in other words, the effect performers
+    must pass the result to the box before returning.
+
+    If this is not the case, an AssertionError will be raised.
+    """
+    successes = []
+    errors = []
+
+    def SUCC(x):
+        successes.append(x)
+
+    def ERR(x):
+        errors.append(x)
+
+    effect = effect.on(success=SUCC, error=ERR)
+    perform(effect, dispatcher=dispatcher)
+    if successes:
+        return successes[0]
+    elif errors:
+        six.reraise(*errors[0])
+    else:
+        raise AssertionError("Performing %r was not synchronous!" % (effect,))

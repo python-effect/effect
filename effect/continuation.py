@@ -1,6 +1,4 @@
-"""
-An "asynchronous" trampoline.
-"""
+"""An asynchronous trampoline."""
 
 
 class Bouncer(object):
@@ -29,10 +27,26 @@ def trampoline(f, *args, **kwargs):
     """
     An asynchronous trampoline.
 
-    Differences from a typical trampoline
-    - return values disappear into the void. This is for intrinsically
-      side-effecting operations.
-    - To indicate more work to be done, call bouncer.bounce(f, *args, **kwargs)
+    Calls f with a new Bouncer, and *args and **kwargs.
+
+    The Bouncer can have its :function:`Bouncer.bounce` method called with
+    another function to call. If the bounce method is called with a new
+    function by the time that 'f' returns, then the function passed
+    will be called immediately, thus avoiding deep recursion.
+
+    If the function returns without calling bounce, then the trampoline
+    returns.
+
+    The interesting difference from a typical trampoline, however, is that the
+    bounce method can be called *after* f returns -- in other words, the
+    bounce method can be called asynchronously, assuming it stashes the bouncer
+    object away somewhere, and something else triggers a call to it. Of course,
+    by then this trampoline will no longer be running. In that case,
+    :func:`Bouncer.bounce` will immediately start up another trampoline and
+    call the passed function.
+
+    Given this asynchronous nature, return values of functions disappear into
+    the void. This trampoline is for intrinsically side-effecting operations.
     """
     while True:
         bouncer = Bouncer()
