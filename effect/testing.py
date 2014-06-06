@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import sys
 
-from . import Effect, synchronous_performer, perform, default_dispatcher
+from . import Effect, synchronous_performer, perform, default_dispatcher, guard
 
 import six
 
@@ -54,24 +54,12 @@ def resolve_effect(effect, result, is_error=False):
     a sequence, and if they're returned from another effect's callback they
     will be returned just like any other effect.
     """
-    # It would be _cool_ if this could be implemented in terms of the Effect's
-    # own machinery for running through callbacks, but the main difference
-    # here is that we stop when we reach a new effect, instead of performing
-    # recursively.
     for i, (callback, errback) in enumerate(effect.callbacks):
         cb = errback if is_error else callback
         if cb is None:
             continue
-        try:
-            is_error = False
-            result = cb(result)
-        except:
-            is_error = True
-            result = sys.exc_info()
+        is_error, result = guard(cb, result)
         if type(result) is Effect:
-            # Wrap all the remaining callbacks around the new effect we just
-            # found, so that resolving it will run everything, and not just
-            # the nested ones.
             return Effect(
                 result.intent,
                 callbacks=result.callbacks + effect.callbacks[i + 1:])
@@ -82,7 +70,7 @@ def resolve_effect(effect, result, is_error=False):
 
 def fail_effect(effect, exception):
     """
-    Resolve an effect with a failure, so its error handler will be run.
+    Resolve an effect with an exception, so its error handler will be run.
     """
     try:
         raise exception

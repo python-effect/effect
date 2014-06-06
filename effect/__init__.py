@@ -123,7 +123,8 @@ class Effect(object):
         callbacks provided based on whether this Effect completes sucessfully
         or in error.
         """
-        return Effect(self.intent, callbacks=self.callbacks + [(success, error)])
+        return Effect(self.intent,
+                      callbacks=self.callbacks + [(success, error)])
 
     def __repr__(self):
         return "Effect(%r, callbacks=%s)" % (self.intent, self.callbacks)
@@ -214,7 +215,7 @@ def perform(effect, dispatcher=default_dispatcher):
             return
         cb = chain[0][is_error]
         if cb is not None:
-            result = _guard(cb, value)
+            result = guard(cb, value)
         chain = chain[1:]
         bouncer.bounce(_run_callbacks, chain, result)
 
@@ -228,7 +229,7 @@ def perform(effect, dispatcher=default_dispatcher):
     trampoline(_perform, effect)
 
 
-def _guard(f, *args, **kwargs):
+def guard(f, *args, **kwargs):
     """
     Run a function.
 
