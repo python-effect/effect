@@ -20,8 +20,8 @@ The core behavior is as follows:
   .on_error, etc.
 - Near the top level of your code, invoke the 'perform' function on the Effect
   you have produced. This will invoke the effect-performing handler specific to
-  the wrapped object, and invoke callbacks as necessary. (Note also that if
-  you're using Twisted, you should use effect.twisted.perform instead)
+  the wrapped object, and invoke callbacks as necessary. Note also that if
+  you're using Twisted, you should use effect.twisted.perform instead.
 - If the callbacks return another instance of Effect, that Effect will be
   performed before continuing back down the callback chain.
 
@@ -75,25 +75,22 @@ __all__ = ['Effect', 'perform', 'parallel', 'ParallelEffects']
 class Effect(object):
     """
     Wrap an object that describes how to perform some effect (called an
-    "effect intent"), and offer a way to actually perform that effect.
+    "effect intent"), and allow attaching callbacks to be run when the effect
+    is complete.
 
     (You're an object-oriented programmer.
      You probably want to subclass this.
      Don't.)
     """
-    def __init__(self, intent):
+    def __init__(self, intent, callbacks=None):
         """
         :param intent: An object that describes an effect to be
             performed. Optionally has a perform_effect(dispatcher) method.
         """
         self.intent = intent
-        self.callbacks = []
-
-    @classmethod
-    def with_callbacks(klass, intent, callbacks):
-        eff = klass(intent)
-        eff.callbacks = callbacks
-        return eff
+        if callbacks is None:
+            callbacks = []
+        self.callbacks = callbacks
 
     def on_success(self, callback):
         """
@@ -125,11 +122,10 @@ class Effect(object):
         callbacks provided based on whether this Effect completes sucessfully
         or in error.
         """
-        return Effect.with_callbacks(self.intent,
-                                     self.callbacks + [(success, error)])
+        return Effect(self.intent, callbacks=self.callbacks + [(success, error)])
 
     def __repr__(self):
-        return "Effect.with_callbacks(%r, %s)" % (self.intent, self.callbacks)
+        return "Effect(%r, callbacks=%s)" % (self.intent, self.callbacks)
 
     def serialize(self):
         """
@@ -214,7 +210,7 @@ def perform(effect, dispatcher=default_dispatcher):
         if type(value) is Effect:
             bouncer.bounce(
                 _perform,
-                Effect.with_callbacks(value.intent, value.callbacks + chain))
+                Effect(value.intent, callbacks=value.callbacks + chain))
             return
         if not chain:
             return

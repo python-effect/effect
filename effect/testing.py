@@ -72,9 +72,9 @@ def resolve_effect(effect, result, is_error=False):
             # Wrap all the remaining callbacks around the new effect we just
             # found, so that resolving it will run everything, and not just
             # the nested ones.
-            return Effect.with_callbacks(
+            return Effect(
                 result.intent,
-                result.callbacks + effect.callbacks[i + 1:])
+                callbacks=result.callbacks + effect.callbacks[i + 1:])
     if is_error:
         six.reraise(*result)
     return result
