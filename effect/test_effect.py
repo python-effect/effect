@@ -4,7 +4,8 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
                                 raises, MatchesPredicateWithParams)
 
-from . import Effect, NoEffectHandlerError, synchronous_performer, perform
+from . import (Effect, NoEffectHandlerError, synchronous_performer, perform,
+               default_dispatcher)
 from .testing import StubIntent, sync_perform
 
 
@@ -13,7 +14,7 @@ class SelfContainedIntent(object):
 
     @synchronous_performer
     def perform_effect(self, dispatcher):
-        return "Self-result"
+        return ("Self-result", dispatcher)
 
 
 class POPOIntent(object):
@@ -30,21 +31,24 @@ class ErrorIntent(object):
 
 
 class EffectPerformTests(TestCase):
-    """Tests for Effect.perform."""
+    """Tests for perform."""
 # - after and on, but these are "obviously correct"
     def test_perform_effect_method_dispatch(self):
         """
-        Effect.perform
+        perform
         - invokes 'perform_effect' on the effect intent,
         - passes the default dispatcher to it
         - returns its result
         """
-        self.assertEqual(
+        self.assertThat(
             sync_perform(Effect(SelfContainedIntent())),
-            "Self-result")
+            MatchesListwise([
+                Equals("Self-result"),
+                Is(default_dispatcher)]))
 
     def test_perform_effect_function_dispatch(self):
-        """Effect.perform
+        """
+        perform
         - invokes the passed in dispatcher
         - passes the effect intent to it
         - returns its result
@@ -60,7 +64,7 @@ class EffectPerformTests(TestCase):
     def test_error_bubbles_up(self):
         """
         When perform_effect raises an exception, it is raised up through
-        Effect.perform.
+        sync_perform.
         """
         self.assertThat(
             lambda: sync_perform(Effect(ErrorIntent())),
@@ -69,7 +73,7 @@ class EffectPerformTests(TestCase):
     def test_no_effect_handler(self):
         """
         When no perform_effect method is on the intent object, the default
-        dispatcher raises  :class:`NoEffectHandlerError`.
+        dispatcher raises :class:`NoEffectHandlerError`.
         """
         intent = object()
         self.assertThat(
@@ -118,7 +122,9 @@ class CallbackTests(TestCase):
                 Effect(SelfContainedIntent())
                 .on_success(lambda x: (x, "amended!"))),
             MatchesListwise([
-                Equals("Self-result"),
+                MatchesListwise([
+                    Equals("Self-result"),
+                    Is(default_dispatcher)]),
                 Equals("amended!")]))
 
     def test_success_propagates_effect_exception(self):
@@ -140,11 +146,13 @@ class CallbackTests(TestCase):
 
         In other words, the error handler is skipped when there's no error.
         """
-        self.assertEqual(
+        self.assertThat(
             sync_perform(
                 Effect(SelfContainedIntent())
                 .on_error(lambda x: (x, "recovered!"))),
-            "Self-result")
+            MatchesListwise([
+                Equals('Self-result'),
+                Is(default_dispatcher)]))
 
     def test_error(self):
         """

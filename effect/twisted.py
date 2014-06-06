@@ -26,10 +26,11 @@ from effect import ParallelEffects
 
 def deferred_performer(func):
     """
-    A decorator which allows you to define your effect-performing functions to
-    return Deferreds. If you use this, you don't have to care about putting
-    your results into the result box -- Effect callbacks will automatically be
-    invoked when the Deferred's result is available.
+    An instance method decorator which allows you to define your
+    effect-performing functions to return Deferreds. If you use this, you
+    don't have to care about putting your results into the result box --
+    Effect callbacks will automatically be invoked when the Deferred's result
+    is available.
 
     Usage:
 
