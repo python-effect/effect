@@ -60,7 +60,7 @@ Third, your function is now purely functional, letting you rest easy knowing
 that you've improved the amount of quality code in the world ;-)
 
 For more information on how to implement the actual effect-performing code,
-and other details, see the [effect module docstring](effect/__init__.py).
+and other details, see the [API documentation](effect/__init__.py).
 
 
 # Callback chains
@@ -95,6 +95,13 @@ like the following:
 
 The monadic bind function has these same properties. Those Haskell people sure
 have some good ideas.
+
+
+# Learning more
+
+I've tried to ensure that the docstrings of all the public functions and
+classes are up to snuff. There are also real-world examples available in
+the [examples](examples/) directory, including how to write idiomatic tests.
 
 
 # Approach: monads for Python
