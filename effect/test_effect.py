@@ -5,8 +5,8 @@ from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
                                 raises, MatchesPredicateWithParams)
 
 from . import (Effect, NoEffectHandlerError, synchronous_performer, perform,
-               default_dispatcher)
-from .testing import StubIntent, sync_perform
+               default_dispatcher, sync_perform)
+from .testing import StubIntent
 
 
 class SelfContainedIntent(object):

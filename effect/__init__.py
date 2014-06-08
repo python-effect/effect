@@ -62,6 +62,8 @@ from __future__ import print_function
 
 import sys
 
+import six
+
 from functools import wraps
 
 from .continuation import trampoline
@@ -283,3 +285,39 @@ def parallel(effects):
     the same order as the input to this function.
     """
     return Effect(ParallelEffects(list(effects)))
+
+
+class NotSynchronousError(Exception):
+    """Raised when performing an effect wasn't synchronous."""
+
+
+def sync_perform(effect, dispatcher=default_dispatcher):
+    """
+    Perform an effect, and return the value that its last callback or error
+    handler returns. If the final callback raises an exception, the exception
+    will be raised.
+
+    This requires that the effect (and all effects returned from any of its
+    callbacks) to be synchronous -- in other words, the effect performers
+    must pass the result to the box before returning.
+
+    If this is not the case, NotSynchronousError will be raised.
+    """
+    successes = []
+    errors = []
+
+    def success(x):
+        successes.append(x)
+
+    def error(x):
+        errors.append(x)
+
+    effect = effect.on(success=success, error=error)
+    perform(effect, dispatcher=dispatcher)
+    if successes:
+        return successes[0]
+    elif errors:
+        six.reraise(*errors[0])
+    else:
+        raise NotSynchronousError("Performing %r was not synchronous!"
+                                  % (effect,))
