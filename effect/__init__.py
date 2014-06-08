@@ -295,7 +295,9 @@ def sync_perform(effect, dispatcher=default_dispatcher):
     """
     Perform an effect, and return the value that its last callback or error
     handler returns. If the final callback raises an exception, the exception
-    will be raised.
+    will be raised. This is useful for testing, and also if you're using
+    blocking functions (e.g. with @synchronous_performer) in all your effect
+    implementations.
 
     This requires that the effect (and all effects returned from any of its
     callbacks) to be synchronous -- in other words, the effect performers
