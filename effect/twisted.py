@@ -81,6 +81,8 @@ def perform(effect, dispatcher=twisted_dispatcher):
     """
     Perform an effect, and return a Deferred that will fire with that effect's
     ultimate result.
+
+    Defaults to using the twisted_dispatcher as the dispatcher.
     """
     d = Deferred()
     eff = effect.on(
