@@ -3,59 +3,6 @@ A system for helping you separate your IO and state-manipulation code
 (hereafter referred to as "effects") from everything else, thus allowing
 the majority of your code to be trivially testable and composable (that is,
 have the general benefits of purely functional code).
-
-Keywords: monad, IO, stateless.
-
-The core behavior is as follows:
-- Effectful operations should be represented as plain Python objects which
-  we will call the *intent* of an effect. These objects should be wrapped
-  in an instance of :class:`Effect`.
-- Intent objects can implement a 'perform_effect' method to actually perform
-  the effect. This method should _not_ be called directly. Note that you'll
-  usually want to use a decorator like @synchronous_performer or
-  @effect.twisted.deferred_performer.
-- In most cases where you'd perform effects in your code, you should instead
-  return an Effect wrapping the effect intent.
-- To represent work to be done *after* an effect, use Effect.on_success,
-  .on_error, etc.
-- Near the top level of your code, invoke the 'perform' function on the Effect
-  you have produced. This will invoke the effect-performing handler specific to
-  the wrapped object, and invoke callbacks as necessary. Note also that if
-  you're using Twisted, you should use effect.twisted.perform instead.
-- If the callbacks return another instance of Effect, that Effect will be
-  performed before continuing back down the callback chain.
-
-On top of the implemented behaviors, there are some conventions that these
-behaviors synergize with:
-
-- Don't perform actual IO or manipulate state in functions that return an
-  Effect. This kinda goes without saying. However, there are a few cases
-  where you may decide to compromise:
-  - most commonly, logging.
-  - generation of random numbers.
-- Effect-wrapped objects should be *inert* and *transparent*. That is, they
-  should be immutable data structures that fully describe the behavior to be
-  performed with public members. This serves two purposes:
-  - First, and most importantly, it makes unit-testing your code trivial.
-    The tests will simply invoke the function, inspect the Effect-wrapped
-    object for correctness, and manually resolve the effect to execute any
-    callbacks in order to test the post-Effect behavior. No more need to mock
-    out effects in your unit tests!
-  - This allows the effect-code to be *small* and *replaceable*. Using these
-    conventions, it's trivial to switch out the implementation of e.g. your
-    HTTP client, using a blocking or non-blocking network library, or
-    configure a threading policy. This is only possible if effect intents
-    expose everything necessary via a public API to alternative
-    implementation.
-- To spell it out clearly: do not call perform() on Effects produced by
-  your code under test: there's no point. Just grab the 'intent'
-  attribute and look at its public attributes to determine if your code
-  is producing the correct kind of effect intents. Separate unit tests for
-  your effect *handlers* are the only tests that need concern themselves with
-  true effects.
-- When testing, use the utilities in the effect.testing module: they will help
-  a lot.
-
 """
 
 from __future__ import print_function
