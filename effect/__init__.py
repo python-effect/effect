@@ -3,6 +3,12 @@ A system for helping you separate your IO and state-manipulation code
 (hereafter referred to as "effects") from everything else, thus allowing
 the majority of your code to be trivially testable and composable (that is,
 have the general benefits of purely functional code).
+
+TODO: an effect implementation of ParallelEffects that uses threads?
+TODO: an effect implementation of ParallelEffects that is actually serial,
+      as a fallback?
+TODO: integration with other asynchronous libraries like asyncio, trollius,
+      eventlet
 """
 
 from __future__ import print_function

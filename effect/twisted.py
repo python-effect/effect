@@ -1,7 +1,10 @@
 """
-Twisted integration for the Effect library.
+Twisted integration for the Effect library. Note
 
 This is largely concerned with bridging the gap between Effects and Deferreds.
+
+Note that the core effect library does *not* depend on Twisted, but this module
+does.
 
 There are three useful functions:
 
