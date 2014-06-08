@@ -85,6 +85,6 @@ def perform(effect, dispatcher=twisted_dispatcher):
     d = Deferred()
     eff = effect.on(
         success=d.callback,
-        error=lambda e: Failure(e[1], e[0], e[2]))
+        error=lambda e: d.errback(Failure(e[1], e[0], e[2])))
     base_perform(eff, dispatcher=dispatcher)
     return d

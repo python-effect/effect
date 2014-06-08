@@ -32,7 +32,7 @@ class ErrorIntent(object):
 
 class EffectPerformTests(TestCase):
     """Tests for perform."""
-# - after and on, but these are "obviously correct"
+
     def test_perform_effect_method_dispatch(self):
         """
         perform

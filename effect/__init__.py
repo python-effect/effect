@@ -21,16 +21,11 @@ from functools import wraps
 
 from .continuation import trampoline
 
-__all__ = ['Effect', 'perform', 'parallel', 'ParallelEffects']
-
-# XXX What happens when an inner effect has no effect implementation (and thus
-# raises NoEffectHandlerError). Are its error handlers invoked?
-
 
 class Effect(object):
     """
     Wrap an object that describes how to perform some effect (called an
-    "effect intent"), and allow attaching callbacks to be run when the effect
+    "intent"), and allow attaching callbacks to be run when the effect
     is complete.
 
     (You're an object-oriented programmer.
@@ -86,8 +81,13 @@ class Effect(object):
 
 
 def dispatch_method(intent, dispatcher, box):
+    """
+    Call intent.perform_effect with the given dispatcher and box.
+
+    Raise NoEffectHandlerError if there's no perform_effect method.
+    """
     if hasattr(intent, 'perform_effect'):
-        return intent.perform_effect(default_dispatcher, box)
+        return intent.perform_effect(dispatcher, box)
     raise NoEffectHandlerError(intent)
 
 
@@ -128,7 +128,7 @@ def synchronous_performer(func):
 
 class _Box(object):
     """
-    An object into which an intent performer can place a result.
+    An object into which an effect handler can place a result.
     """
     def __init__(self, bouncer, more):
         self._bouncer = bouncer
@@ -150,8 +150,12 @@ class _Box(object):
 
 def perform(effect, dispatcher=default_dispatcher):
     """
-    Perform the intent of an effect by passing it to the dispatcher, and
-    invoke callbacks associated with it.
+    Perform the intent of an effect by invoking the dispatcher, and invoke
+    callbacks associated with it.
+
+    The dispatcher will be passed a "box" argument and the intent. The box
+    is an object that lets the dispatcher specify when and whether the effect
+    has succeeded or failed. See :func:`_Box.succeed` and :func:`_Box.fail`.
 
     Note that this function does _not_ return the final result of the effect.
     You may instead want to use effect.twisted.perform.
@@ -253,10 +257,9 @@ def sync_perform(effect, dispatcher=default_dispatcher):
     implementations.
 
     This requires that the effect (and all effects returned from any of its
-    callbacks) to be synchronous -- in other words, the effect performers
-    must pass the result to the box before returning.
-
-    If this is not the case, NotSynchronousError will be raised.
+    callbacks) to be synchronous -- in other words, the effect handlers
+    must pass the result to the box before returning. If this is not the case,
+    NotSynchronousError will be raised.
     """
     successes = []
     errors = []

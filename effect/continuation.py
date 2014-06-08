@@ -35,7 +35,7 @@ def trampoline(f, *args, **kwargs):
     The Bouncer can have its :function:`Bouncer.bounce` method called with
     another function to call. If the bounce method is called with a new
     function by the time that 'f' returns, then the function passed
-    will be called immediately, thus avoiding deep recursion.
+    will be called immediately.
 
     If the function returns without calling bounce, then the trampoline
     returns.
