@@ -50,4 +50,4 @@ class TwistedPerformTests(SynchronousTestCase):
         e = Effect(SelfContainedIntent())
         d = perform(e)
         self.assertEqual(self.successResultOf(d),
-                        ('Self-result', twisted_dispatcher))
+                         ('Self-result', twisted_dispatcher))
