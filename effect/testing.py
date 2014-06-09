@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import sys
 
-from . import Effect, synchronous_performer, guard
+from . import Effect, guard
 
 import six
 
@@ -19,7 +19,6 @@ class StubIntent(object):
     def __repr__(self):
         return "StubIntent(%r)" % (self.result,)
 
-    @synchronous_performer
     def perform_effect(self, dispatcher):
         return self.result
 

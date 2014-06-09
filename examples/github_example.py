@@ -17,7 +17,7 @@ from functools import reduce
 
 from six.moves import input
 
-from effect import Effect, parallel, synchronous_performer
+from effect import Effect, parallel
 from effect.twisted import perform
 from .http_example import HTTPRequest
 
@@ -77,7 +77,6 @@ class ReadLine(object):
     def __init__(self, prompt):
         self.prompt = prompt
 
-    @synchronous_performer
     def perform_effect(self, dispatcher):
         return input(self.prompt)
 

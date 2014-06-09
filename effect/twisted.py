@@ -1,23 +1,20 @@
 """
-Twisted integration for the Effect library. Note
+Twisted integration for the Effect library.
 
 This is largely concerned with bridging the gap between Effects and Deferreds.
 
 Note that the core effect library does *not* depend on Twisted, but this module
 does.
 
-There are three useful functions:
-
-- deferred_performer, which is a decorator for writing effect handlers that
-  return Deferreds.
-- perform, which is like effect.perform except that it returns a Deferred
-  with the final result, and also sets up some Deferred-specific handlers.
-- perform_parallel, which is the Deferred-specific handler for the
-  ParallelEffects intent.
+The main useful thing you should be concerned with is the :func:`perform`
+function, which is like effect.perform except that it returns a Deferred with
+the final result, and also sets up Twisted/Deferred specific effect handling
+by using its default effect dispatcher, twisted_dispatcher.
 """
 
 from __future__ import absolute_import
 
+import sys
 from functools import wraps
 
 from twisted.internet.defer import Deferred, maybeDeferred, gatherResults
@@ -25,28 +22,6 @@ from twisted.python.failure import Failure
 
 from . import dispatch_method, perform as base_perform
 from effect import ParallelEffects
-
-
-def deferred_performer(func):
-    """
-    An instance method decorator which allows you to define your
-    effect-performing functions to return Deferreds. If you use this, you
-    don't have to care about putting your results into the result box --
-    Effect callbacks will automatically be invoked when the Deferred's result
-    is available.
-
-    Usage:
-
-        class MyIntent(object):
-            @deferred_performer
-            def perform_effect(self, dispatcher):
-                return get_a_deferred()
-    """
-    @wraps(func)
-    def perform_effect(self, dispatcher, box):
-        d = maybeDeferred(func, self, dispatcher)
-        deferred_to_box(d, box)
-    return perform_effect
 
 
 def deferred_to_box(d, box):
@@ -64,7 +39,15 @@ def twisted_dispatcher(intent, box):
     if type(intent) is ParallelEffects:
         perform_parallel(intent, twisted_dispatcher, box)
     else:
-        dispatch_method(intent, twisted_dispatcher, box)
+        try:
+            result = dispatch_method(intent, twisted_dispatcher)
+        except:
+            box.fail(sys.exc_info())
+        else:
+            if isinstance(result, Deferred):
+                deferred_to_box(result, box)
+            else:
+                box.succeed(result)
 
 
 def perform_parallel(parallel, dispatcher, box):

@@ -80,14 +80,14 @@ class Effect(object):
         return "Effect(%r, callbacks=%s)" % (self.intent, self.callbacks)
 
 
-def dispatch_method(intent, dispatcher, box):
+def dispatch_method(intent, dispatcher):
     """
     Call intent.perform_effect with the given dispatcher and box.
 
     Raise NoEffectHandlerError if there's no perform_effect method.
     """
     if hasattr(intent, 'perform_effect'):
-        return intent.perform_effect(dispatcher, box)
+        return intent.perform_effect(dispatcher)
     raise NoEffectHandlerError(intent)
 
 
@@ -96,34 +96,18 @@ def default_dispatcher(intent, box):
     This is the default dispatcher used by :func:`perform`.
 
     If the intent has a 'perform_effect' method, invoke it with this
-    function as an argument, as well as an instance of :class:`_Box`.
-
-    The perform_effect method MUST call :func:`_Box.succeed` or
-    :func:`_Box.fail` with the successful result or exc_info tuple in the case
-    of a failure. To reduce this burden, please make use of decorators such as
-    :func:`synchronous_performer` or :func:`effect.twisted.deferred_performer`.
+    function as an argument. Its result will be passed to the first callback
+    on the effect.
 
     If the perform_effect method can't be found, raise NoEffectHandlerError.
 
     If you're using Twisted Deferreds, you should look at
     :func:`effect.twisted.twisted_dispatcher`.
     """
-    return dispatch_method(intent, default_dispatcher, box)
-
-
-def synchronous_performer(func):
-    """
-    A decorator that wraps a perform_effect function so it doesn't need to
-    care about the result box -- it just needs to return a value (or raise an
-    exception).
-    """
-    @wraps(func)
-    def perform_effect(self, dispatcher, box):
-        try:
-            box.succeed(func(self, dispatcher))
-        except:
-            box.fail(sys.exc_info())
-    return perform_effect
+    try:
+        box.succeed(dispatch_method(intent, default_dispatcher))
+    except:
+        box.fail(sys.exc_info())
 
 
 class _Box(object):
@@ -244,13 +228,11 @@ def sync_perform(effect, dispatcher=default_dispatcher):
     Perform an effect, and return the value that its last callback or error
     handler returns. If the final callback raises an exception, the exception
     will be raised. This is useful for testing, and also if you're using
-    blocking functions (e.g. with @synchronous_performer) in all your effect
-    implementations.
+    blocking functions in all your effect implementations.
 
     This requires that the effect (and all effects returned from any of its
-    callbacks) to be synchronous -- in other words, the effect handlers
-    must pass the result to the box before returning. If this is not the case,
-    NotSynchronousError will be raised.
+    callbacks) to be synchronous. If this is not the case, NotSynchronousError
+    will be raised.
     """
     successes = []
     errors = []

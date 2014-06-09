@@ -4,7 +4,7 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
                                 raises, MatchesPredicateWithParams)
 
-from . import (Effect, NoEffectHandlerError, synchronous_performer, perform,
+from . import (Effect, NoEffectHandlerError, perform,
                default_dispatcher, sync_perform, NotSynchronousError)
 from .testing import StubIntent
 
@@ -12,7 +12,6 @@ from .testing import StubIntent
 class SelfContainedIntent(object):
     """An example effect intent which implements its own perform_effect."""
 
-    @synchronous_performer
     def perform_effect(self, dispatcher):
         return ("Self-result", dispatcher)
 
@@ -25,7 +24,7 @@ class POPOIntent(object):
 
 
 class ErrorIntent(object):
-    @synchronous_performer
+
     def perform_effect(self, dispatcher):
         raise ValueError("oh dear")
 
