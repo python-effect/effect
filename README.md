@@ -109,19 +109,22 @@ Following are a number of sections where the utility of the Effect library is
 highlighted from a number of different use cases.
 
 
-## Monads for Python
+## IO Monad for Python
 
-Effects are very analogus to IO monads. The Effect class is similar to the
-IO type, in that it "tags" (or wraps) your return type, and
-`Effect.on_success` is like the bind function (`>>=`), indicating that the
-function passed is to be called with the result of the effect.
+Effects are vaguely analogus to IO monads. The Effect class can be compared
+to the IO type, which tags (or wraps) your result type, and
+`Effect.on_success` is somewhat like the bind function (`>>=`), indicating
+that the function passed is to be called with the result of the effect.
+Haskell's "Either" can be thrown in to handle `.on_success` vs `.on_error`.
 
-This library encourages a convention of representing your effects as
-*transparent data*, which we call the "intent" of an effect. By transparent,
-I specifically mean that it should be an inert data structure with public
-attributes describing everything necessary to perform the effect. In Haskell,
-typically when you write an IO function, the only thing you can do with it is
-return it up to main to perform it. No way to inspect the operation.
+But Effect is a little more than just the IO monad, since Effects make
+available the intent as *transparent data*. By transparent, I specifically
+mean that it should be an inert data structure with public attributes
+describing everything necessary to perform the effect. In Haskell, a function
+that returns `IO a` can only be returned up to main and performed -- there is
+no way to introspect what the function wants to do (for, e.g., testing
+purposes).
+
 Representing effects as transparent data gives us two advantages:
 
 - the ability to provide alternative implementations (such as an asynchronous
@@ -130,10 +133,19 @@ Representing effects as transparent data gives us two advantages:
 - the ability to perform simple value comparisons in your unit tests to ensure
   the right effects will be performed.
 
-Similar things have been done in Haskell (in a perhaps more elegant way) by
-using free monads, which are essentially a way to "parse" and interpret your
-monadic code without really performing its effects. This would be difficult in
-Python.
+Of course these use cases have also been solved in Haskell. Quite interesting
+is the recent work being done with free monads, and the idea of "parsing", or
+more accurately interpreting, effect-relying code written in a domain-specific
+language in a way so as to not actually perform those effects. For more
+information on this work, see:
+
+http://programmers.stackexchange.com/questions/242795/what-is-the-free-monad-interpreter-pattern
+
+http://debasishg.blogspot.com/2013/01/a-language-and-its-interpretation.html
+
+https://skillsmatter.com/skillscasts/4429-simon-marlow
+
+To say the least, this would be difficult to fit into Python.
 
 ## Immutable Deferreds
 
