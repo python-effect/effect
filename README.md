@@ -120,7 +120,7 @@ This library encourages a convention of representing your effects as
 *transparent data*, which we call the "intent" of an effect. By transparent,
 I specifically mean that it should be an inert data structure with public
 attributes describing everything necessary to perform the effect. In Haskell,
-typically you write an IO function, the only thing you can do with it is
+typically when you write an IO function, the only thing you can do with it is
 return it up to main to perform it. No way to inspect the operation.
 Representing effects as transparent data gives us two advantages:
 
