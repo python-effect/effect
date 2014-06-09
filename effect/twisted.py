@@ -15,7 +15,6 @@ by using its default effect dispatcher, twisted_dispatcher.
 from __future__ import absolute_import
 
 import sys
-from functools import wraps
 
 from twisted.internet.defer import Deferred, maybeDeferred, gatherResults
 from twisted.python.failure import Failure

@@ -17,8 +17,6 @@ import sys
 
 import six
 
-from functools import wraps
-
 from .continuation import trampoline
 
 
