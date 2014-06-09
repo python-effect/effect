@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import
 
 from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
-                                raises, MatchesPredicateWithParams)
+                                raises)
 
 from . import (Effect, NoEffectHandlerError, perform,
                default_dispatcher, sync_perform, NotSynchronousError)
@@ -210,15 +210,6 @@ class CallbackTests(TestCase):
         perform(eff, dispatcher)
         boxes[0].succeed('foo')
         self.assertEqual(results, ['foo'])
-
-
-def _failure_matches_exception(a, b):
-    return type(a.value) is type(b) and a.value.args == b.args
-
-
-MatchesBasicFailure = MatchesPredicateWithParams(
-    _failure_matches_exception,
-    "{0} is not an exception similar to {1}.")
 
 
 def raise_(e):
