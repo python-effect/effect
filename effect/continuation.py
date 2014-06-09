@@ -14,7 +14,7 @@ class Bouncer(object):
         If the calling trampoline has finished, the function will be run
         synchronously in a new trampoline.
 
-        This method may only be called once, to encourage a tail-call style.
+        This method may only be called once, to enforce a tail-call style.
         """
         if self.work is not None:
             raise RuntimeError(

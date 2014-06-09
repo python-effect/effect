@@ -110,7 +110,7 @@ def default_dispatcher(intent, box):
 
 class _Box(object):
     """
-    An object into which an effect handler can place a result.
+    An object into which an effect dispatcher can place a result.
     """
     def __init__(self, bouncer, more):
         self._bouncer = bouncer
@@ -132,15 +132,16 @@ class _Box(object):
 
 def perform(effect, dispatcher=default_dispatcher):
     """
-    Perform the intent of an effect by invoking the dispatcher, and invoke
-    callbacks associated with it.
+    Perform an effect by invoking the dispatcher, and invoke callbacks
+    associated with it.
 
     The dispatcher will be passed a "box" argument and the intent. The box
-    is an object that lets the dispatcher specify when and whether the effect
-    has succeeded or failed. See :func:`_Box.succeed` and :func:`_Box.fail`.
+    is an object that lets the dispatcher specify the result (optionally
+    asynchronously). See :func:`_Box.succeed` and :func:`_Box.fail`.
 
     Note that this function does _not_ return the final result of the effect.
-    You may instead want to use effect.twisted.perform.
+    You may instead want to use :func:`sync_perform` or
+    :func:`effect.twisted.perform`.
 
     :returns: None
     """
@@ -185,7 +186,7 @@ def guard(f, *args, **kwargs):
 
 class NoEffectHandlerError(Exception):
     """
-    No Effect handler could be found for the given Effect-wrapped object.
+    No perform_effect method was found on the given intent.
     """
 
 
@@ -218,15 +219,14 @@ def parallel(effects):
 
 
 class NotSynchronousError(Exception):
-    """Raised when performing an effect wasn't synchronous."""
+    """Performing an effect did not immediately return a value."""
 
 
 def sync_perform(effect, dispatcher=default_dispatcher):
     """
-    Perform an effect, and return the value that its last callback or error
-    handler returns. If the final callback raises an exception, the exception
-    will be raised. This is useful for testing, and also if you're using
-    blocking functions in all your effect implementations.
+    Perform an effect, and return its ultimate result. If the final result is
+    an error, the exception will be raised. This is useful for testing, and
+    also if you're using blocking effect implementations.
 
     This requires that the effect (and all effects returned from any of its
     callbacks) to be synchronous. If this is not the case, NotSynchronousError

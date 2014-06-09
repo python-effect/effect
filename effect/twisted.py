@@ -32,8 +32,11 @@ def deferred_to_box(d, box):
 
 def twisted_dispatcher(intent, box):
     """
-    Do the same as :func:`effect.default_dispatcher`, but handle 'parallel'
-    intents by passing them to :func:`perform_parallel`.
+    Very similar to :func:`effect.default_dispatcher`, with two differences:
+
+    - Deferred results from effect handlers are used to provide the effect
+      results
+    - parallel intents are handled with :func:`perform_parallel`.
     """
     if type(intent) is ParallelEffects:
         perform_parallel(intent, twisted_dispatcher, box)
@@ -61,8 +64,8 @@ def perform_parallel(parallel, dispatcher, box):
 
 def perform(effect, dispatcher=twisted_dispatcher):
     """
-    Perform an effect, and return a Deferred that will fire with that effect's
-    ultimate result.
+    Perform an effect, handling Deferred results and returning a Deferred
+    that will fire with the effect's ultimate result.
 
     Defaults to using the twisted_dispatcher as the dispatcher.
     """
