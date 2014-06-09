@@ -7,10 +7,12 @@ isolating the effects (that is, IO or state manipulation) in your code.
 
 You can [read the code](effect/__init__.py).
 
+
 # Status: Alpha
 
 Right now Effect is in alpha, and is likely to change incompatibly. Once it's
 being used in production, I'll release a final version.
+
 
 # What Is It?
 
@@ -103,24 +105,24 @@ I've tried to ensure that the docstrings of all the public functions and
 classes are up to snuff. There are also real-world examples available in
 the [examples](examples/) directory, including how to write idiomatic tests.
 
+Following are a number of sections where the utility of the Effect library is
+highlighted from a number of different use cases.
 
-# Approach: monads for Python
 
-Effects are very analogus to monads. The Effect class is similar to the
-monadic type, in that it "tags" (or wraps) your return type, and
-`Effect.on_success` is like the the bind function (>>=), indicating that the
+## Monads for Python
+
+Effects are very analogus to IO monads. The Effect class is similar to the
+IO type, in that it "tags" (or wraps) your return type, and
+`Effect.on_success` is like the bind function (`>>=`), indicating that the
 function passed is to be called with the result of the effect.
-
-## How is it unlike monads?
 
 This library encourages a convention of representing your effects as
 *transparent data*, which we call the "intent" of an effect. By transparent,
 I specifically mean that it should be an inert data structure with public
-attributes describing everything necessary to perform the effect. This is
-certainly possible in a language like Haskell, but by default when you write
-an IO function in Haskell, the only thing you can do with it is return it up
-to main to perform it. Representing effects as transparent data gives us two
-advantages:
+attributes describing everything necessary to perform the effect. In Haskell,
+typically you write an IO function, the only thing you can do with it is
+return it up to main to perform it. No way to inspect the operation.
+Representing effects as transparent data gives us two advantages:
 
 - the ability to provide alternative implementations (such as an asynchronous
   Twisted-based implementation, or a standard blocking implementation), since
@@ -128,11 +130,12 @@ advantages:
 - the ability to perform simple value comparisons in your unit tests to ensure
   the right effects will be performed.
 
-The design pattern encouraged this library could certainly be used in Haskell,
-and it could probably be done better by making use of monads.
+Similar things have been done in Haskell (in a perhaps more elegant way) by
+using free monads, which are essentially a way to "parse" and interpret your
+monadic code without really performing its effects. This would be difficult in
+Python.
 
-
-# Approach: immutable Deferreds
+## Immutable Deferreds
 
 There are two main differences between Effects and Deferreds, and one is only
 conventional. One, of course, is that Effects are immutable. The second is that
@@ -159,9 +162,7 @@ possibly be attached, so we can immediately raise an exception if the final
 result was an error (this is the behavior of the `sync_perform` function).
 
 
-# Approach: testability by promoting stub objects
-
-One way to think of effects is as so:
+## Testability by promoting stub objects
 
 In unit tests, we often use stub objects to replace objects that are
 considered "expensive", or otherwise difficult to deal with. The Effect
@@ -170,7 +171,7 @@ This allows us to stop worrying if our stub is close enough to the real thing,
 since it *is* the real thing -- if the stub is wrong, the effect implementation wouldn't work.
 
 
-# Approach: alternative effect implementations
+## Alternative effect implementations
 
 Effect is a good way to write code that can be used in any number of IO
 frameworks: either with standard blocking IO, or with an asynchronous IO
@@ -179,7 +180,7 @@ etc). This is because it forces you to decouple the plain, pure functions that
 perform only the work *between* IO from the IO work itself.
 
 
-# A history of the development
+## A history of the development
 
 For pedagogical purposes, I'll describe the thought process that led me to
 write this library. There were a couple of desires that led to me thinking
@@ -225,7 +226,7 @@ that could specify a request *and* process the result -- by checking to see
 if the response code was something other than 200 and raising an error, for
 example. Or automatically decoding JSON responses to Python objects.
 
-Basically, I needed callbacks, or the >>= operator from Haskell. Deferreds
+Basically, I needed callbacks, or the `>>=` operator from Haskell. Deferreds
 are a great abstraction for callbacks, but I wanted something purely
 functional, and which let you decouple the intent of the effect from the
 performance of the effect. From all these ideas came the Effect library.
