@@ -27,7 +27,7 @@ def deferred_to_box(d, box):
     """
     Make a Deferred pass its success or fail events on to the given box.
     """
-    d.addCallbacks(box.succeed, lambda f: box.fail((f.value, f.type, f.tb)))
+    d.addCallbacks(box.succeed, lambda f: box.fail((f.type, f.value, f.tb)))
 
 
 def twisted_dispatcher(intent, box):

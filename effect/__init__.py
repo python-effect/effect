@@ -54,7 +54,7 @@ class Effect(object):
 
         The callback will be invoked with the sys.exc_info() exception tuple
         as its only argument. Note that sometimes the third element in the
-        tuple, usually the traceback, may sometimes be None.
+        tuple, the traceback, may sometimes be None.
         """
         return self.on(success=None, error=callback)
 

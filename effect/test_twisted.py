@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 
+from testtools import TestCase
+from testtools.matchers import MatchesListwise, Equals, MatchesException
+
 from twisted.trial.unittest import SynchronousTestCase
+from twisted.internet.defer import succeed, fail
 
 from . import Effect, parallel
 from .twisted import perform, twisted_dispatcher
@@ -21,7 +25,10 @@ class ParallelTests(SynchronousTestCase):
         self.assertEqual(self.successResultOf(d), ['a', 'b'])
 
 
-class TwistedPerformTests(SynchronousTestCase):
+class TwistedPerformTests(SynchronousTestCase, TestCase):
+
+    skip = None  # Horrible hack to make testtools play with trial...
+
     def test_perform(self):
         """
         effect.twisted.perform returns a Deferred which fires with the ultimate
@@ -51,3 +58,31 @@ class TwistedPerformTests(SynchronousTestCase):
         d = perform(e)
         self.assertEqual(self.successResultOf(d),
                          ('Self-result', twisted_dispatcher))
+
+    def test_deferred_effect(self):
+        """
+        When an Effect handler returns a Deferred, the Deferred result is
+        passed to the first effect callback.
+        """
+        d = succeed('foo')
+        e = Effect(StubIntent(d)).on_success(lambda x: ('success', x))
+        result = perform(e)
+        self.assertEqual(self.successResultOf(result),
+                         ('success', 'foo'))
+
+    def test_failing_deferred_effect(self):
+        """
+        A failing Deferred returned from an effect causes error handlers to be
+        called with an exception tuple based on the failure.
+        """
+        d = fail(ValueError('foo'))
+        e = Effect(StubIntent(d)).on_error(lambda e: ('error', e))
+        result = self.successResultOf(perform(e))
+        self.assertThat(
+            result,
+            MatchesListwise([
+                Equals('error'),
+                MatchesException(ValueError('foo'))]))
+        # The traceback element is None, because we constructed the failure
+        # without a traceback.
+        self.assertIs(result[1][2], None)
