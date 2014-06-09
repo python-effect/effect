@@ -122,6 +122,15 @@ class ResolveEffectTests(TestCase):
                     ValueError('oh deary me')),
             raises(ValueError('oh deary me')))
 
+    def test_skip_callbacks(self):
+        """
+        Intermediate callbacks of the wrong type are skipped.
+        """
+        eff = (Effect('foo')
+               .on_error(lambda f: 1)
+               .on_success(lambda x: ('succeeded', x)))
+        self.assertEqual(resolve_effect(eff, 'foo'), ('succeeded', 'foo'))
+
 
 def _raise(e):
     raise e

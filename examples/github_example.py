@@ -18,6 +18,7 @@ from functools import reduce
 from six.moves import input
 
 from effect import Effect, parallel
+from effect.twisted import perform
 from .http_example import HTTPRequest
 
 
@@ -90,8 +91,9 @@ def main_effect_2():
         get_orgs_repos)
 
 
+# Only the code below here depends on Twisted.
 def main(reactor):
-    return main_effect_2().perform().addCallback(print)
+    return perform(main_effect_2()).addCallback(print)
 
 if __name__ == '__main__':
     from twisted.internet.task import react

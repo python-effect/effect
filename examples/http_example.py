@@ -13,7 +13,7 @@ class HTTPRequest(object):
         return "HTTPRequest(%r, %r, headers=%r, data=%r)" % (
             self.method, self.url, self.headers, self.data)
 
-    def perform_effect(self, handlers):
+    def perform_effect(self, dispatcher):
         import treq
         func = getattr(treq, self.method.lower())
         headers = self.headers.copy() if self.headers is not None else {}
