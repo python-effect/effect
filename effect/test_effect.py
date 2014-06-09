@@ -5,7 +5,7 @@ from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
                                 raises, MatchesPredicateWithParams)
 
 from . import (Effect, NoEffectHandlerError, synchronous_performer, perform,
-               default_dispatcher, sync_perform)
+               default_dispatcher, sync_perform, NotSynchronousError)
 from .testing import StubIntent
 
 
@@ -105,6 +105,12 @@ class EffectPerformTests(TestCase):
                                 Effect(
                                     StubIntent("foo"))))))),
             "foo")
+
+    def test_sync_perform_async_effect(self):
+        """If an effect is asynchronous, sync_effect raises an error."""
+        self.assertRaises(NotSynchronousError,
+                          lambda: sync_perform(Effect(StubIntent("foo")),
+                                               dispatcher=lambda i, box: None))
 
 
 class CallbackTests(TestCase):

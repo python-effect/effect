@@ -201,15 +201,6 @@ def guard(f, *args, **kwargs):
         return (True, sys.exc_info())
 
 
-def _iter_conses(seq):
-    """
-    Generate (head, tail) tuples so you can iterate in a way that feels like
-    a typical recursive function over a linked list.
-    """
-    for i in range(len(seq)):
-        yield seq[i], seq[i + 1:]
-
-
 class NoEffectHandlerError(Exception):
     """
     No Effect handler could be found for the given Effect-wrapped object.
