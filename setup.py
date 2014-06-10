@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="effect",
-    version="0.1a3",
+    version="0.1a4",
     description="pure effects for Python",
     long_description="A way to isolate effects (IO and state manipulation) "
                      "from the rest of your code",
