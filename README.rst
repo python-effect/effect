@@ -37,15 +37,15 @@ Effect starts with a very simple idea: instead of having a function which
 performs side-effects (such as IO):
 
 
-.. code-block: pycon
+.. code:: python
 
-    >>> def get_user_name():
-    >>>     return raw_input("Enter User Name> ")
+    def get_user_name():
+        return raw_input("Enter User Name> ")
 
 you instead have a function which *returns* a representation of the
 side-effect:
 
-.. code: python
+.. code:: python
 
     def get_user_name():
         return Effect(ReadLine("Enter User Name> "))
@@ -55,21 +55,20 @@ effect is to read a line.
 
 This function now returns an object which can later be "performed":
 
-.. code: python
+.. code:: python
 
     def main():
         effect = get_user_name()
         effect.on_success(print)
         perform(effect)
 
-This has a number of advantages. First, your unit tests for `get_user_name`
-become simpler. You don't need to mock out or parameterize the `raw_input`
-function - you just call `get_user_name` and assert that it returns a ReadLine
+This has a number of advantages. First, your unit tests for ``get_user_name``
+become simpler. You don't need to mock out or parameterize the ``raw_input``
+function - you just call ``get_user_name`` and assert that it returns a ReadLine
 object with the correct 'prompt' value.
 
 Second, you can implement ReadLine in a number of different ways - it's
-possible to override the "perform" implementations for effects to do whatever
-you want.
+possible to override the implementations of effects to do whatever you want.
 
 Third, your function is now purely functional, letting you rest easy knowing
 that you've improved the amount of quality code in the world ;-)
@@ -82,13 +81,15 @@ Callback chains
 ===============
 
 Effect allows you to build up chains of callbacks that process data in turn.
-That is, if you attach a callback `a` and then a callback `b` to an Effect,
-`a` will be called with the original result and `b` will be called with with
-the result of `a`. This is inspired directly by Twisted's Deferreds.
+That is, if you attach a callback ``a`` and then a callback ``b`` to an Effect,
+``a`` will be called with the original result and ``b`` will be called with with
+the result of ``a``. This is inspired directly by Twisted's Deferreds.
 
 This is a great way to build end-to-end abstractions, compared to non-chaining
 callback systems like Python's Futures. You can easily build abstractions
 like the following:
+
+.. code:: python
 
     def request_url(method, url, str_body):
         """Perform an HTTP request."""
@@ -129,15 +130,15 @@ IO Monad for Python
 
 Effects are vaguely analogus to IO monads. The Effect class can be compared
 to the IO type, which tags (or wraps) your result type, and
-`Effect.on_success` is somewhat like the bind function (`>>=`), indicating
+``Effect.on_success`` is somewhat like the bind function (``>>=``), indicating
 that the function passed is to be called with the result of the effect.
-Haskell's "Either" can be thrown in to handle `.on_success` vs `.on_error`.
+Haskell's ``Either`` can be thrown in to handle ``.on_success`` vs ``.on_error``.
 
 But Effect is a little more than just the IO monad, since Effects make
 available the intent as *transparent data*. By transparent, I specifically
 mean that it should be an inert data structure with public attributes
 describing everything necessary to perform the effect. In Haskell, a function
-that returns `IO a` can only be returned up to main and performed -- there is
+that returns ``IO a`` can only be returned up to main and performed -- there is
 no way to introspect what the function wants to do (for, e.g., testing
 purposes).
 
@@ -188,7 +189,7 @@ This avoids the problems with Deferred that require it to have a special
 garbage-collection handler to log errors that haven't yet been handled --
 we know that when all of an Effect's callbacks have been run, no more can
 possibly be attached, so we can immediately raise an exception if the final
-result was an error (this is the behavior of the `sync_perform` function).
+result was an error (this is the behavior of the ``sync_perform`` function).
 
 
 Testability by promoting stub objects
@@ -258,7 +259,7 @@ that could specify a request *and* process the result -- by checking to see
 if the response code was something other than 200 and raising an error, for
 example. Or automatically decoding JSON responses to Python objects.
 
-Basically, I needed callbacks, or the `>>=` operator from Haskell. Deferreds
+Basically, I needed callbacks, or the ``>>=`` operator from Haskell. Deferreds
 are a great abstraction for callbacks, but I wanted something purely
 functional, and which let you decouple the intent of the effect from the
 performance of the effect. From all these ideas came the Effect library.
