@@ -39,8 +39,8 @@ performs side-effects (such as IO):
 
 .. code-block: pycon
 
-    def get_user_name():
-        return raw_input("Enter User Name> ")
+    >>> def get_user_name():
+    >>>     return raw_input("Enter User Name> ")
 
 you instead have a function which *returns* a representation of the
 side-effect:
