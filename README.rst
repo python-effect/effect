@@ -37,7 +37,7 @@ Effect starts with a very simple idea: instead of having a function which
 performs side-effects (such as IO):
 
 
-.. code-block: python
+.. code-block: pycon
 
     def get_user_name():
         return raw_input("Enter User Name> ")
