@@ -9,7 +9,7 @@ isolating the effects (that is, IO or state manipulation) in your code.
 
 You can `read the core module`_, it's pretty short.
 
-.. _`read the core module`: effect/__init__.py
+.. _`read the core module`: https://github.com/radix/effect/blob/master/effect/__init__.py
 
 
 Status: Alpha
@@ -76,7 +76,7 @@ that you've improved the amount of quality code in the world ;-)
 For more information on how to implement the actual effect-performing code,
 and other details, see the `API documentation`_
 
-.. _`API documentation`: effect/__init__.py
+.. _`API documentation`: https://github.com/radix/effect/blob/master/effect/__init__.py
 
 
 Callback chains
@@ -121,7 +121,9 @@ Learning more
 
 I've tried to ensure that the docstrings of all the public functions and
 classes are up to snuff. There are also real-world examples available in
-the [examples](examples/) directory, including how to write idiomatic tests.
+the `examples`_ directory, including how to write idiomatic tests.
+
+.. _`examples`: https://github.com/radix/effect/tree/master/examples
 
 Following are a number of sections where the utility of the Effect library is
 highlighted from a number of different use cases.
@@ -271,7 +273,9 @@ Thanks
 ======
 
 Thanks to Rackspace for allowing me to work on this project, and having an
-*excellent* [open source employee contribution policy](https://www.rackspace.com/blog/rackspaces-policy-on-contributing-to-open-source/).
+*excellent* `open source employee contribution policy`_
+
+.. _`open source employee contribution policy`: https://www.rackspace.com/blog/rackspaces-policy-on-contributing-to-open-source/
 
 
 License
