@@ -1,20 +1,26 @@
-# Effect
+Effect
+======
 
-[![Build Status](https://travis-ci.org/radix/effect.svg?branch=master)](https://travis-ci.org/radix/effect)
+.. image:: https://travis-ci.org/radix/effect.svg?branch=master
+    :target: https://travis-ci.org/radix/effect
 
 Effect is a library for helping you write purely functional code by
 isolating the effects (that is, IO or state manipulation) in your code.
 
-You can [read the code](effect/__init__.py).
+You can `read the core module`_, it's pretty short.
+
+.. _`read the core module`: effect/__init__.py
 
 
-# Status: Alpha
+Status: Alpha
+=============
 
 Right now Effect is in alpha, and is likely to change incompatibly. Once it's
 being used in production, I'll release a final version.
 
 
-# What Is It?
+What Is It?
+===========
 
 It's a number of things, depending on your perspective:
 
@@ -30,11 +36,16 @@ Each of these perspectives has a section below describing that approach.
 Effect starts with a very simple idea: instead of having a function which
 performs side-effects (such as IO):
 
+
+.. code-block: python
+
     def get_user_name():
         return raw_input("Enter User Name> ")
 
 you instead have a function which *returns* a representation of the
 side-effect:
+
+.. code: python
 
     def get_user_name():
         return Effect(ReadLine("Enter User Name> "))
@@ -43,6 +54,8 @@ We call objects like "ReadLine" an *intent* -- that is, the *intent* of this
 effect is to read a line.
 
 This function now returns an object which can later be "performed":
+
+.. code: python
 
     def main():
         effect = get_user_name()
@@ -65,7 +78,8 @@ For more information on how to implement the actual effect-performing code,
 and other details, see the [API documentation](effect/__init__.py).
 
 
-# Callback chains
+Callback chains
+===============
 
 Effect allows you to build up chains of callbacks that process data in turn.
 That is, if you attach a callback `a` and then a callback `b` to an Effect,
@@ -99,7 +113,8 @@ The monadic bind function has these same properties. Those Haskell people sure
 have some good ideas.
 
 
-# Learning more
+Learning more
+=============
 
 I've tried to ensure that the docstrings of all the public functions and
 classes are up to snuff. There are also real-world examples available in
@@ -109,7 +124,8 @@ Following are a number of sections where the utility of the Effect library is
 highlighted from a number of different use cases.
 
 
-## IO Monad for Python
+IO Monad for Python
+-------------------
 
 Effects are vaguely analogus to IO monads. The Effect class can be compared
 to the IO type, which tags (or wraps) your result type, and
@@ -147,7 +163,8 @@ https://skillsmatter.com/skillscasts/4429-simon-marlow
 
 To say the least, this would be difficult to fit into Python.
 
-## Immutable Deferreds
+Immutable Deferreds
+-------------------
 
 There are two main differences between Effects and Deferreds, and one is only
 conventional. One, of course, is that Effects are immutable. The second is that
@@ -174,7 +191,8 @@ possibly be attached, so we can immediately raise an exception if the final
 result was an error (this is the behavior of the `sync_perform` function).
 
 
-## Testability by promoting stub objects
+Testability by promoting stub objects
+-------------------------------------
 
 In unit tests, we often use stub objects to replace objects that are
 considered "expensive", or otherwise difficult to deal with. The Effect
@@ -183,7 +201,8 @@ This allows us to stop worrying if our stub is close enough to the real thing,
 since it *is* the real thing -- if the stub is wrong, the effect implementation wouldn't work.
 
 
-## Alternative effect implementations
+Alternative effect implementations
+----------------------------------
 
 Effect is a good way to write code that can be used in any number of IO
 frameworks: either with standard blocking IO, or with an asynchronous IO
@@ -192,7 +211,8 @@ etc). This is because it forces you to decouple the plain, pure functions that
 perform only the work *between* IO from the IO work itself.
 
 
-## A history of the development
+A history of the development
+----------------------------
 
 For pedagogical purposes, I'll describe the thought process that led me to
 write this library. There were a couple of desires that led to me thinking
@@ -244,13 +264,15 @@ functional, and which let you decouple the intent of the effect from the
 performance of the effect. From all these ideas came the Effect library.
 
 
-# Thanks
+Thanks
+======
 
 Thanks to Rackspace for allowing me to work on this project, and having an
 *excellent* [open source employee contribution policy](https://www.rackspace.com/blog/rackspaces-policy-on-contributing-to-open-source/).
 
 
-# License
+License
+=======
 
 Effect is licensed under the MIT license:
 
