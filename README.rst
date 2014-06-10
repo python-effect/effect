@@ -74,7 +74,9 @@ Third, your function is now purely functional, letting you rest easy knowing
 that you've improved the amount of quality code in the world ;-)
 
 For more information on how to implement the actual effect-performing code,
-and other details, see the [API documentation](effect/__init__.py).
+and other details, see the `API documentation`_
+
+.. _`API documentation`: effect/__init__.py
 
 
 Callback chains
