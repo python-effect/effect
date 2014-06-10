@@ -15,7 +15,7 @@ class HTTPRequest(object):
 
     def perform_effect(self, dispatcher):
         import treq
-        func = getattr(treq, self.method.lower())
+        func = treq.request(self.method.lower())
         headers = self.headers.copy() if self.headers is not None else {}
         if 'user-agent' not in headers:
             headers['user-agent'] = ['Pure Snakes Example']
