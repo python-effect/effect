@@ -104,9 +104,8 @@ class ResolveEffectTests(TestCase):
         self.assertThat(
             lambda:
                 resolve_effect(
-                    Effect('orig')
-                        .on(success=
-                            lambda r: _raise(ValueError('oh goodness'))),
+                    Effect('orig').on(
+                        success=lambda r: _raise(ValueError('oh goodness'))),
                     'result'),
             raises(ValueError('oh goodness')))
 
