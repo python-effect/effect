@@ -40,32 +40,7 @@ class Effect(object):
             callbacks = []
         self.callbacks = callbacks
 
-    def on_success(self, callback):
-        """
-        Return a new Effect that will invoke the associated callback when this
-        Effect completes succesfully.
-        """
-        return self.on(success=callback, error=None)
-
-    def on_error(self, callback):
-        """
-        Return a new Effect that will invoke the associated callback when this
-        Effect fails.
-
-        The callback will be invoked with the sys.exc_info() exception tuple
-        as its only argument. Note that sometimes the third element in the
-        tuple, the traceback, may sometimes be None.
-        """
-        return self.on(success=None, error=callback)
-
-    def after(self, callback):
-        """
-        Return a new Effect that will invoke the associated callback when this
-        Effect completes, whether successfully or in error.
-        """
-        return self.on(success=callback, error=callback)
-
-    def on(self, success, error):
+    def on(self, success=None, error=None):
         """
         Return a new Effect that will invoke either the success or error
         callbacks provided based on whether this Effect completes sucessfully

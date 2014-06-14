@@ -125,7 +125,7 @@ class CallbackTests(TestCase):
         self.assertThat(
             sync_perform(
                 Effect(SelfContainedIntent())
-                .on_success(lambda x: (x, "amended!"))),
+                .on(success=lambda x: (x, "amended!"))),
             MatchesListwise([
                 MatchesListwise([
                     Equals("Self-result"),
@@ -140,7 +140,7 @@ class CallbackTests(TestCase):
         self.assertThat(
             lambda:
                 sync_perform(
-                    Effect(ErrorIntent()).on_success(lambda x: 'nope')),
+                    Effect(ErrorIntent()).on(success=lambda x: 'nope')),
             raises(ValueError('oh dear')))
 
     def test_error_success(self):
@@ -154,7 +154,7 @@ class CallbackTests(TestCase):
         self.assertThat(
             sync_perform(
                 Effect(SelfContainedIntent())
-                .on_error(lambda x: (x, "recovered!"))),
+                .on(error=lambda x: (x, "recovered!"))),
             MatchesListwise([
                 Equals('Self-result'),
                 Is(default_dispatcher)]))
@@ -169,7 +169,7 @@ class CallbackTests(TestCase):
         self.assertThat(
             sync_perform(
                 Effect(ErrorIntent())
-                    .on_error(lambda x: ("handled", x))),
+                    .on(error=lambda x: ("handled", x))),
             MatchesListwise([
                 Equals('handled'),
                 MatchesException(ValueError('oh dear'))]))
@@ -183,7 +183,7 @@ class CallbackTests(TestCase):
             lambda:
                 sync_perform(
                     Effect(ErrorIntent())
-                        .on_error(lambda x: raise_(ValueError('eb error')))),
+                        .on(error=lambda x: raise_(ValueError('eb error')))),
             raises(ValueError('eb error')))
 
     def test_nested_effect_exception_passes_to_outer_error_handler(self):
@@ -194,7 +194,7 @@ class CallbackTests(TestCase):
         self.assertThat(
             sync_perform(
                 Effect(StubIntent(Effect(ErrorIntent())))
-                    .on_error(lambda x: x)),
+                    .on(error=lambda x: x)),
             MatchesException(ValueError('oh dear')))
 
     def test_asynchronous_callback_invocation(self):
@@ -206,7 +206,7 @@ class CallbackTests(TestCase):
         boxes = []
         dispatcher = lambda intent, box: boxes.append(box)
         intent = POPOIntent()
-        eff = Effect(intent).on_success(results.append)
+        eff = Effect(intent).on(success=results.append)
         perform(eff, dispatcher)
         boxes[0].succeed('foo')
         self.assertEqual(results, ['foo'])

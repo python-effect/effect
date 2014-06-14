@@ -59,7 +59,7 @@ This function now returns an object which can later be "performed":
 
     def main():
         effect = get_user_name()
-        effect.on_success(print)
+        effect.on(success=print)
         perform(effect)
 
 This has a number of advantages. First, your unit tests for ``get_user_name``
@@ -101,7 +101,7 @@ like the following:
         """
         Perform an HTTP request, and raise an error if the response is not 200.
         """
-        return request_url(method, url, str_body).on_success(check_status)
+        return request_url(method, url, str_body).on(success=check_status)
 
     def json_request(method, url, dict_body):
         """
@@ -110,7 +110,7 @@ like the following:
         application/json.
         """
         str_body = json.dumps(dict_body)
-        return request_url(method, url, str_body).on_success(decode_json)
+        return request_url(method, url, str_body).on(success=decode_json)
 
 The monadic bind function has these same properties. Those Haskell people sure
 have some good ideas.
@@ -134,9 +134,10 @@ IO Monad for Python
 
 Effects are vaguely analogus to IO monads. The Effect class can be compared
 to the IO type, which tags (or wraps) your result type, and
-``Effect.on_success`` is somewhat like the bind function (``>>=``), indicating
+``Effect.on`` is somewhat like the bind function (``>>=``), indicating
 that the function passed is to be called with the result of the effect.
-Haskell's ``Either`` can be thrown in to handle ``.on_success`` vs ``.on_error``.
+Haskell's ``Either`` can be thrown in to handle ``.on(success=...)`` vs
+``.on(error=...)``.
 
 But Effect is a little more than just the IO monad, since Effects make
 available the intent as *transparent data*. By transparent, I specifically

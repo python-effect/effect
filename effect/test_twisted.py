@@ -65,7 +65,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         passed to the first effect callback.
         """
         d = succeed('foo')
-        e = Effect(StubIntent(d)).on_success(lambda x: ('success', x))
+        e = Effect(StubIntent(d)).on(success=lambda x: ('success', x))
         result = perform(e)
         self.assertEqual(self.successResultOf(result),
                          ('success', 'foo'))
@@ -76,7 +76,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         called with an exception tuple based on the failure.
         """
         d = fail(ValueError('foo'))
-        e = Effect(StubIntent(d)).on_error(lambda e: ('error', e))
+        e = Effect(StubIntent(d)).on(error=lambda e: ('error', e))
         result = self.successResultOf(perform(e))
         self.assertThat(
             result,

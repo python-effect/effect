@@ -27,7 +27,7 @@ class ResolveEffectTests(TestCase):
 
         def add1(n):
             return n + 1
-        eff = Effect(None).on_success(add1).on_success(add1)
+        eff = Effect(None).on(success=add1).on(success=add1)
         self.assertEqual(resolve_effect(eff, 0), 2)
 
     def test_callback_returning_effect(self):
@@ -35,7 +35,7 @@ class ResolveEffectTests(TestCase):
         When a callback returns an effect, that effect is returned.
         """
         stub_effect = Effect('inner')
-        eff = Effect(None).on_success(lambda r: stub_effect)
+        eff = Effect(None).on(success=lambda r: stub_effect)
         result = resolve_effect(eff, 'foo')
         self.assertEqual(result.intent, 'inner')
         self.assertEqual(resolve_effect(result, 'next-result'),
@@ -54,7 +54,7 @@ class ResolveEffectTests(TestCase):
 
         def b(r):
             return ("b-result", r)
-        eff = Effect("orig").on_success(a).on_success(b)
+        eff = Effect("orig").on(success=a).on(success=b)
         result = resolve_effect(eff, "foo")
         self.assertEqual(
             resolve_effect(result, "next-result"),
@@ -69,14 +69,14 @@ class ResolveEffectTests(TestCase):
         nested_effect = Effect("nested")
 
         def a(r):
-            return nested_effect.on_success(nested_b)
+            return nested_effect.on(success=nested_b)
 
         def nested_b(r):
             return ("nested-b-result", r)
 
         def c(r):
             return ("c-result", r)
-        eff = Effect("orig").on_success(a).on_success(c)
+        eff = Effect("orig").on(success=a).on(success=c)
         result = resolve_effect(eff, "foo")
         self.assertEqual(resolve_effect(result, 'next-result'),
                          ('c-result', ('nested-b-result', 'next-result')))
@@ -89,8 +89,8 @@ class ResolveEffectTests(TestCase):
         self.assertThat(
             resolve_effect(
                 Effect("orig")
-                    .on_success(lambda r: 1 / 0)
-                    .on_error(lambda exc: ('handled', exc)),
+                    .on(success=lambda r: 1 / 0)
+                    .on(error=lambda exc: ('handled', exc)),
                 'result'),
             MatchesListwise([
                 Equals('handled'),
@@ -105,7 +105,7 @@ class ResolveEffectTests(TestCase):
             lambda:
                 resolve_effect(
                     Effect('orig')
-                        .on_success(
+                        .on(success=
                             lambda r: _raise(ValueError('oh goodness'))),
                     'result'),
             raises(ValueError('oh goodness')))
@@ -127,8 +127,8 @@ class ResolveEffectTests(TestCase):
         Intermediate callbacks of the wrong type are skipped.
         """
         eff = (Effect('foo')
-               .on_error(lambda f: 1)
-               .on_success(lambda x: ('succeeded', x)))
+               .on(error=lambda f: 1)
+               .on(success=lambda x: ('succeeded', x)))
         self.assertEqual(resolve_effect(eff, 'foo'), ('succeeded', 'foo'))
 
 

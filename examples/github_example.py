@@ -32,7 +32,7 @@ def get_orgs(name):
     req = Effect(
         HTTPRequest("get",
                     "https://api.github.com/users/{0}/orgs".format(name)))
-    return req.on_success(lambda x: [org['login'] for org in json.loads(x)])
+    return req.on(success=lambda x: [org['login'] for org in json.loads(x)])
 
 
 def get_org_repos(name):
@@ -44,7 +44,7 @@ def get_org_repos(name):
     req = Effect(
         HTTPRequest("get",
                     "https://api.github.com/orgs/{0}/repos".format(name)))
-    return req.on_success(lambda x: [repo['name'] for repo in json.loads(x)])
+    return req.on(success=lambda x: [repo['name'] for repo in json.loads(x)])
 
 
 def get_orgs_repos(name):
@@ -52,11 +52,11 @@ def get_orgs_repos(name):
     Fetch ALL of the repos that a user has access to, in any organization.
     """
     req = get_orgs(name)
-    req = req.on_success(
-        lambda org_names:
+    req = req.on(
+        success=lambda org_names:
             parallel(map(get_org_repos, org_names)))
-    req = req.on_success(
-        lambda repo_lists: reduce(operator.add, repo_lists))
+    req = req.on(
+        success=lambda repo_lists: reduce(operator.add, repo_lists))
     return req
 
 
@@ -68,7 +68,7 @@ def get_first_org_repos(name):
     This demonstrates how to chain effects.
     """
     req = get_orgs(name)
-    return req.on_success(lambda orgs: get_org_repos(orgs[0]))
+    return req.on(success=lambda orgs: get_org_repos(orgs[0]))
 
 
 class ReadLine(object):
@@ -82,13 +82,13 @@ class ReadLine(object):
 
 
 def main_effect():
-    return Effect(ReadLine("Enter GitHub Username> ")).on_success(
-        get_first_org_repos)
+    return Effect(ReadLine("Enter GitHub Username> ")).on(
+        success=get_first_org_repos)
 
 
 def main_effect_2():
-    return Effect(ReadLine("Enter GitHub Username> ")).on_success(
-        get_orgs_repos)
+    return Effect(ReadLine("Enter GitHub Username> ")).on(
+        success=get_orgs_repos)
 
 
 # Only the code below here depends on Twisted.
