@@ -279,6 +279,21 @@ Thanks to Rackspace for allowing me to work on this project, and having an
 .. _`open source employee contribution policy`: https://www.rackspace.com/blog/rackspaces-policy-on-contributing-to-open-source/
 
 
+See Also
+========
+
+Over the past few years, the ecosystem of libraries to help with functional
+programming in Python has exploded. Here are some libraries I recommend:
+
+- `pyrsistent`_ - persistent (optimized immutable) data structures in Python
+- `toolz`_ - a general library of pure FP functions
+- `fn.py`_ - a Scala-inspired set of tools, including a weird lambda syntax, option type, and monads
+
+.. _`pyrsistent`: https://pypi.python.org/pypi/pyrsistent/
+.. _`toolz`: https://pypi.python.org/pypi/toolz
+.. _`fn.py`: https://pypi.python.org/pypi/fn
+
+
 License
 =======
 
