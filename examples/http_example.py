@@ -1,6 +1,6 @@
 class HTTPRequest(object):
     """
-    An HTTP effect request. Default implementation uses treq.
+    An HTTP request intent. Default implementation uses treq.
     """
 
     def __init__(self, method, url, headers=None, data=None):
@@ -17,6 +17,6 @@ class HTTPRequest(object):
         import treq
         headers = self.headers.copy() if self.headers is not None else {}
         if 'user-agent' not in headers:
-            headers['user-agent'] = ['Pure Snakes Example']
+            headers['user-agent'] = ['Effect example']
         return treq.request(self.method.lower(), self.url, headers=headers,
                             data=self.data).addCallback(treq.content)

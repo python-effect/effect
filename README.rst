@@ -252,7 +252,7 @@ behavior as the real implementation.
 Then I realized that stubs were a lot like my idea for the "Request" object
 that my ideal HTTP client library would return -- in other words, the stubs
 could be promoted to being used in the real implementation. That way the
-majority of my tetss wouldn't need any mocking or stubbing, and would just
+majority of my tests wouldn't need any mocking or stubbing, and would just
 invoke the pure 'get' method and ensure that it returned a Request object that
 looked right.
 

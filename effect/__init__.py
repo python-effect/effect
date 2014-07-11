@@ -33,7 +33,7 @@ class Effect(object):
     def __init__(self, intent, callbacks=None):
         """
         :param intent: An object that describes an effect to be
-            performed. Optionally has a perform_effect(dispatcher, box) method.
+            performed. Optionally has a perform_effect(dispatcher) method.
         """
         self.intent = intent
         if callbacks is None:
