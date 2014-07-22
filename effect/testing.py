@@ -12,7 +12,7 @@ import six
 
 
 class StubIntent(object):
-    """An effect that returns a pre-specified result."""
+    """An intent that returns a pre-specified result when performed."""
     def __init__(self, result):
         self.result = result
 
@@ -21,6 +21,25 @@ class StubIntent(object):
 
     def perform_effect(self, dispatcher):
         return self.result
+
+
+class StubErrorIntent(object):
+    """An intent that raises a pre-specified exception when performed."""
+    def __init__(self, exception):
+        self.exception = exception
+
+    def perform_effect(self, dispatcher):
+        raise self.exception
+
+
+class FuncIntent(object):
+    """An intent that returns the result of the specified function."""
+
+    def __init__(self, func):
+        self.func = func
+
+    def perform_effect(self, dispatcher):
+        return self.func()
 
 
 def resolve_effect(effect, result, is_error=False):
@@ -83,3 +102,23 @@ def resolve_stub(effect):
     StubIntent.
     """
     return resolve_effect(effect, effect.intent.result)
+
+
+def resolve_stubs(effect):
+    """
+    Resolves an effect until it returns a non-Effect value, or an Effect with
+    a non-stub intent.
+    """
+    if type(effect) is not Effect:
+        raise TypeError("effect must be Effect: %r" % (effect,))
+    while type(effect) is Effect:
+        if type(effect.intent) is StubIntent:
+            effect = resolve_stub(effect)
+        elif type(effect.intent) is StubErrorIntent:
+            effect = fail_effect(effect, effect.intent.exception)
+        elif type(effect.intent) is FuncIntent:
+            is_error, result = guard(effect.intent.func)
+            effect = resolve_effect(effect, result, is_error=is_error)
+        else:
+            break
+    return effect
