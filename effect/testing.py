@@ -23,7 +23,7 @@ class StubIntent(object):
         return self.result
 
 
-class StubErrorIntent(object):
+class ErrorIntent(object):
     """An intent that raises a pre-specified exception when performed."""
     def __init__(self, exception):
         self.exception = exception
@@ -33,7 +33,12 @@ class StubErrorIntent(object):
 
 
 class FuncIntent(object):
-    """An intent that returns the result of the specified function."""
+    """
+    An intent that returns the result of the specified function.
+
+    This class should _only_ be used for unit tests, since the
+    :func:`resolve_stubs` function automatically performs it.
+    """
 
     def __init__(self, func):
         self.func = func
@@ -106,18 +111,18 @@ def resolve_stub(effect):
 
 def resolve_stubs(effect):
     """
-    Resolves an effect until it returns a non-Effect value, or an Effect with
-    a non-stub intent.
+    Successively resolves effects until a non-Effect value, or an Effect with
+    a non-stub intent is returned, and return that value.
+
+    This should probably be your most commonly used unit testing function.
     """
+    # TODO: perhaps support parallel effects, as long as all the child effects
+    # are stubs.
     if type(effect) is not Effect:
         raise TypeError("effect must be Effect: %r" % (effect,))
     while type(effect) is Effect:
-        if type(effect.intent) is StubIntent:
-            effect = resolve_stub(effect)
-        elif type(effect.intent) is StubErrorIntent:
-            effect = fail_effect(effect, effect.intent.exception)
-        elif type(effect.intent) is FuncIntent:
-            is_error, result = guard(effect.intent.func)
+        if type(effect.intent) in (StubIntent, ErrorIntent, FuncIntent):
+            is_error, result = guard(effect.intent.perform_effect, None)
             effect = resolve_effect(effect, result, is_error=is_error)
         else:
             break

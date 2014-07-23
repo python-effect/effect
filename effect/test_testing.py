@@ -7,7 +7,8 @@ from testtools.matchers import (MatchesListwise, Equals, MatchesException,
                                 raises)
 
 from . import Effect
-from .testing import resolve_effect, fail_effect
+from .testing import (resolve_effect, fail_effect, resolve_stubs, StubIntent,
+                      FuncIntent, ErrorIntent)
 
 
 class ResolveEffectTests(TestCase):
@@ -129,6 +130,30 @@ class ResolveEffectTests(TestCase):
                .on(error=lambda f: 1)
                .on(success=lambda x: ('succeeded', x)))
         self.assertEqual(resolve_effect(eff, 'foo'), ('succeeded', 'foo'))
+
+
+class ResolveStubsTest(TestCase):
+    """Tests for resolve_stubs."""
+
+    def test_resolve_stubs(self):
+        """
+        resolve_stubs automatically performs StubIntent, ErrorIntent, and
+        FuncIntent.
+        """
+        eff = Effect(StubIntent("foo")).on(
+            success=lambda r: Effect(ErrorIntent(RuntimeError("foo")))).on(
+                error=lambda e: Effect(FuncIntent(lambda: "heyo")))
+        self.assertEqual(resolve_stubs(eff), "heyo")
+
+    def test_non_test_intent(self):
+        """
+        When a non-stub effect intent is found, the effect is returned.
+        """
+        bare_effect = Effect(object())
+        eff = Effect(StubIntent("foo")).on(success=lambda r: bare_effect)
+        result_eff = resolve_stubs(eff)
+        self.assertIs(result_eff.intent, bare_effect.intent)
+        self.assertEqual(result_eff.callbacks, [])
 
 
 def _raise(e):
