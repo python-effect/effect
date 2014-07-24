@@ -103,27 +103,29 @@ def fail_effect(effect, exception):
 
 def resolve_stub(effect):
     """
-    Like resolve_effect, but automatically uses the result available in a
-    StubIntent.
+    Automatically resolve a FuncIntent, ErrorIntent, or StubIntent.
     """
-    return resolve_effect(effect, effect.intent.result)
+    if type(effect.intent) in (StubIntent, ErrorIntent, FuncIntent):
+        is_error, result = guard(effect.intent.perform_effect, None)
+        return resolve_effect(effect, result, is_error=is_error)
+    else:
+        raise TypeError("resolve_stub can only resolve stubs, not %r"
+                        % (effect,))
 
 
 def resolve_stubs(effect):
     """
     Successively resolves effects until a non-Effect value, or an Effect with
     a non-stub intent is returned, and return that value.
-
-    This should probably be your most commonly used unit testing function.
     """
     # TODO: perhaps support parallel effects, as long as all the child effects
     # are stubs.
     if type(effect) is not Effect:
         raise TypeError("effect must be Effect: %r" % (effect,))
+
     while type(effect) is Effect:
-        if type(effect.intent) in (StubIntent, ErrorIntent, FuncIntent):
-            is_error, result = guard(effect.intent.perform_effect, None)
-            effect = resolve_effect(effect, result, is_error=is_error)
-        else:
+        try:
+            effect = resolve_stub(effect)
+        except TypeError:
             break
     return effect
