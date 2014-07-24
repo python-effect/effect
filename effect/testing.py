@@ -37,7 +37,7 @@ class FuncIntent(object):
     An intent that returns the result of the specified function.
 
     This class should _only_ be used for unit tests, since the
-    :func:`resolve_stubs` function automatically performs it.
+    :func:`resolve_stub` function automatically performs it.
     """
 
     def __init__(self, func):
