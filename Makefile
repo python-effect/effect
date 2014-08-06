@@ -6,4 +6,4 @@ build-dist:
 	python setup.py sdist bdist_wheel
 
 upload-dist:
-	python setup.py upload
+	twine upload dist/*
