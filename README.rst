@@ -59,7 +59,7 @@ This function now returns an object which can later be "performed":
 
     def main():
         effect = get_user_name()
-        effect.on(success=print)
+        effect = effect.on(success=print)
         perform(effect)
 
 This has a number of advantages. First, your unit tests for ``get_user_name``
