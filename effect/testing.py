@@ -91,8 +91,8 @@ def resolve_stub(effect):
 
 def resolve_stubs(effect):
     """
-    Successively resolves stub effects until a non-Effect value, or an Effect
-    with a non-stub intent is returned, and return that value.
+    Successively performs effects with resolve_stub until a non-Effect value,
+    or an Effect with a non-stub intent is returned, and return that value.
     """
     # TODO: perhaps support parallel effects, as long as all the child effects
     # are stubs.
