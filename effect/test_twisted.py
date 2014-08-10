@@ -6,9 +6,8 @@ from testtools.matchers import MatchesListwise, Equals, MatchesException
 from twisted.trial.unittest import SynchronousTestCase
 from twisted.internet.defer import succeed, fail
 
-from . import Effect, parallel
+from . import Effect, parallel, ConstantIntent
 from .twisted import perform, twisted_dispatcher
-from .testing import StubIntent
 from .test_effect import SelfContainedIntent, ErrorIntent
 
 
@@ -20,8 +19,8 @@ class ParallelTests(SynchronousTestCase):
         same order that they were passed to parallel.
         """
         d = perform(
-            parallel([Effect(StubIntent('a')),
-                      Effect(StubIntent('b'))]))
+            parallel([Effect(ConstantIntent('a')),
+                      Effect(ConstantIntent('b'))]))
         self.assertEqual(self.successResultOf(d), ['a', 'b'])
 
 
@@ -34,7 +33,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         effect.twisted.perform returns a Deferred which fires with the ultimate
         result of the Effect.
         """
-        e = Effect(StubIntent("foo"))
+        e = Effect(ConstantIntent("foo"))
         d = perform(e)
         self.assertEqual(self.successResultOf(d), 'foo')
 
@@ -65,7 +64,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         passed to the first effect callback.
         """
         d = succeed('foo')
-        e = Effect(StubIntent(d)).on(success=lambda x: ('success', x))
+        e = Effect(ConstantIntent(d)).on(success=lambda x: ('success', x))
         result = perform(e)
         self.assertEqual(self.successResultOf(result),
                          ('success', 'foo'))
@@ -76,7 +75,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         called with an exception tuple based on the failure.
         """
         d = fail(ValueError('foo'))
-        e = Effect(StubIntent(d)).on(error=lambda e: ('error', e))
+        e = Effect(ConstantIntent(d)).on(error=lambda e: ('error', e))
         result = self.successResultOf(perform(e))
         self.assertThat(
             result,

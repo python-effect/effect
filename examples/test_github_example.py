@@ -5,9 +5,12 @@ import json
 
 from testtools import TestCase
 
-from effect import Effect, ParallelEffects
+from effect import Effect, ParallelEffects, ConstantIntent
 from effect.testing import StubIntent, resolve_stub, resolve_effect
 from . import github_example
+
+
+Constant = lambda x: Effect(StubIntent(ConstantIntent(x)))
 
 
 class GithubTests(TestCase):
@@ -58,8 +61,8 @@ class GithubTests(TestCase):
         # - behavior based on non-argument state is not an issue
         # - repeated calls are not an issue
         # so don't freak out, patching is ok :)
-        get_orgs = {'radix': Effect(StubIntent(['twisted', 'rackerlabs']))}
-        get_org_repos = {'twisted': Effect(StubIntent(['twisted', 'txstuff']))}
+        get_orgs = {'radix': Constant(['twisted', 'rackerlabs'])}
+        get_org_repos = {'twisted': Constant(['twisted', 'txstuff'])}
         self.patch(github_example, 'get_orgs', get_orgs.get)
         self.patch(github_example, 'get_org_repos', get_org_repos.get)
         eff = github_example.get_first_org_repos('radix')

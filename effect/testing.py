@@ -12,39 +12,15 @@ import six
 
 
 class StubIntent(object):
-    """An intent that returns a pre-specified result when performed."""
-    def __init__(self, result):
-        self.result = result
-
-    def __repr__(self):
-        return "StubIntent(%r)" % (self.result,)
-
-    def perform_effect(self, dispatcher):
-        return self.result
-
-
-class ErrorIntent(object):
-    """An intent that raises a pre-specified exception when performed."""
-    def __init__(self, exception):
-        self.exception = exception
-
-    def perform_effect(self, dispatcher):
-        raise self.exception
-
-
-class FuncIntent(object):
     """
-    An intent that returns the result of the specified function.
+    An intent which wraps another intent, to flag that the intent should
+    be automatically resolved by :func:`resolve_stub`.
 
-    This class should _only_ be used for unit tests, since the
-    :func:`resolve_stub` function automatically performs it.
+    This intent is intentionally not performable by any default mechanism.
     """
 
-    def __init__(self, func):
-        self.func = func
-
-    def perform_effect(self, dispatcher):
-        return self.func()
+    def __init__(self, intent):
+        self.intent = intent
 
 
 def resolve_effect(effect, result, is_error=False):
@@ -103,10 +79,10 @@ def fail_effect(effect, exception):
 
 def resolve_stub(effect):
     """
-    Automatically resolve a FuncIntent, ErrorIntent, or StubIntent.
+    Automatically perform an effect, if its intent is a StubIntent.
     """
-    if type(effect.intent) in (StubIntent, ErrorIntent, FuncIntent):
-        is_error, result = guard(effect.intent.perform_effect, None)
+    if type(effect.intent) is StubIntent:
+        is_error, result = guard(effect.intent.intent.perform_effect, None)
         return resolve_effect(effect, result, is_error=is_error)
     else:
         raise TypeError("resolve_stub can only resolve stubs, not %r"
@@ -115,8 +91,8 @@ def resolve_stub(effect):
 
 def resolve_stubs(effect):
     """
-    Successively resolves effects until a non-Effect value, or an Effect with
-    a non-stub intent is returned, and return that value.
+    Successively resolves stub effects until a non-Effect value, or an Effect
+    with a non-stub intent is returned, and return that value.
     """
     # TODO: perhaps support parallel effects, as long as all the child effects
     # are stubs.

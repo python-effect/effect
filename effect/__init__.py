@@ -225,3 +225,41 @@ def sync_perform(effect, dispatcher=default_dispatcher):
     else:
         raise NotSynchronousError("Performing %r was not synchronous!"
                                   % (effect,))
+
+
+class ConstantIntent(object):
+    """An intent that returns a pre-specified result when performed."""
+    def __init__(self, result):
+        self.result = result
+
+    def __repr__(self):
+        return "ConstantIntent(%r)" % (self.result,)
+
+    def perform_effect(self, dispatcher):
+        return self.result
+
+
+class ErrorIntent(object):
+    """An intent that raises a pre-specified exception when performed."""
+    def __init__(self, exception):
+        self.exception = exception
+
+    def perform_effect(self, dispatcher):
+        raise self.exception
+
+
+class FuncIntent(object):
+    """
+    An intent that returns the result of the specified function.
+
+    This class should _only_ be used for unit tests, since the
+    :func:`resolve_stub` function automatically performs it.
+
+    See :class:`effect.FuncIntent` for non-testing cases.
+    """
+
+    def __init__(self, func):
+        self.func = func
+
+    def perform_effect(self, dispatcher):
+        return self.func()

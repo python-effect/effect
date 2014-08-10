@@ -5,8 +5,8 @@ from testtools.matchers import (MatchesListwise, Is, Equals, MatchesException,
                                 raises)
 
 from . import (Effect, NoEffectHandlerError, perform,
-               default_dispatcher, sync_perform, NotSynchronousError)
-from .testing import StubIntent
+               default_dispatcher, sync_perform, NotSynchronousError,
+               ConstantIntent)
 
 
 class SelfContainedIntent(object):
@@ -86,7 +86,8 @@ class EffectPerformTests(TestCase):
         - the result of that is returned.
         """
         self.assertEqual(
-            sync_perform(Effect(StubIntent(Effect(StubIntent("foo"))))),
+            sync_perform(
+                Effect(ConstantIntent(Effect(ConstantIntent("foo"))))),
             "foo")
 
     def test_effects_returning_effects_returning_effects(self):
@@ -98,17 +99,17 @@ class EffectPerformTests(TestCase):
         self.assertEqual(
             sync_perform(
                 Effect(
-                    StubIntent(
+                    ConstantIntent(
                         Effect(
-                            StubIntent(
+                            ConstantIntent(
                                 Effect(
-                                    StubIntent("foo"))))))),
+                                    ConstantIntent("foo"))))))),
             "foo")
 
     def test_sync_perform_async_effect(self):
         """If an effect is asynchronous, sync_effect raises an error."""
         self.assertRaises(NotSynchronousError,
-                          lambda: sync_perform(Effect(StubIntent("foo")),
+                          lambda: sync_perform(Effect(ConstantIntent("foo")),
                                                dispatcher=lambda i, box: None))
 
 
@@ -193,7 +194,7 @@ class CallbackTests(TestCase):
         """
         self.assertThat(
             sync_perform(
-                Effect(StubIntent(Effect(ErrorIntent())))
+                Effect(ConstantIntent(Effect(ErrorIntent())))
                     .on(error=lambda x: x)),
             MatchesException(ValueError('oh dear')))
 

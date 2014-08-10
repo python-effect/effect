@@ -6,9 +6,13 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Equals, MatchesException,
                                 raises)
 
-from . import Effect
-from .testing import (resolve_effect, fail_effect, resolve_stubs, StubIntent,
-                      FuncIntent, ErrorIntent)
+from . import Effect, ConstantIntent, FuncIntent, ErrorIntent
+from .testing import resolve_effect, fail_effect, resolve_stubs, StubIntent
+
+
+Constant = lambda x: Effect(StubIntent(ConstantIntent(x)))
+Error = lambda x: Effect(StubIntent(ErrorIntent(x)))
+Func = lambda x: Effect(StubIntent(FuncIntent(x)))
 
 
 class ResolveEffectTests(TestCase):
@@ -137,12 +141,11 @@ class ResolveStubsTest(TestCase):
 
     def test_resolve_stubs(self):
         """
-        resolve_stubs automatically performs StubIntent, ErrorIntent, and
-        FuncIntent.
+        resolve_stubs automatically performs StubIntent.
         """
-        eff = Effect(StubIntent("foo")).on(
-            success=lambda r: Effect(ErrorIntent(RuntimeError("foo")))).on(
-                error=lambda e: Effect(FuncIntent(lambda: "heyo")))
+        eff = Constant("foo").on(
+            success=lambda r: Error(RuntimeError("foo")).on(
+                error=lambda e: Func(lambda: "heyo")))
         self.assertEqual(resolve_stubs(eff), "heyo")
 
     def test_non_test_intent(self):
@@ -150,7 +153,7 @@ class ResolveStubsTest(TestCase):
         When a non-stub effect intent is found, the effect is returned.
         """
         bare_effect = Effect(object())
-        eff = Effect(StubIntent("foo")).on(success=lambda r: bare_effect)
+        eff = Constant("foo").on(success=lambda r: bare_effect)
         result_eff = resolve_stubs(eff)
         self.assertIs(result_eff.intent, bare_effect.intent)
         self.assertEqual(result_eff.callbacks, [])
