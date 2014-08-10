@@ -81,6 +81,8 @@ def resolve_stub(effect):
     """
     Automatically perform an effect, if its intent is a StubIntent.
     """
+    # TODO: perhaps support parallel effects, as long as all the child effects
+    # are stubs.
     if type(effect.intent) is StubIntent:
         is_error, result = guard(effect.intent.intent.perform_effect, None)
         return resolve_effect(effect, result, is_error=is_error)
@@ -94,8 +96,6 @@ def resolve_stubs(effect):
     Successively performs effects with resolve_stub until a non-Effect value,
     or an Effect with a non-stub intent is returned, and return that value.
     """
-    # TODO: perhaps support parallel effects, as long as all the child effects
-    # are stubs.
     if type(effect) is not Effect:
         raise TypeError("effect must be Effect: %r" % (effect,))
 
