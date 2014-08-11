@@ -257,7 +257,6 @@ class FuncIntent(object):
 
     See :class:`effect.FuncIntent` for non-testing cases.
     """
-
     def __init__(self, func):
         self.func = func
 
