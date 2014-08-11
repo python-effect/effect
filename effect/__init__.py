@@ -249,14 +249,7 @@ class ErrorIntent(object):
 
 
 class FuncIntent(object):
-    """
-    An intent that returns the result of the specified function.
-
-    This class should _only_ be used for unit tests, since the
-    :func:`resolve_stub` function automatically performs it.
-
-    See :class:`effect.FuncIntent` for non-testing cases.
-    """
+    """An intent that returns the result of the specified function."""
     def __init__(self, func):
         self.func = func
 
