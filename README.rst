@@ -19,6 +19,13 @@ Right now Effect is in alpha, and is likely to change incompatibly. Once it's
 being used in production, I'll release a final version.
 
 
+Discuss
+=======
+
+If you would like to talk about Effect, there is a Github-integrated web forum
+available at http://ost.io/@radix/effect
+
+
 What Is It?
 ===========
 
