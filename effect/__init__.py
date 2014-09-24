@@ -249,7 +249,24 @@ class ErrorIntent(object):
 
 
 class FuncIntent(object):
-    """An intent that returns the result of the specified function."""
+    """
+    An intent that returns the result of the specified function.
+
+    Note that FuncIntent is something of a cop-out. It doesn't follow the
+    convention of an intent being transparent data that is easy to introspect,
+    since it just wraps an opaque callable. This has two drawbacks:
+
+    - it's harder to test, since the only thing you can do is call the
+      function, instead of inspect its data.
+    - it doesn't offer any ability for changing the way the effect is
+      performed.
+
+    If you use FuncIntent in your application code, know that you are giving
+    up some ease of testing and flexibility. It's preferable to represent your
+    intents as inert objects with public attributes of simple data. However,
+    this is useful for integrating wih "legacy" side-effecting code in a quick
+    way.
+    """
     def __init__(self, func):
         self.func = func
 
