@@ -158,6 +158,17 @@ class ResolveStubsTest(TestCase):
         self.assertIs(result_eff.intent, bare_effect.intent)
         self.assertEqual(result_eff.callbacks, [])
 
+    def test_type_error(self):
+        """
+        TypeErrors in callbacks (or otherwise performed intents) are propagated
+        resolve_stubs.
+
+        (This only exists because the initial implementation was done stupidly,
+        and had to be fixed.)
+        """
+        eff = Constant("foo").on(success=lambda r: None["foo"])
+        self.assertRaises(TypeError, resolve_stubs, eff)
+
 
 def _raise(e):
     raise e

@@ -100,8 +100,9 @@ def resolve_stubs(effect):
         raise TypeError("effect must be Effect: %r" % (effect,))
 
     while type(effect) is Effect:
-        try:
+        if type(effect.intent) is StubIntent:
             effect = resolve_stub(effect)
-        except TypeError:
+        else:
             break
+
     return effect
