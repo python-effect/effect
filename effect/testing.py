@@ -22,6 +22,9 @@ class StubIntent(object):
     def __init__(self, intent):
         self.intent = intent
 
+    def __repr__(self):
+        return "StubIntent(%r)" % (self.intent,)
+
 
 def resolve_effect(effect, result, is_error=False):
     """
