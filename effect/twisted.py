@@ -14,12 +14,15 @@ by using its default effect dispatcher, twisted_dispatcher.
 
 from __future__ import absolute_import
 
+from functools import partial
+
 import sys
 
 from twisted.internet.defer import Deferred, maybeDeferred, gatherResults
 from twisted.python.failure import Failure
+from twisted.internet.task import deferLater
 
-from . import dispatch_method, perform as base_perform
+from . import dispatch_method, perform as base_perform, Delay
 from effect import ParallelEffects
 
 
@@ -30,7 +33,7 @@ def deferred_to_box(d, box):
     d.addCallbacks(box.succeed, lambda f: box.fail((f.type, f.value, f.tb)))
 
 
-def twisted_dispatcher(intent, box):
+def twisted_dispatcher(reactor, intent, box):
     """
     Very similar to :func:`effect.default_dispatcher`, with two differences:
 
@@ -38,31 +41,43 @@ def twisted_dispatcher(intent, box):
       results
     - parallel intents are handled with :func:`perform_parallel`.
     """
+    # TODO: Allow Twisted-specific effect performers to have the reactor passed
+    #       to them. ALTERNATIVELY, rely on application writers to curry in
+    #       the reactor they desire to their effect performers...
+    dispatcher = partial(twisted_dispatcher, reactor)
     if type(intent) is ParallelEffects:
-        perform_parallel(intent, twisted_dispatcher, box)
+        func = partial(perform_parallel, intent, reactor)
+    elif type(intent) is Delay:
+        func = partial(perform_delay, intent, reactor)
     else:
-        try:
-            result = dispatch_method(intent, twisted_dispatcher)
-        except:
-            box.fail(sys.exc_info())
+        func = partial(dispatch_method, intent, dispatcher)
+
+    try:
+        result = func()
+    except:
+        box.fail(sys.exc_info())
+    else:
+        if isinstance(result, Deferred):
+            deferred_to_box(result, box)
         else:
-            if isinstance(result, Deferred):
-                deferred_to_box(result, box)
-            else:
-                box.succeed(result)
+            box.succeed(result)
 
 
-def perform_parallel(parallel, dispatcher, box):
+def perform_parallel(parallel, reactor):
     """
     Perform a ParallelEffects intent by using the Deferred gatherResults
     function.
     """
-    d = gatherResults(
-        [maybeDeferred(perform, e, dispatcher) for e in parallel.effects])
-    deferred_to_box(d, box)
+    return gatherResults(
+        [maybeDeferred(perform, reactor, e, dispatcher=twisted_dispatcher)
+         for e in parallel.effects])
 
 
-def perform(effect, dispatcher=twisted_dispatcher):
+def perform_delay(delay, reactor):
+    return deferLater(reactor, delay.delay, lambda: None)
+
+
+def perform(reactor, effect, dispatcher=twisted_dispatcher):
     """
     Perform an effect, handling Deferred results and returning a Deferred
     that will fire with the effect's ultimate result.
@@ -73,5 +88,5 @@ def perform(effect, dispatcher=twisted_dispatcher):
     eff = effect.on(
         success=d.callback,
         error=lambda e: d.errback(Failure(e[1], e[0], e[2])))
-    base_perform(eff, dispatcher=dispatcher)
+    base_perform(eff, dispatcher=partial(dispatcher, reactor))
     return d

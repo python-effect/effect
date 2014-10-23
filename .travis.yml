@@ -8,6 +8,7 @@ install:
     - pip install -r dev-requirements.txt
     - pip install six
     - pip install discover
+    - pip install 'characteristic>=14.0.0'
 script:
     - make lint
     - python -mtesttools.run discover --list

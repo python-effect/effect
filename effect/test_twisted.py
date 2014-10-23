@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 
+from functools import partial
+
 from testtools import TestCase
 from testtools.matchers import MatchesListwise, Equals, MatchesException
 
 from twisted.trial.unittest import SynchronousTestCase
 from twisted.internet.defer import succeed, fail
+from twisted.internet.task import Clock
 
-from . import Effect, parallel, ConstantIntent
+from . import Effect, parallel, ConstantIntent, Delay
 from .twisted import perform, twisted_dispatcher
 from .test_effect import SelfContainedIntent, ErrorIntent
 
@@ -19,9 +22,26 @@ class ParallelTests(SynchronousTestCase):
         same order that they were passed to parallel.
         """
         d = perform(
+            None,
             parallel([Effect(ConstantIntent('a')),
                       Effect(ConstantIntent('b'))]))
         self.assertEqual(self.successResultOf(d), ['a', 'b'])
+
+
+class DelayTests(SynchronousTestCase):
+    """Tess for :class:`Delay`."""
+    def test_delay(self):
+        """
+        Delay intents will cause time to pass with reactor.callLater, and
+        result in None.
+        """
+        clock = Clock()
+        called = []
+        eff = Effect(Delay(1)).on(called.append)
+        perform(clock, eff)
+        self.assertEqual(called, [])
+        clock.advance(1)
+        self.assertEqual(called, [None])
 
 
 class TwistedPerformTests(SynchronousTestCase, TestCase):
@@ -34,7 +54,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         result of the Effect.
         """
         e = Effect(ConstantIntent("foo"))
-        d = perform(e)
+        d = perform(None, e)
         self.assertEqual(self.successResultOf(d), 'foo')
 
     def test_perform_failure(self):
@@ -43,7 +63,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         result of the Effect is an exception.
         """
         e = Effect(ErrorIntent())
-        d = perform(e)
+        d = perform(None, e)
         f = self.failureResultOf(d)
         self.assertEqual(f.type, ValueError)
         self.assertEqual(str(f.value), 'oh dear')
@@ -54,9 +74,13 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         handle_effect methods, in case the effects need to run more effects.
         """
         e = Effect(SelfContainedIntent())
-        d = perform(e)
-        self.assertEqual(self.successResultOf(d),
-                         ('Self-result', twisted_dispatcher))
+        d = perform("reactor", e)
+        result = self.successResultOf(d)
+        # this is hella white-box
+        self.assertEqual(result[0], 'Self-result')
+        self.assertIs(type(result[1]), partial)
+        self.assertEqual(result[1].args, ('reactor',))
+        self.assertEqual(result[1].func, twisted_dispatcher)
 
     def test_deferred_effect(self):
         """
@@ -65,7 +89,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         """
         d = succeed('foo')
         e = Effect(ConstantIntent(d)).on(success=lambda x: ('success', x))
-        result = perform(e)
+        result = perform(None, e)
         self.assertEqual(self.successResultOf(result),
                          ('success', 'foo'))
 
@@ -76,7 +100,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         """
         d = fail(ValueError('foo'))
         e = Effect(ConstantIntent(d)).on(error=lambda e: ('error', e))
-        result = self.successResultOf(perform(e))
+        result = self.successResultOf(perform(None, e))
         self.assertThat(
             result,
             MatchesListwise([

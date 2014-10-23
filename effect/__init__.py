@@ -15,11 +15,14 @@ from __future__ import print_function
 
 import sys
 
+from characteristic import attributes
+
 import six
 
 from .continuation import trampoline
 
 
+@attributes(['intent', 'callbacks'], apply_with_init=False)
 class Effect(object):
     """
     Wrap an object that describes how to perform some effect (called an
@@ -48,9 +51,6 @@ class Effect(object):
         """
         return Effect(self.intent,
                       callbacks=self.callbacks + [(success, error)])
-
-    def __repr__(self):
-        return "Effect(%r, callbacks=%s)" % (self.intent, self.callbacks)
 
 
 def dispatch_method(intent, dispatcher):
@@ -165,22 +165,22 @@ class NoEffectHandlerError(Exception):
     """
 
 
+@attributes(['effects'], apply_with_init=False)
 class ParallelEffects(object):
     """
     An effect intent that asks for a number of effects to be run in parallel,
     and for their results to be gathered up into a sequence.
 
-    The default implementation of this effect relies on Twisted's Deferreds.
-    An alternative implementation can run the child effects in threads, for
-    example. Of course, the implementation strategy for this effect will need
-    to cooperate with the effects being parallelized -- there's not much use
-    running a Deferred-returning effect in a thread.
+    There is an implementation of this intent for Twisted, as long as the
+    effect.twisted.perform function is used to perform the effect.
+
+    Alternative implementations could run the child effects in threads, or use
+    some other concurrency mechanism. Of course, the implementation strategy
+    for this effect will need to cooperate with the effects being parallelized
+    -- there's not much use running a Deferred-returning effect in a thread.
     """
     def __init__(self, effects):
         self.effects = effects
-
-    def __repr__(self):
-        return "ParallelEffects(%r)" % (self.effects,)
 
 
 def parallel(effects):
@@ -191,6 +191,18 @@ def parallel(effects):
     the same order as the input to this function.
     """
     return Effect(ParallelEffects(list(effects)))
+
+
+@attributes(['delay'], apply_with_init=False)
+class Delay(object):
+    """
+    An effect which represents a delay in time.
+
+    When performed, the specified delay will pass and then the effect will
+    result in None.
+    """
+    def __init__(self, delay):
+        self.delay = delay
 
 
 class NotSynchronousError(Exception):
@@ -227,18 +239,17 @@ def sync_perform(effect, dispatcher=default_dispatcher):
                                   % (effect,))
 
 
+@attributes(['result'], apply_with_init=False)
 class ConstantIntent(object):
     """An intent that returns a pre-specified result when performed."""
     def __init__(self, result):
         self.result = result
 
-    def __repr__(self):
-        return "ConstantIntent(%r)" % (self.result,)
-
     def perform_effect(self, dispatcher):
         return self.result
 
 
+@attributes(['exception'], apply_with_init=False)
 class ErrorIntent(object):
     """An intent that raises a pre-specified exception when performed."""
     def __init__(self, exception):
@@ -248,6 +259,7 @@ class ErrorIntent(object):
         raise self.exception
 
 
+@attributes(['func'], apply_with_init=False)
 class FuncIntent(object):
     """
     An intent that returns the result of the specified function.
