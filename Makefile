@@ -7,3 +7,5 @@ build-dist:
 
 upload-dist:
 	twine upload dist/*
+	echo
+	echo "Don't forget to add a git tag."
