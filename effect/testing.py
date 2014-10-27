@@ -83,6 +83,9 @@ def fail_effect(effect, exception):
 def resolve_stub(effect):
     """
     Automatically perform an effect, if its intent is a StubIntent.
+
+    Note that resolve_stubs is preferred to this function, since it handles
+    chains of stub effects.
     """
     if type(effect.intent) is StubIntent:
         is_error, result = guard(effect.intent.intent.perform_effect, None)
