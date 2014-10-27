@@ -190,6 +190,15 @@ class ResolveStubsTests(TestCase):
         p_eff = parallel([Constant(1), Constant(2)]).on(lambda r: r[0])
         self.assertEqual(resolve_stubs(p_eff), 1)
 
+    def test_parallel_stubs_with_callbacks_returning_effects(self):
+        """
+        resolve_stubs further processes effects that are returned from
+        callbacks of parallel effects.
+        """
+        p_eff = parallel([Constant(1), Constant(2)]).on(
+            lambda r: Constant(r[0] + 1))
+        self.assertEqual(resolve_stubs(p_eff), 2)
+
 
 def _raise(e):
     raise e
