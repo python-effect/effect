@@ -6,7 +6,7 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Equals, MatchesException,
                                 raises)
 
-from . import Effect, ConstantIntent, FuncIntent, ErrorIntent
+from . import Effect, ConstantIntent, FuncIntent, ErrorIntent, parallel
 from .testing import resolve_effect, fail_effect, resolve_stubs, StubIntent
 
 
@@ -136,7 +136,7 @@ class ResolveEffectTests(TestCase):
         self.assertEqual(resolve_effect(eff, 'foo'), ('succeeded', 'foo'))
 
 
-class ResolveStubsTest(TestCase):
+class ResolveStubsTests(TestCase):
     """Tests for resolve_stubs."""
 
     def test_resolve_stubs(self):
@@ -168,6 +168,19 @@ class ResolveStubsTest(TestCase):
         """
         eff = Constant("foo").on(success=lambda r: None["foo"])
         self.assertRaises(TypeError, resolve_stubs, eff)
+
+    def test_parallel_stubs(self):
+        """Parallel effects are recursively resolved."""
+        p_eff = parallel([Constant(1), Constant(2)])
+        self.assertEqual(resolve_stubs(p_eff), [1, 2])
+
+    def test_parallel_non_stubs(self):
+        """
+        If a parallel effect contains a non-stub, the unresolved effect is
+        included in the resulting list.
+        """
+        p_eff = parallel([Constant(1), Effect(ConstantIntent(2))])
+        self.assertEqual(resolve_stubs(p_eff), [1, Effect(ConstantIntent(2))])
 
 
 def _raise(e):
