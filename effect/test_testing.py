@@ -182,6 +182,14 @@ class ResolveStubsTests(TestCase):
         p_eff = parallel([Constant(1), Effect(ConstantIntent(2))])
         self.assertEqual(resolve_stubs(p_eff), [1, Effect(ConstantIntent(2))])
 
+    def test_parallel_stubs_with_callbacks(self):
+        """
+        resolve_stubs runs callbacks of parallel effects.
+        (bugfix test)
+        """
+        p_eff = parallel([Constant(1), Constant(2)]).on(lambda r: r[0])
+        self.assertEqual(resolve_stubs(p_eff), 1)
+
 
 def _raise(e):
     raise e
