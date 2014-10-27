@@ -110,7 +110,7 @@ def resolve_stubs(effect):
         if type(effect.intent) is StubIntent:
             effect = resolve_stub(effect)
         elif type(effect.intent) is ParallelEffects:
-            return map(resolve_stubs, effect.intent.effects)
+            return list(map(resolve_stubs, effect.intent.effects))
         else:
             break
 
