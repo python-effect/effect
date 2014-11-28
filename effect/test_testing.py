@@ -176,11 +176,13 @@ class ResolveStubsTests(TestCase):
 
     def test_parallel_non_stubs(self):
         """
-        If a parallel effect contains a non-stub, the unresolved effect is
-        included in the resulting list.
+        If a parallel effect contains a non-stub, the parallel effect is
+        returned as-is.
         """
-        p_eff = parallel([Constant(1), Effect(ConstantIntent(2))])
-        self.assertEqual(resolve_stubs(p_eff), [1, Effect(ConstantIntent(2))])
+        p_eff = parallel(
+            [Constant(1), Effect(ConstantIntent(2))]
+        ).on(lambda x: 0)
+        self.assertEqual(resolve_stubs(p_eff), p_eff)
 
     def test_parallel_stubs_with_callbacks(self):
         """

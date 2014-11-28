@@ -101,7 +101,7 @@ def resolve_stubs(effect):
     or an Effect with a non-stub intent is returned, and return that value.
 
     Parallel effects are supported by recursively invoking resolve_stubs on
-    the child effects.
+    the child effects, if all of their children are stubs.
     """
     if type(effect) is not Effect:
         raise TypeError("effect must be Effect: %r" % (effect,))
@@ -110,9 +110,13 @@ def resolve_stubs(effect):
         if type(effect.intent) is StubIntent:
             effect = resolve_stub(effect)
         elif type(effect.intent) is ParallelEffects:
-            effect = resolve_effect(
-                effect,
-                list(map(resolve_stubs, effect.intent.effects)))
+            if not all(isinstance(x.intent, StubIntent)
+                       for x in effect.intent.effects):
+                break
+            else:
+                effect = resolve_effect(
+                    effect,
+                    list(map(resolve_stubs, effect.intent.effects)))
         else:
             break
 
