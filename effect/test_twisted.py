@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import sys
+
 from functools import partial
 
 from testtools import TestCase
@@ -10,7 +12,7 @@ from twisted.internet.defer import succeed, fail
 from twisted.internet.task import Clock
 
 from . import Effect, parallel, ConstantIntent, Delay
-from .twisted import perform, twisted_dispatcher
+from .twisted import perform, twisted_dispatcher, exc_info_to_failure
 from .test_effect import SelfContainedIntent, ErrorIntent
 
 
@@ -109,3 +111,22 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         # The traceback element is None, because we constructed the failure
         # without a traceback.
         self.assertIs(result[1][2], None)
+
+
+class ExcInfoToFailureTests(TestCase):
+    """Tests for :func:`exc_info_to_failure`."""
+
+    def test_exc_info_to_failure(self):
+        """
+        :func:`exc_info_to_failure` converts an exc_info tuple to a
+        :obj:`Failure`.
+        """
+        try:
+            raise RuntimeError("foo")
+        except:
+            exc_info = sys.exc_info()
+
+        failure = exc_info_to_failure(exc_info)
+        self.assertIs(failure.type, RuntimeError)
+        self.assertEqual(failure.value.message, "foo")
+        self.assertIs(failure.tb, exc_info[2])

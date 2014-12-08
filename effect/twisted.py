@@ -87,6 +87,11 @@ def perform(reactor, effect, dispatcher=twisted_dispatcher):
     d = Deferred()
     eff = effect.on(
         success=d.callback,
-        error=lambda e: d.errback(Failure(e[1], e[0], e[2])))
+        error=lambda e: d.errback(exc_info_to_failure(e)))
     base_perform(eff, dispatcher=partial(dispatcher, reactor))
     return d
+
+
+def exc_info_to_failure(exc_info):
+    """Convert an exc_info tuple to a :class:`Failure`."""
+    return Failure(exc_info[1], exc_info[0], exc_info[2])
