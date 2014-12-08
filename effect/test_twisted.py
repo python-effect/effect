@@ -128,5 +128,5 @@ class ExcInfoToFailureTests(TestCase):
 
         failure = exc_info_to_failure(exc_info)
         self.assertIs(failure.type, RuntimeError)
-        self.assertEqual(failure.value.message, "foo")
+        self.assertEqual(str(failure.value), "foo")
         self.assertIs(failure.tb, exc_info[2])
