@@ -19,6 +19,8 @@ class Effect(object):
     "intent"), and allow attaching callbacks to be run when the effect
     is complete.
 
+    Effects can be performed with :func:`perform`.
+
     (You're an object-oriented programmer.
      You probably want to subclass this.
      Don't.)
