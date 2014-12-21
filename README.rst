@@ -22,7 +22,7 @@ being used in production, I'll release a final version.
 IRC
 ===
 
-There is a ``#python-effects`` IRC channel on irc.freenode.net.
+There is a ``#python-effect`` IRC channel on irc.freenode.net.
 
 
 What Is It?
