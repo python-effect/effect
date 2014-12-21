@@ -13,3 +13,6 @@ script:
     - make lint
     - python -mtesttools.run discover --list
     - python -mtesttools.run discover
+
+notifications:
+  irc: "chat.freenode.net#python-effect"
