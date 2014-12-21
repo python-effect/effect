@@ -1,8 +1,5 @@
 from __future__ import print_function, absolute_import
 
-from functools import partial
-
-import sys
 import traceback
 
 from testtools import TestCase
@@ -103,6 +100,9 @@ class EffectPerformTests(TestCase):
         self.assertEqual(calls, ['foo'])
 
     def test_bounced(self):
+        """
+        The callbacks of a performer are called after the performer returns.
+        """
         calls = []
 
         def out_of_order(box):
@@ -111,28 +111,24 @@ class EffectPerformTests(TestCase):
         perform(func_dispatcher, Effect(out_of_order).on(success=calls.append))
         self.assertEqual(calls, ["bar", "foo"])
 
-    def test_double_bounced(self):
-        calls = []
-
-        def out_of_order(result, after, box):
-            box.succeed(result)
-            calls.append(after)
-        effect = Effect(partial(out_of_order,
-                                Effect(partial(out_of_order, "foo", "bar")),
-                                "baz"))
-        perform(func_dispatcher, effect.on(success=calls.append))
-        self.assertEqual(calls, ["baz", "bar", "foo"])
-
     def test_callbacks_bounced(self):
+        """
+        Multiple callbacks don't increase the stack depth.
+        """
         calls = []
 
         def get_stack(_):
             calls.append(traceback.extract_stack())
         perform(func_dispatcher,
-                Effect(None).on(success=get_stack).on(success=get_stack))
+                Effect(lambda box: box.succeed(None))
+                .on(success=get_stack).on(success=get_stack))
         self.assertEqual(calls[0], calls[1])
 
     def test_effect_bounced(self):
+        """
+        When an effect returns another effect, the effects are performed at the
+        same stack depth.
+        """
         calls = []
 
         def get_stack(box):
@@ -144,19 +140,20 @@ class EffectPerformTests(TestCase):
         self.assertEqual(calls[0], calls[1])
 
     def test_callback_error(self):
+        """
+        If a callback raises an error, the exception is passed to the error
+        callback.
+        """
         calls = []
 
         def raise_(_):
-            try:
-                raise ValueError("oh dear")
-            except ValueError:
-                calls.append(sys.exc_info())
-                raise
+            raise ValueError("oh dear")
 
         perform(func_dispatcher,
                 Effect(lambda box: box.succeed("foo"))
                 .on(success=lambda _: raise_(ValueError("oh dear")))
                 .on(error=calls.append))
-        self.assertEqual(traceback.extract_tb(calls[0][2]),
-                         traceback.extract_tb(calls[1][2])[-1:])
-        self.assertEqual(calls[0][:2], calls[1][:2])
+        self.assertThat(
+            calls,
+            MatchesListwise([
+                MatchesException(ValueError('oh dear'))]))
