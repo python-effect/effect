@@ -9,6 +9,7 @@ from characteristic import attributes
 
 from .continuation import trampoline
 
+
 @attributes([
     'intent', 'callbacks',
 ], apply_with_init=False, apply_immutable=True)
@@ -31,7 +32,6 @@ class Effect(object):
         if callbacks is None:
             callbacks = []
         self.callbacks = callbacks
-
 
     def on(self, success=None, error=None):
         """
@@ -74,6 +74,7 @@ def guard(f, *args, **kwargs):
         return (False, f(*args, **kwargs))
     except:
         return (True, sys.exc_info())
+
 
 class NoPerformerFoundError(Exception):
     """Raised when a performer for an intent couldn't be found."""
@@ -120,7 +121,6 @@ def perform(dispatcher, effect):
                 Effect(value.intent, callbacks=value.callbacks + chain))
             return
 
-
         if not chain:
             return
 
@@ -139,6 +139,6 @@ def perform(dispatcher, effect):
             dispatcher,
             effect.intent,
             _Box(partial(bouncer.bounce,
-                             _run_callbacks, effect.callbacks)))
+                         _run_callbacks, effect.callbacks)))
 
     trampoline(_perform, effect)
