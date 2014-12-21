@@ -5,6 +5,7 @@ from characteristic import attributes
 
 from ._base import Effect
 from ._sync import sync_performer
+from .dispatcher import TypeDispatcher
 
 
 @attributes(['effects'], apply_with_init=False, apply_immutable=True)
@@ -98,3 +99,10 @@ class FuncIntent(object):
 @sync_performer
 def perform_func(dispatcher, intent):
     return intent.func()
+
+
+base_dispatcher = TypeDispatcher({
+    ConstantIntent: perform_constant,
+    ErrorIntent: perform_error,
+    FuncIntent: perform_func,
+})
