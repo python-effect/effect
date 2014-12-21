@@ -12,8 +12,16 @@ from twisted.internet.defer import succeed, fail
 from twisted.internet.task import Clock
 
 from . import Effect, parallel, ConstantIntent, Delay
-from .twisted import deferred_performer, perform, exc_info_to_failure
-from .test_effect import SelfContainedIntent, ErrorIntent
+from .twisted import deferred_performer, perform, exc_info_to_failure, make_twisted_dispatcher
+from ._intents import base_dispatcher, ConstantIntent, ErrorIntent
+from .dispatcher import TypeDispatcher, ComposedDispatcher
+
+
+def _dispatcher(reactor):
+    return ComposedDispatcher([
+        make_twisted_dispatcher(reactor),
+        base_dispatcher
+    ])
 
 
 class ParallelTests(SynchronousTestCase):
@@ -24,7 +32,7 @@ class ParallelTests(SynchronousTestCase):
         same order that they were passed to parallel.
         """
         d = perform(
-            None,
+            _dispatcher(None),
             parallel([Effect(ConstantIntent('a')),
                       Effect(ConstantIntent('b'))]))
         self.assertEqual(self.successResultOf(d), ['a', 'b'])
@@ -40,7 +48,7 @@ class DelayTests(SynchronousTestCase):
         clock = Clock()
         called = []
         eff = Effect(Delay(1)).on(called.append)
-        perform(clock, eff)
+        perform(make_twisted_dispatcher(clock), eff)
         self.assertEqual(called, [])
         clock.advance(1)
         self.assertEqual(called, [None])

@@ -39,8 +39,8 @@ def make_twisted_dispatcher(reactor):
     Create a dispatcher that knows how to perform certain built-in Intents
     with Twisted-specific implementations.
     """
-    return TypedDispatcher({
-        ParallelEffects: deferred_performer(perform_parallel),
+    return TypeDispatcher({
+        ParallelEffects: perform_parallel,
         Delay: deferred_performer(partial(perform_delay, reactor)),
     })
 
@@ -76,7 +76,6 @@ def perform_parallel(dispatcher, parallel):
         map(partial(maybeDeferred, perform, dispatcher), parallel.effects))
 
 
-@deferred_performer
 def perform_delay(reactor, dispatcher, delay):
     """
     Perform a :obj:`Delay` with Twisted's
