@@ -19,6 +19,12 @@ Right now Effect is in alpha, and is likely to change incompatibly. Once it's
 being used in production, I'll release a final version.
 
 
+IRC
+===
+
+There is a ``#python-effects`` IRC channel on irc.freenode.net.
+
+
 What Is It?
 ===========
 
