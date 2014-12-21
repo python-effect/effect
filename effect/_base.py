@@ -85,10 +85,10 @@ def perform(dispatcher, effect):
     Perform an effect and invoke callbacks associated with it.
 
     The dispatcher will be passed the intent, and is expected to return a
-    ``performer``, which is a function taking a dispatcher and a box and
-    returning nothing. See :module:`effect.dispatcher` for some implementations
-    of dispatchers, and :obj:`effect.base_dispatcher` for a dispatcher
-    supporting core intents like :obj:`ConstantIntent` and so forth.
+    ``performer``, which is a function taking a dispatcher, the intent, and a
+    box, and returning nothing. See :module:`effect.dispatcher` for some
+    implementations of dispatchers, and :obj:`effect.base_dispatcher` for a
+    dispatcher supporting core intents like :obj:`ConstantIntent` and so forth.
 
     The performer will then be invoked with two arguments: the dispatcher and
     the box.
