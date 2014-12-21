@@ -16,3 +16,5 @@ script:
 
 notifications:
   irc: "chat.freenode.net#python-effect"
+  skip_join: true
+  use_notice: true
