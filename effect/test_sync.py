@@ -1,10 +1,9 @@
 from testtools import TestCase
 from testtools.matchers import (
-    # MatchesListwise, Equals, MatchesException,
-    raises)
+    MatchesException, raises)
 
 from . import Effect
-from ._sync import sync_perform, NotSynchronousError
+from ._sync import sync_perform, NotSynchronousError, sync_performer
 
 
 def func_dispatcher(intent):
@@ -13,8 +12,8 @@ def func_dispatcher(intent):
     return performer
 
 
-class SyncPerformEffectTests(TestCase):
-    """Tests for :func:`perform_effect`."""
+class SyncPerformtTests(TestCase):
+    """Tests for :func:`sync_perform`."""
 
     def test_sync_perform_effect_function_dispatch(self):
         """
@@ -42,3 +41,29 @@ class SyncPerformEffectTests(TestCase):
         self.assertThat(
             lambda: sync_perform(func_dispatcher, Effect(fail)),
             raises(ValueError('oh dear')))
+
+
+class SyncPerformerTests(TestCase):
+    """
+    Tests for :func:`sync_performer`.
+    """
+
+    def test_success(self):
+        @sync_performer
+        def succeed(dispatcher, intent):
+            return intent
+
+        dispatcher = lambda _: succeed
+        result = sync_perform(dispatcher, Effect("foo"))
+        self.assertEqual(result, "foo")
+
+    def test_failure(self):
+        @sync_performer
+        def fail(dispatcher, intent):
+            raise intent
+
+        dispatcher = lambda _: fail
+        self.assertThat(
+            sync_perform(dispatcher,
+                         Effect(ValueError('oh dear')).on(error=lambda e: e)),
+            MatchesException(ValueError('oh dear')))

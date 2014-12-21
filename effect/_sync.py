@@ -1,6 +1,9 @@
 # -*- test-case-name: effect.test_sync -*-
-from ._base import perform
+
 import six
+import sys
+
+from ._base import perform
 
 
 class NotSynchronousError(Exception):
@@ -28,3 +31,19 @@ def sync_perform(dispatcher, effect):
     else:
         raise NotSynchronousError("Performing %r was not synchronous!"
                                   % (effect,))
+
+
+def sync_performer(f):
+    """
+    A decorator for performers that return a value synchronously.
+
+    The returned function accepts an intent and a box, and the wrapped
+    function will be called with only the intent. The result of the
+    function will be provided as the result to the box.
+    """
+    def inner(dispatcher, intent, box):
+        try:
+            box.succeed(f(dispatcher, intent))
+        except:
+            box.fail(sys.exc_info())
+    return inner
