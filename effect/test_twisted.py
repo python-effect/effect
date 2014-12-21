@@ -12,7 +12,7 @@ from twisted.internet.defer import succeed, fail
 from twisted.internet.task import Clock
 
 from . import Effect, parallel, ConstantIntent, Delay
-from .twisted import perform, twisted_dispatcher, exc_info_to_failure
+from .twisted import deferred_performer, perform, exc_info_to_failure
 from .test_effect import SelfContainedIntent, ErrorIntent
 
 
@@ -56,7 +56,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         result of the Effect.
         """
         e = Effect(ConstantIntent("foo"))
-        d = perform(None, e)
+        d = perform(e)
         self.assertEqual(self.successResultOf(d), 'foo')
 
     def test_perform_failure(self):
@@ -112,7 +112,36 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         # without a traceback.
         self.assertIs(result[1][2], None)
 
+        
+class DeferredPerformerTests(SynchronousTestCase, TestCase):
+    """Tests for :func:`deferred_performer`."""
 
+    skip = None  # Horrible hack to make testtools play with trial...
+
+    def test_deferred_performer(self):
+        """
+        """
+        deferred = succeed('foo')
+        e = Effect('meaningless').on(success=lambda x: ('success', x))
+        dispatcher = lambda i: deferred_performer(lambda dispatcher, intent: deferred)
+        result = perform(dispatcher, e)
+        self.assertEqual(self.successResultOf(result), ('success', 'foo'))
+
+    def test_deferred_performer_failure(self):
+        """
+        A failing Deferred causes error handlers to be called with an exception
+        tuple based on the failure.
+        """
+        deferred = fail(ValueError('foo'))
+        e = Effect('meaningless').on(error=lambda e: ('error', e))
+        dispatcher = lambda i: deferred_performer(lambda dispatcher, intent: deferred)
+        result = self.successResultOf(perform(dispatcher, e))
+        self.assertThat(result,
+                         MatchesListwise([
+                             Equals('error'),
+                             MatchesException(ValueError('foo'))]))
+
+        
 class ExcInfoToFailureTests(TestCase):
     """Tests for :func:`exc_info_to_failure`."""
 

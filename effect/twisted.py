@@ -1,15 +1,14 @@
 """
 Twisted integration for the Effect library.
 
-This is largely concerned with bridging the gap between Effects and Deferreds.
+This is largely concerned with bridging the gap between Effects and Deferreds,
+and also implementing Twisted-specific performers for standard Intents.
+
+The most important functions here are :func:`perform`,
+:func:`make_twisted_dispatcher`, and :func:`deferred_performer`.
 
 Note that the core effect library does *not* depend on Twisted, but this module
 does.
-
-The main useful thing you should be concerned with is the :func:`perform`
-function, which is like effect.perform except that it returns a Deferred with
-the final result, and also sets up Twisted/Deferred specific effect handling
-by using its default effect dispatcher, twisted_dispatcher.
 """
 
 from __future__ import absolute_import
@@ -22,7 +21,9 @@ from twisted.internet.defer import Deferred, maybeDeferred, gatherResults
 from twisted.python.failure import Failure
 from twisted.internet.task import deferLater
 
-from . import dispatch_method, perform as base_perform, Delay
+from ._base import perform as base_perform
+from . import Delay
+from .dispatcher import TypeDispatcher
 from effect import ParallelEffects
 
 
@@ -33,62 +34,67 @@ def deferred_to_box(d, box):
     d.addCallbacks(box.succeed, lambda f: box.fail((f.type, f.value, f.tb)))
 
 
-def twisted_dispatcher(reactor, intent, box):
+def make_twisted_dispatcher(reactor):
     """
-    Very similar to :func:`effect.default_dispatcher`, with two differences:
-
-    - Deferred results from effect handlers are used to provide the effect
-      results
-    - parallel intents are handled with :func:`perform_parallel`.
+    Create a dispatcher that knows how to perform certain built-in Intents
+    with Twisted-specific implementations.
     """
-    # TODO: Allow Twisted-specific effect performers to have the reactor passed
-    #       to them. ALTERNATIVELY, rely on application writers to curry in
-    #       the reactor they desire to their effect performers...
-    dispatcher = partial(twisted_dispatcher, reactor)
-    if type(intent) is ParallelEffects:
-        func = partial(perform_parallel, intent, reactor)
-    elif type(intent) is Delay:
-        func = partial(perform_delay, intent, reactor)
-    else:
-        func = partial(dispatch_method, intent, dispatcher)
+    return TypedDispatcher({
+        ParallelEffects: deferred_performer(perform_parallel),
+        Delay: deferred_performer(partial(perform_delay, reactor)),
+    })
 
-    try:
-        result = func()
-    except:
-        box.fail(sys.exc_info())
-    else:
-        if isinstance(result, Deferred):
-            deferred_to_box(result, box)
+
+def deferred_performer(f):
+    """
+    A decorator for performers that return Deferreds.
+
+    The wrapped function is expected to take a dispatcher and an intent (and 
+    not a box), and may return a Deferred. This decorator deals with putting
+    the Deferred's result into the box.
+    """
+    def inner(dispatcher, intent, box):
+        try:
+            result = f(dispatcher, intent)
+        except:
+            box.fail(sys.exc_info())
         else:
-            box.succeed(result)
+            if isinstance(result, Deferred):
+                deferred_to_box(result, box)
+            else:
+                box.succeed(result)
+    return inner
 
 
-def perform_parallel(parallel, reactor):
+@deferred_performer
+def perform_parallel(dispatcher, parallel):
     """
-    Perform a ParallelEffects intent by using the Deferred gatherResults
-    function.
+    Perform a :obj:`ParallelEffects` intent by using Twisted's
+        :func:`twisted.internet.defer.gatherResults`.
     """
     return gatherResults(
-        [maybeDeferred(perform, reactor, e, dispatcher=twisted_dispatcher)
-         for e in parallel.effects])
+        map(partial(maybeDeferred, perform, dispatcher), parallel.effects))
 
 
-def perform_delay(delay, reactor):
+@deferred_performer
+def perform_delay(reactor, dispatcher, delay):
+    """
+    Perform a :obj:`Delay` with Twisted's
+        :func:`twisted.internet.task.deferLater`.
+    """
     return deferLater(reactor, delay.delay, lambda: None)
 
 
-def perform(reactor, effect, dispatcher=twisted_dispatcher):
+def perform(dispatcher, effect):
     """
-    Perform an effect, handling Deferred results and returning a Deferred
-    that will fire with the effect's ultimate result.
-
-    Defaults to using the twisted_dispatcher as the dispatcher.
+    Perform an effect, returning a Deferred that will fire with the effect's
+    ultimate result.
     """
     d = Deferred()
     eff = effect.on(
         success=d.callback,
         error=lambda e: d.errback(exc_info_to_failure(e)))
-    base_perform(eff, dispatcher=partial(dispatcher, reactor))
+    base_perform(dispatcher, eff)
     return d
 
 
