@@ -6,6 +6,7 @@ import sys
 import traceback
 
 from testtools import TestCase
+from testtools.matchers import MatchesException, MatchesListwise
 
 from ._base import (Effect, perform, NoPerformerFoundError)
 
@@ -71,7 +72,10 @@ class EffectPerformTests(TestCase):
         intent = lambda box: box.fail(
             (ValueError, ValueError('dispatched'), None))
         perform(func_dispatcher, Effect(intent).on(error=calls.append))
-        self.assertEqual(calls, [(ValueError, ValueError('dispatched'), None)])
+        self.assertThat(
+            calls,
+            MatchesListwise([
+                MatchesException(ValueError('dispatched'))]))
 
     def test_effects_returning_effects(self):
         """
