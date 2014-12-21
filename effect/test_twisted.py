@@ -64,7 +64,7 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         result of the Effect.
         """
         e = Effect(ConstantIntent("foo"))
-        d = perform(e)
+        d = perform(_dispatcher(None), e)
         self.assertEqual(self.successResultOf(d), 'foo')
 
     def test_perform_failure(self):
@@ -72,53 +72,11 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         effect.twisted.perform fails the Deferred it returns if the ultimate
         result of the Effect is an exception.
         """
-        e = Effect(ErrorIntent())
-        d = perform(None, e)
+        e = Effect(ErrorIntent(ValueError('oh dear')))
+        d = perform(_dispatcher(None), e)
         f = self.failureResultOf(d)
         self.assertEqual(f.type, ValueError)
         self.assertEqual(str(f.value), 'oh dear')
-
-    def test_dispatcher(self):
-        """
-        The twisted dispatcher passes the twisted dispatcher to the
-        handle_effect methods, in case the effects need to run more effects.
-        """
-        e = Effect(SelfContainedIntent())
-        d = perform("reactor", e)
-        result = self.successResultOf(d)
-        # this is hella white-box
-        self.assertEqual(result[0], 'Self-result')
-        self.assertIs(type(result[1]), partial)
-        self.assertEqual(result[1].args, ('reactor',))
-        self.assertEqual(result[1].func, twisted_dispatcher)
-
-    def test_deferred_effect(self):
-        """
-        When an Effect handler returns a Deferred, the Deferred result is
-        passed to the first effect callback.
-        """
-        d = succeed('foo')
-        e = Effect(ConstantIntent(d)).on(success=lambda x: ('success', x))
-        result = perform(None, e)
-        self.assertEqual(self.successResultOf(result),
-                         ('success', 'foo'))
-
-    def test_failing_deferred_effect(self):
-        """
-        A failing Deferred returned from an effect causes error handlers to be
-        called with an exception tuple based on the failure.
-        """
-        d = fail(ValueError('foo'))
-        e = Effect(ConstantIntent(d)).on(error=lambda e: ('error', e))
-        result = self.successResultOf(perform(None, e))
-        self.assertThat(
-            result,
-            MatchesListwise([
-                Equals('error'),
-                MatchesException(ValueError('foo'))]))
-        # The traceback element is None, because we constructed the failure
-        # without a traceback.
-        self.assertIs(result[1][2], None)
 
         
 class DeferredPerformerTests(SynchronousTestCase, TestCase):
