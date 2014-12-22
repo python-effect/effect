@@ -9,7 +9,9 @@ install:
     - pip install six
     - pip install discover
     - pip install 'characteristic>=14.0.0'
+    - pip install sphinx
 script:
     - make lint
     - python -mtesttools.run discover --list
     - python -mtesttools.run discover
+    - make doc
