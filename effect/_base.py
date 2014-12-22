@@ -7,7 +7,7 @@ from functools import partial
 
 from characteristic import attributes
 
-from .continuation import trampoline
+from ._continuation import trampoline
 
 
 @attributes([
