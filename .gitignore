@@ -3,3 +3,5 @@ _trial_temp
 build/
 effect.egg-info/
 dist/
+docs/source/api
+docs/source/modules.rst
