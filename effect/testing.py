@@ -49,7 +49,7 @@ def resolve_effect(effect, result, is_error=False):
         next_eff = resolve_effect(next_eff, second_result)
         result = resolve_effect(next_eff, third_result)
 
-    Equivalently, if you don't care about intermediate results:
+    Equivalently, if you don't care about intermediate results::
 
         result = resolve_effect(
             resolve_effect(

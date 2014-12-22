@@ -15,8 +15,8 @@ Here's a quick tour of the Effect library:
   executes the Intent and puts the result in the Box. For example, the
   performer for ReadLine() would read a line from STDIN.
 - Dispatcher: A callable that takes an Intent and finds the Performer that can
-  execute it (or None). See :module:`effect.dispatcher` for handy pre-built
-  dispatchers.
+  execute it (or None). See :obj:`TypeDispatcher` and :obj:`ComposedDispatcher`
+  for handy pre-built dispatchers.
 - Box: An object that has 'succeed' and 'fail' methods for providing the result
   of an execution (potentially asynchronously). Usually you don't need to care
   about this, if you define your performers with :func:`effect.sync_performer`
