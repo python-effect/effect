@@ -39,7 +39,7 @@ def parallel(effects):
 @attributes(['delay'], apply_with_init=False, apply_immutable=True)
 class Delay(object):
     """
-    An effect which represents a delay in time.
+    An intent which represents a delay in time.
 
     When performed, the specified delay will pass and then the effect will
     result in None.
