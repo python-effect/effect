@@ -99,10 +99,10 @@ class DeferredPerformerTests(TestCase):
         and hooks up its Deferred result to the box.
         """
         deferred = succeed('foo')
-        e = Effect('meaningless').on(success=lambda x: ('success', x))
+        eff = Effect('meaningless').on(success=lambda x: ('success', x))
         dispatcher = lambda i: deferred_performer(
             lambda dispatcher, intent: deferred)
-        result = perform(dispatcher, e)
+        result = perform(dispatcher, eff)
         self.assertEqual(self.successResultOf(result), ('success', 'foo'))
 
     def test_deferred_performer_failure(self):
@@ -111,16 +111,31 @@ class DeferredPerformerTests(TestCase):
         tuple based on the failure.
         """
         deferred = fail(ValueError('foo'))
-        e = Effect('meaningless').on(error=lambda e: ('error', e))
+        eff = Effect('meaningless').on(error=lambda e: ('error', e))
         dispatcher = lambda i: deferred_performer(
             lambda dispatcher, intent: deferred)
-        result = self.successResultOf(perform(dispatcher, e))
+        result = self.successResultOf(perform(dispatcher, eff))
         self.assertThat(result,
                          MatchesListwise([
                              Equals('error'),
                              MatchesException(ValueError('foo'))]))
 
-        
+    def test_instance_method_performer(self):
+        """The @deferred_performer decorator works on instance methods."""
+        eff = Effect('meaningless')
+
+        class PerformerContainer(object):
+            @deferred_performer
+            def performer(self, dispatcher, intent):
+                return (self, dispatcher, intent)
+
+        container = PerformerContainer()
+
+        dispatcher = lambda i: container.performer
+        result = self.successResultOf(perform(dispatcher, eff))
+        self.assertEqual(result, (container, dispatcher, 'meaningless'))
+
+
 class ExcInfoToFailureTests(TestCase):
     """Tests for :func:`exc_info_to_failure`."""
 

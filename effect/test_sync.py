@@ -12,7 +12,7 @@ def func_dispatcher(intent):
     return performer
 
 
-class SyncPerformtTests(TestCase):
+class SyncPerformTests(TestCase):
     """Tests for :func:`sync_perform`."""
 
     def test_sync_perform_effect_function_dispatch(self):
@@ -49,6 +49,7 @@ class SyncPerformerTests(TestCase):
     """
 
     def test_success(self):
+        """Return value of the performer becomes the result of the Effect."""
         @sync_performer
         def succeed(dispatcher, intent):
             return intent
@@ -58,6 +59,9 @@ class SyncPerformerTests(TestCase):
         self.assertEqual(result, "foo")
 
     def test_failure(self):
+        """
+        Errors are caught and cause the effect to fail with the exception info.
+        """
         @sync_performer
         def fail(dispatcher, intent):
             raise intent
@@ -67,3 +71,19 @@ class SyncPerformerTests(TestCase):
             sync_perform(dispatcher,
                          Effect(ValueError('oh dear')).on(error=lambda e: e)),
             MatchesException(ValueError('oh dear')))
+
+
+    def test_instance_method_performer(self):
+        """The decorator works on instance methods."""
+        eff = Effect('meaningless')
+
+        class PerformerContainer(object):
+            @sync_performer
+            def performer(self, dispatcher, intent):
+                return (self, dispatcher, intent)
+
+        container = PerformerContainer()
+
+        dispatcher = lambda i: container.performer
+        result = sync_perform(dispatcher, eff)
+        self.assertEqual(result, (container, dispatcher, 'meaningless'))

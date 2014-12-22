@@ -1,5 +1,9 @@
 # -*- test-case-name: effect.test_sync -*-
 
+"""
+Tools for dealing with Effects synchronously.
+"""
+
 import six
 import sys
 
@@ -10,7 +14,7 @@ class NotSynchronousError(Exception):
     """Performing an effect did not immediately return a value."""
 
 
-def sync_perform(dispatcher, effect):
+def sync_perform(dispatcher, effect, recurse_effects=True):
     """
     Perform an effect, and return its ultimate result. If the final result is
     an error, the exception will be raised. This is useful for testing, and
@@ -23,7 +27,7 @@ def sync_perform(dispatcher, effect):
     successes = []
     errors = []
     effect = effect.on(success=successes.append, error=errors.append)
-    perform(dispatcher, effect)
+    perform(dispatcher, effect, recurse_effects=recurse_effects)
     if successes:
         return successes[0]
     elif errors:
@@ -37,13 +41,15 @@ def sync_performer(f):
     """
     A decorator for performers that return a value synchronously.
 
-    The returned function accepts an intent and a box, and the wrapped
-    function will be called with only the intent. The result of the
-    function will be provided as the result to the box.
+    The wrapped function is expected to take a dispatcher and an intent (and
+    not a box), and should return or raise normally. The decorator deals with
+    putting the result or exception into the box.
     """
-    def inner(dispatcher, intent, box):
+    def inner(*args):
+        box = args[-1]
+        pass_args = args[:-1]
         try:
-            box.succeed(f(dispatcher, intent))
+            box.succeed(f(*pass_args))
         except:
             box.fail(sys.exc_info())
     return inner

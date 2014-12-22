@@ -15,7 +15,7 @@ does.
 
 from __future__ import absolute_import
 
-from functools import partial
+from functools import partial, wraps
 import sys
 import warnings
 
@@ -74,9 +74,11 @@ def deferred_performer(f):
     not a box), and may return a Deferred. This decorator deals with putting
     the Deferred's result into the box.
     """
-    def inner(dispatcher, intent, box):
+    def inner(*args):
+        box = args[-1]
+        pass_args = args[:-1]
         try:
-            result = f(dispatcher, intent)
+            result = f(*pass_args)
         except:
             box.fail(sys.exc_info())
         else:
