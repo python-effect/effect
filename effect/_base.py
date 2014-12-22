@@ -15,9 +15,8 @@ from .continuation import trampoline
 ], apply_with_init=False, apply_immutable=True)
 class Effect(object):
     """
-    Wrap an object that describes how to perform some effect (called an
-    "intent"), and allow attaching callbacks to be run when the effect
-    is complete.
+    Take an object that describes a desired effect (called an "Intent"), and
+    allow binding callbacks to be called with the result of the effect.
 
     Effects can be performed with :func:`perform`.
 
@@ -37,9 +36,7 @@ class Effect(object):
 
     def on(self, success=None, error=None):
         """
-        Return a new Effect that will invoke either the success or error
-        callbacks provided based on whether this Effect completes sucessfully
-        or in error.
+        Return a new Effect with the given success and/or error callbacks bound.
         """
         return Effect(self.intent,
                       callbacks=self.callbacks + [(success, error)])
@@ -70,7 +67,7 @@ def guard(f, *args, **kwargs):
     Run a function.
 
     Return (is_error, result), where is_error is a boolean indicating whether
-    it raised an exception. In that case result will be sys.exc_info().
+    it raised an exception. In that case result will be ``sys.exc_info()``.
     """
     try:
         return (False, f(*args, **kwargs))
@@ -84,32 +81,30 @@ class NoPerformerFoundError(Exception):
 
 def perform(dispatcher, effect, recurse_effects=True):
     """
-    Perform an effect and invoke callbacks associated with it.
+    Perform an effect and invoke callbacks bound to it.
 
     The dispatcher will be passed the intent, and is expected to return a
-    ``performer``, which is a function taking a dispatcher, the intent, and a
-    box, and returning nothing. See :module:`effect.dispatcher` for some
-    implementations of dispatchers, and :obj:`effect.base_dispatcher` for a
-    dispatcher supporting core intents like :obj:`ConstantIntent` and so forth.
+    ""performer"". See :module:`effect.dispatcher` for some implementations of
+    dispatchers, and :obj:`effect.base_dispatcher` for a dispatcher supporting
+    basic intents like :obj:`ConstantIntent` et al.
 
-    The performer will then be invoked with two arguments: the dispatcher and
-    the box.
+    The performer will then be invoked with the dispatcher, the intent, and
+    the box, and should perform the desired effect.
 
     The dispatcher is passed so the performer can make recursive calls to
     perform, if it needs to perform other effects (see :func:`parallel` and
     :func:`perform_parallel` for an example of this).
 
     The box is an object that lets the performer provide the result (optionally
-    asynchronously). See :func:`_Box.succeed` and :func:`_Box.fail`. Often
+    asynchronously). See :func:`_Box.succeed` and :func:`_Box.fail`. Usually
     you can ignore the box by using a decorator like :func:`sync_performer` or
     :func:`effect.twisted.deferred_performer`.
 
-    If a callback of an Effect ``a`` returns an Effect ``b``, ``b`` will be
-    performed immediately, and its result will be passed on to the next
-    callback.
+    Callbacks can return Effects, and those effects will immediately performed.
+    The result of the returned Effect will be passed to the next callback.
 
     Note that this function does _not_ return the final result of the effect.
-    You may instead want to use :func:`sync_perform` or
+    You may instead want to use :func:`effect.sync_perform` or
     :func:`effect.twisted.perform`.
 
     :returns: None
