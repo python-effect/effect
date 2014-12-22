@@ -15,6 +15,8 @@ script:
     - python -mtesttools.run discover
 
 notifications:
-  irc: "chat.freenode.net#python-effect"
-  skip_join: true
-  use_notice: true
+  irc:
+    channels:
+    - "chat.freenode.net#python-effect"
+    skip_join: true
+    use_notice: true
