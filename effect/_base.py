@@ -82,7 +82,7 @@ class NoPerformerFoundError(Exception):
     """Raised when a performer for an intent couldn't be found."""
 
 
-def perform(dispatcher, effect):
+def perform(dispatcher, effect, recurse_effects=True):
     """
     Perform an effect and invoke callbacks associated with it.
 
@@ -117,7 +117,7 @@ def perform(dispatcher, effect):
     def _run_callbacks(bouncer, chain, result):
         is_error, value = result
 
-        if type(value) is Effect:
+        if recurse_effects and type(value) is Effect:
             bouncer.bounce(
                 _perform,
                 Effect(value.intent, callbacks=value.callbacks + chain))

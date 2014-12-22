@@ -6,7 +6,7 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Equals, MatchesException,
                                 raises)
 
-from . import Effect, ConstantIntent, FuncIntent, ErrorIntent, parallel
+from . import Effect, ConstantIntent, FuncIntent, ErrorIntent, parallel, base_dispatcher
 from .testing import resolve_effect, fail_effect, resolve_stubs, StubIntent
 
 
@@ -141,12 +141,13 @@ class ResolveStubsTests(TestCase):
 
     def test_resolve_stubs(self):
         """
-        resolve_stubs automatically performs StubIntent.
+        resolve_stubs automatically performs intents that are wrapped in
+        :class:`StubIntent`.
         """
         eff = Constant("foo").on(
             success=lambda r: Error(RuntimeError("foo")).on(
                 error=lambda e: Func(lambda: "heyo")))
-        self.assertEqual(resolve_stubs(eff), "heyo")
+        self.assertEqual(resolve_stubs(base_dispatcher, eff), "heyo")
 
     def test_non_test_intent(self):
         """
@@ -154,7 +155,7 @@ class ResolveStubsTests(TestCase):
         """
         bare_effect = Effect(object())
         eff = Constant("foo").on(success=lambda r: bare_effect)
-        result_eff = resolve_stubs(eff)
+        result_eff = resolve_stubs(base_dispatcher, eff)
         self.assertIs(result_eff.intent, bare_effect.intent)
         self.assertEqual(result_eff.callbacks, [])
 
@@ -167,12 +168,12 @@ class ResolveStubsTests(TestCase):
         and had to be fixed.)
         """
         eff = Constant("foo").on(success=lambda r: None["foo"])
-        self.assertRaises(TypeError, resolve_stubs, eff)
+        self.assertRaises(TypeError, resolve_stubs, base_dispatcher, eff)
 
     def test_parallel_stubs(self):
         """Parallel effects are recursively resolved."""
         p_eff = parallel([Constant(1), Constant(2)])
-        self.assertEqual(resolve_stubs(p_eff), [1, 2])
+        self.assertEqual(resolve_stubs(base_dispatcher, p_eff), [1, 2])
 
     def test_parallel_non_stubs(self):
         """
@@ -182,7 +183,7 @@ class ResolveStubsTests(TestCase):
         p_eff = parallel(
             [Constant(1), Effect(ConstantIntent(2))]
         ).on(lambda x: 0)
-        self.assertEqual(resolve_stubs(p_eff), p_eff)
+        self.assertEqual(resolve_stubs(base_dispatcher, p_eff), p_eff)
 
     def test_parallel_stubs_with_callbacks(self):
         """
@@ -190,7 +191,7 @@ class ResolveStubsTests(TestCase):
         (bugfix test)
         """
         p_eff = parallel([Constant(1), Constant(2)]).on(lambda r: r[0])
-        self.assertEqual(resolve_stubs(p_eff), 1)
+        self.assertEqual(resolve_stubs(base_dispatcher, p_eff), 1)
 
     def test_parallel_stubs_with_callbacks_returning_effects(self):
         """
@@ -199,7 +200,7 @@ class ResolveStubsTests(TestCase):
         """
         p_eff = parallel([Constant(1), Constant(2)]).on(
             lambda r: Constant(r[0] + 1))
-        self.assertEqual(resolve_stubs(p_eff), 2)
+        self.assertEqual(resolve_stubs(base_dispatcher, p_eff), 2)
 
 
 def _raise(e):

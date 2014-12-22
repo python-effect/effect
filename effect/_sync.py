@@ -21,8 +21,8 @@ def sync_perform(dispatcher, effect, recurse_effects=True):
     also if you're using blocking effect implementations.
 
     This requires that the effect (and all effects returned from any of its
-    callbacks) to be synchronous. If this is not the case, NotSynchronousError
-    will be raised.
+    callbacks) be synchronous. If the result is not available immediately,
+    :class:`NotSynchronousError` will be raised.
     """
     successes = []
     errors = []
