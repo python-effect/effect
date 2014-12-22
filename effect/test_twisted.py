@@ -21,7 +21,7 @@ from .twisted import (
     make_twisted_dispatcher,
     perform)
 from ._intents import base_dispatcher, ConstantIntent, ErrorIntent
-from .dispatcher import TypeDispatcher, ComposedDispatcher
+from ._dispatcher import TypeDispatcher, ComposedDispatcher
 
 
 def _dispatcher(reactor):

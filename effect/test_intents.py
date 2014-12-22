@@ -4,7 +4,7 @@ from testtools import TestCase
 
 from ._base import Effect
 from ._sync import sync_perform
-from .dispatcher import TypeDispatcher
+from ._dispatcher import TypeDispatcher
 
 from ._intents import (
     ConstantIntent, perform_constant,

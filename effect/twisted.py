@@ -27,7 +27,7 @@ from twisted.internet.task import deferLater
 
 from ._base import perform as base_perform
 from . import Delay
-from .dispatcher import TypeDispatcher
+from ._dispatcher import TypeDispatcher
 from effect import ParallelEffects
 
 

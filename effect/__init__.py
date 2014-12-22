@@ -47,6 +47,7 @@ from ._intents import (
     Delay, ParallelEffects, parallel,
     ConstantIntent, ErrorIntent, FuncIntent,
     base_dispatcher)
+from ._dispatcher import ComposedDispatcher, TypeDispatcher
 
 __all__ = [
     "Effect", "perform", "NoPerformerFoundError",
@@ -54,4 +55,5 @@ __all__ = [
     "Delay", "ParallelEffects", "parallel",
     "ConstantIntent", "ErrorIntent", "FuncIntent",
     "base_dispatcher",
+    "TypeDispatcher", "ComposedDispatcher",
 ]

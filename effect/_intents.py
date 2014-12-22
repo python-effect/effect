@@ -5,7 +5,7 @@ from characteristic import attributes
 
 from ._base import Effect
 from ._sync import sync_performer
-from .dispatcher import TypeDispatcher
+from ._dispatcher import TypeDispatcher
 
 
 @attributes(['effects'], apply_with_init=False, apply_immutable=True)
