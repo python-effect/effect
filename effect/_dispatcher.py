@@ -2,7 +2,7 @@
 Dispatcher!
 """
 
-from itertools import ifilter
+from six.moves import filter
 from characteristic import attributes
 
 
@@ -36,4 +36,4 @@ class ComposedDispatcher(object):
         self.dispatchers = dispatchers
 
     def __call__(self, intent):
-        return next(ifilter(None, (d(intent) for d in self.dispatchers)), None)
+        return next(filter(None, (d(intent) for d in self.dispatchers)), None)

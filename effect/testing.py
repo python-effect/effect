@@ -95,7 +95,7 @@ def resolve_stub(real_dispatcher, effect):
     chains of stub effects.
     """
     def stub_dispatcher(i):
-	return lambda d, _, box: real_dispatcher(i.intent)(d, i.intent, box)
+        return lambda d, _, box: real_dispatcher(i.intent)(d, i.intent, box)
 
     if type(effect.intent) is StubIntent:
         return sync_perform(stub_dispatcher, effect, recurse_effects=False)

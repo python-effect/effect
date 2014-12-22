@@ -213,12 +213,12 @@ class ResolveStubsTests(TestCase):
         self.assertEqual(resolve_stubs(base_dispatcher, p_eff), 2)
 
     def test_parallel_stubs_with_callbacks_on_elements_returning_non_stubs(self):
-	"""
-	When an element of a parallel effect returns a non-stub effect, it will
-	NOT be performed.
-	"""
-	p_eff = parallel([Constant(1).on(lambda r: Effect(ConstantIntent(2)))])
-	self.assertEqual(resolve_stubs(base_dispatcher, p_eff),
+        """
+        When an element of a parallel effect returns a non-stub effect, it will
+        NOT be performed.
+        """
+        p_eff = parallel([Constant(1).on(lambda r: Effect(ConstantIntent(2)))])
+        self.assertEqual(resolve_stubs(base_dispatcher, p_eff),
                          [Effect(ConstantIntent(2))])
 
 def _raise(e):
