@@ -15,7 +15,11 @@ import operator
 import json
 from functools import reduce
 
-from effect import Effect, parallel, sync_performer, ComposedDispatcher, TypeDispatcher
+from effect import (
+    ComposedDispatcher,
+    Effect,
+    TypeDispatcher,
+    parallel)
 from effect.twisted import perform, make_twisted_dispatcher
 from .http_example import HTTPRequest, treq_http_request
 from .readline_example import ReadLine, stdin_read_line

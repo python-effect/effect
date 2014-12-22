@@ -14,4 +14,3 @@ class ReadLine(object):
 def stdin_read_line(dispatcher, readline):
     """Perform a :obj:`ReadLine` intent by reading from STDIN."""
     return input(readline.prompt)
-
