@@ -72,7 +72,6 @@ class SyncPerformerTests(TestCase):
                          Effect(ValueError('oh dear')).on(error=lambda e: e)),
             MatchesException(ValueError('oh dear')))
 
-
     def test_instance_method_performer(self):
         """The decorator works on instance methods."""
         eff = Effect('meaningless')

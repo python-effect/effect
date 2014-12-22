@@ -12,8 +12,8 @@ Here's a quick tour of the Effect library:
 - :obj:`Effect`: An object which binds callbacks to receive the result of
   performing an intent.
 - Performer: A callable that takes the Dispatcher, an Intent, and a Box. It
-  executes the Intent and puts the result in the Box. For example, the performer
-  for ReadLine() would read a line from STDIN.
+  executes the Intent and puts the result in the Box. For example, the
+  performer for ReadLine() would read a line from STDIN.
 - Dispatcher: A callable that takes an Intent and finds the Performer that can
   execute it (or None). See :module:`effect.dispatcher` for handy pre-built
   dispatchers.
@@ -24,9 +24,9 @@ Here's a quick tour of the Effect library:
 
 There's a few main things you need to do to use Effect.
 
-- Define some intents to describe your side-effects (or use a library containing
-  intents that already exist). For example, an ``HTTPRequest`` intent that has
-  'method', 'url', etc attributes.
+- Define some intents to describe your side-effects (or use a library
+  containing intents that already exist). For example, an ``HTTPRequest``
+  intent that has 'method', 'url', etc attributes.
 - Write your application code to create effects like
   ``Effect(HTTPRequest(...))`` and attach callbacks to them with
   :func:`Effect.on`.

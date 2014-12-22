@@ -2,8 +2,6 @@ from __future__ import absolute_import
 
 import sys
 
-from functools import partial
-
 from characteristic import attributes
 
 from testtools import TestCase
@@ -13,15 +11,20 @@ from twisted.trial.unittest import SynchronousTestCase
 from twisted.internet.defer import succeed, fail
 from twisted.internet.task import Clock
 
-from . import Effect, parallel, ConstantIntent, Delay
+from ._base import Effect
+from ._intents import (
+    ConstantIntent,
+    Delay,
+    ErrorIntent,
+    base_dispatcher,
+    parallel)
+from ._dispatcher import ComposedDispatcher
 from .twisted import (
     deferred_performer,
     exc_info_to_failure,
     legacy_dispatcher,
     make_twisted_dispatcher,
     perform)
-from ._intents import base_dispatcher, ConstantIntent, ErrorIntent
-from ._dispatcher import TypeDispatcher, ComposedDispatcher
 
 
 def _dispatcher(reactor):
@@ -33,7 +36,7 @@ def _dispatcher(reactor):
 
 class TestCase(TestCase, SynchronousTestCase):
 
-    skip = None # horrible hack to make trial cooperate with testtools
+    skip = None  # horrible hack to make trial cooperate with testtools
 
 
 class ParallelTests(TestCase):
@@ -89,7 +92,7 @@ class TwistedPerformTests(TestCase):
         self.assertEqual(f.type, ValueError)
         self.assertEqual(str(f.value), 'oh dear')
 
-        
+
 class DeferredPerformerTests(TestCase):
     """Tests for :func:`deferred_performer`."""
 
@@ -116,9 +119,9 @@ class DeferredPerformerTests(TestCase):
             lambda dispatcher, intent: deferred)
         result = self.successResultOf(perform(dispatcher, eff))
         self.assertThat(result,
-                         MatchesListwise([
-                             Equals('error'),
-                             MatchesException(ValueError('foo'))]))
+                        MatchesListwise([
+                            Equals('error'),
+                            MatchesException(ValueError('foo'))]))
 
     def test_instance_method_performer(self):
         """The @deferred_performer decorator works on instance methods."""
@@ -208,9 +211,9 @@ class LegacyDispatcherTests(TestCase):
         d = perform(legacy_dispatcher, eff)
         result = self.successResultOf(d)
         self.assertThat(result,
-                         MatchesListwise([
-                             Equals('error'),
-                             MatchesException(ValueError('oh dear'))]))
+                        MatchesListwise([
+                            Equals('error'),
+                            MatchesException(ValueError('oh dear'))]))
 
     def test_performer_async_exception(self):
         """

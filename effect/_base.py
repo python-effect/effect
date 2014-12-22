@@ -36,7 +36,8 @@ class Effect(object):
 
     def on(self, success=None, error=None):
         """
-        Return a new Effect with the given success and/or error callbacks bound.
+        Return a new Effect with the given success and/or error callbacks
+        bound.
 
         The result of the Effect will be passed to the first callback. Any
         callbacks added afterwards will receive the result of the previous
@@ -44,8 +45,8 @@ class Effect(object):
         callback, and exceptions are passed to the next ``error`` callback
         as a ``sys.exc_info()`` tuple.
 
-        If a callback returns an :obj:`Effect`, the result of that :obj:`Effect`
-        will be passed to the next callback.
+        If a callback returns an :obj:`Effect`, the result of that
+        :obj:`Effect` will be passed to the next callback.
         """
         return Effect(self.intent,
                       callbacks=self.callbacks + [(success, error)])

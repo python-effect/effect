@@ -6,7 +6,13 @@ from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Equals, MatchesException,
                                 raises)
 
-from . import Effect, ConstantIntent, FuncIntent, ErrorIntent, parallel, base_dispatcher
+from . import (
+    ConstantIntent,
+    Effect,
+    ErrorIntent,
+    FuncIntent,
+    base_dispatcher,
+    parallel)
 from .testing import resolve_effect, fail_effect, resolve_stubs, StubIntent
 
 
@@ -212,7 +218,7 @@ class ResolveStubsTests(TestCase):
             lambda r: Constant(r[0] + 1))
         self.assertEqual(resolve_stubs(base_dispatcher, p_eff), 2)
 
-    def test_parallel_stubs_with_callbacks_on_elements_returning_non_stubs(self):
+    def test_parallel_stubs_with_element_callbacks_returning_non_stubs(self):
         """
         When an element of a parallel effect returns a non-stub effect, it will
         NOT be performed.
@@ -220,6 +226,7 @@ class ResolveStubsTests(TestCase):
         p_eff = parallel([Constant(1).on(lambda r: Effect(ConstantIntent(2)))])
         self.assertEqual(resolve_stubs(base_dispatcher, p_eff),
                          [Effect(ConstantIntent(2))])
+
 
 def _raise(e):
     raise e

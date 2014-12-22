@@ -15,7 +15,7 @@ does.
 
 from __future__ import absolute_import
 
-from functools import partial, wraps
+from functools import partial
 import sys
 import warnings
 
@@ -56,14 +56,16 @@ def legacy_dispatcher(intent):
     DEPRECATED.
 
     A dispatcher that supports the old 'perform_effect' methods on intent
-    objects. We recommend specifying your performers in a :obj:`TypeDispatcher`.
+    objects. We recommend specifying your performers in a
+    :obj:`TypeDispatcher`.
     """
     method = getattr(intent, 'perform_effect', None)
     if method is not None:
         warnings.warn(
             "Intent %r has a deprecated perform_effect method." % (intent,),
             DeprecationWarning)
-        return deferred_performer(lambda dispatcher, intent: method(dispatcher))
+        return deferred_performer(
+            lambda dispatcher, intent: method(dispatcher))
 
 
 def deferred_performer(f):
