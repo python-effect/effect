@@ -7,16 +7,30 @@ Effect
 Effect is a library for helping you write purely functional code by
 isolating the effects (that is, IO or state manipulation) in your code.
 
-You can `read the core module`_, it's pretty short.
-
-.. _`read the core module`: https://github.com/radix/effect/blob/master/effect/__init__.py
-
 
 Status: Alpha
 =============
 
 Right now Effect is in alpha, and is likely to change incompatibly. Once it's
-being used in production, I'll release a final version.
+being used in production and the API seems pretty good, a final version will be
+released.
+
+
+Authors
+=======
+
+Effect was originally written by `Christopher Armstrong`_,
+but now has contributions from the following people:
+
+.. _`Christopher Armstrong`: https://github.com/radix
+
+- `lvh`_
+- `Manish Tomar`_
+- `Tom Prince`_
+
+.. _`lvh`: https://github.com/lvh
+.. _`Manish Tomar`: https://github.com/manishtomar
+.. _`Tom Prince`: https://github.com/tomprince
 
 
 IRC
@@ -36,8 +50,6 @@ It's a number of things, depending on your perspective:
   implementation
 - a way to decouple the "intent" of an effect from the implementation, thus
   allowing alternative implementations of effects.
-
-Each of these perspectives has a section below describing that approach.
 
 Effect starts with a very simple idea: instead of having a function which
 performs side-effects (such as IO):
@@ -66,7 +78,7 @@ This function now returns an object which can later be "performed":
     def main():
         effect = get_user_name()
         effect = effect.on(success=print)
-        perform(effect)
+        perform(dispatcher, effect)
 
 This has a number of advantages. First, your unit tests for ``get_user_name``
 become simpler. You don't need to mock out or parameterize the ``raw_input``
@@ -74,10 +86,7 @@ function - you just call ``get_user_name`` and assert that it returns a ReadLine
 object with the correct 'prompt' value.
 
 Second, you can implement ReadLine in a number of different ways - it's
-possible to override the implementations of effects to do whatever you want.
-
-Third, your function is now purely functional, letting you rest easy knowing
-that you've improved the amount of quality code in the world ;-)
+possible to override the way an intent is performed to do whatever you want.
 
 For more information on how to implement the actual effect-performing code,
 and other details, see the `API documentation`_
