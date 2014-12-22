@@ -50,6 +50,9 @@ clean:
 	rm -rf $(BUILDDIR)/*
 
 html:
+# RADIX CUSTOMIZATION
+	sphinx-apidoc -o source/api ../effect ../setup.py ../examples
+# /RADIX CUSTOMIZATION
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
