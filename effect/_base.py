@@ -140,12 +140,17 @@ def perform(dispatcher, effect, recurse_effects=True):
     def _perform(bouncer, effect):
         performer = dispatcher(effect.intent)
         if performer is None:
-            raise NoPerformerFoundError(effect.intent)
+            try:
+                raise NoPerformerFoundError(effect.intent)
+            except:
+                e = sys.exc_info()
+            _run_callbacks(bouncer, effect.callbacks, (True, e))
 
-        performer(
-            dispatcher,
-            effect.intent,
-            _Box(partial(bouncer.bounce,
-                         _run_callbacks, effect.callbacks)))
+        else:
+            performer(
+                dispatcher,
+                effect.intent,
+                _Box(partial(bouncer.bounce,
+                             _run_callbacks, effect.callbacks)))
 
     trampoline(_perform, effect)

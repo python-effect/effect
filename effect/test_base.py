@@ -5,7 +5,7 @@ import traceback
 from testtools import TestCase
 from testtools.matchers import MatchesException, MatchesListwise
 
-from ._base import (Effect, perform, NoPerformerFoundError)
+from ._base import Effect, NoPerformerFoundError, perform
 
 
 class POPOIntent(object):
@@ -28,12 +28,18 @@ class EffectPerformTests(TestCase):
     def test_no_performer(self):
         """
         When a dispatcher returns None, :class:`NoPerformerFoundError` is
-        raised.
+        provided as an error to the Effect's callbacks.
         """
         dispatcher = lambda i: None
-        self.assertRaises(
-            NoPerformerFoundError,
-            perform, dispatcher, Effect(object()))
+        calls = []
+        intent = object()
+        eff = Effect(intent).on(error=calls.append)
+        perform(dispatcher, eff)
+        self.assertThat(
+            calls,
+            MatchesListwise([
+                MatchesException(NoPerformerFoundError(intent))
+            ]))
 
     def test_dispatcher(self):
         calls = []
