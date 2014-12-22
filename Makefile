@@ -12,5 +12,6 @@ upload-dist:
 
 doc:
 	rm -rf docs/build
-	cd docs; sphinx-apidoc -o source/api ../effect ../setup.py ../examples
-	cd docs; PYTHONPATH=..:$(PYTHONPATH) sphinx-build -nW -b html -d build/doctrees source build/html
+	rm -rf docs/source/api
+	cd docs; sphinx-apidoc -e -o source/api ../effect ../setup.py ../examples ../effect/test_*.py
+	cd docs; PYTHONPATH=..:$(PYTHONPATH) sphinx-build -W -b html -d build/doctrees source build/html
