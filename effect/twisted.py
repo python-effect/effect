@@ -1,3 +1,5 @@
+# -*- test-case-name: effect.test_twisted -*-
+
 """
 Twisted integration for the Effect library.
 
@@ -14,11 +16,13 @@ does.
 from __future__ import absolute_import
 
 from functools import partial
-
 import sys
+import warnings
 
 from twisted.internet.defer import Deferred, maybeDeferred, gatherResults
 from twisted.python.failure import Failure
+from twisted.python.deprecate import deprecated
+from twisted.python.versions import Version
 from twisted.internet.task import deferLater
 
 from ._base import perform as base_perform
@@ -45,11 +49,28 @@ def make_twisted_dispatcher(reactor):
     })
 
 
+@deprecated(Version('effect', 0, 1, 12),
+            "put performers in a TypedDispatcher and pass to perform")
+def legacy_dispatcher(intent):
+    """
+    DEPRECATED.
+
+    A dispatcher that supports the old 'perform_effect' methods on intent
+    objects. We recommend specifying your performers in a :obj:`TypeDispatcher`.
+    """
+    method = getattr(intent, 'perform_effect', None)
+    if method is not None:
+        warnings.warn(
+            "Intent %r has a deprecated perform_effect method." % (intent,),
+            DeprecationWarning)
+        return deferred_performer(lambda dispatcher, intent: method(dispatcher))
+
+
 def deferred_performer(f):
     """
     A decorator for performers that return Deferreds.
 
-    The wrapped function is expected to take a dispatcher and an intent (and 
+    The wrapped function is expected to take a dispatcher and an intent (and
     not a box), and may return a Deferred. This decorator deals with putting
     the Deferred's result into the box.
     """

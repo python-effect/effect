@@ -4,6 +4,8 @@ import sys
 
 from functools import partial
 
+from characteristic import attributes
+
 from testtools import TestCase
 from testtools.matchers import MatchesListwise, Equals, MatchesException
 
@@ -12,7 +14,12 @@ from twisted.internet.defer import succeed, fail
 from twisted.internet.task import Clock
 
 from . import Effect, parallel, ConstantIntent, Delay
-from .twisted import deferred_performer, perform, exc_info_to_failure, make_twisted_dispatcher
+from .twisted import (
+    deferred_performer,
+    exc_info_to_failure,
+    legacy_dispatcher,
+    make_twisted_dispatcher,
+    perform)
 from ._intents import base_dispatcher, ConstantIntent, ErrorIntent
 from .dispatcher import TypeDispatcher, ComposedDispatcher
 
@@ -24,7 +31,12 @@ def _dispatcher(reactor):
     ])
 
 
-class ParallelTests(SynchronousTestCase):
+class TestCase(TestCase, SynchronousTestCase):
+
+    skip = None # horrible hack to make trial cooperate with testtools
+
+
+class ParallelTests(TestCase):
     """Tests for :func:`parallel`."""
     def test_parallel(self):
         """
@@ -38,8 +50,9 @@ class ParallelTests(SynchronousTestCase):
         self.assertEqual(self.successResultOf(d), ['a', 'b'])
 
 
-class DelayTests(SynchronousTestCase):
-    """Tess for :class:`Delay`."""
+class DelayTests(TestCase):
+    """Tests for :class:`Delay`."""
+
     def test_delay(self):
         """
         Delay intents will cause time to pass with reactor.callLater, and
@@ -54,9 +67,7 @@ class DelayTests(SynchronousTestCase):
         self.assertEqual(called, [None])
 
 
-class TwistedPerformTests(SynchronousTestCase, TestCase):
-
-    skip = None  # Horrible hack to make testtools play with trial...
+class TwistedPerformTests(TestCase):
 
     def test_perform(self):
         """
@@ -79,17 +90,18 @@ class TwistedPerformTests(SynchronousTestCase, TestCase):
         self.assertEqual(str(f.value), 'oh dear')
 
         
-class DeferredPerformerTests(SynchronousTestCase, TestCase):
+class DeferredPerformerTests(TestCase):
     """Tests for :func:`deferred_performer`."""
-
-    skip = None  # Horrible hack to make testtools play with trial...
 
     def test_deferred_performer(self):
         """
+        @deferred_performer wraps a function taking the dispatcher and intent
+        and hooks up its Deferred result to the box.
         """
         deferred = succeed('foo')
         e = Effect('meaningless').on(success=lambda x: ('success', x))
-        dispatcher = lambda i: deferred_performer(lambda dispatcher, intent: deferred)
+        dispatcher = lambda i: deferred_performer(
+            lambda dispatcher, intent: deferred)
         result = perform(dispatcher, e)
         self.assertEqual(self.successResultOf(result), ('success', 'foo'))
 
@@ -100,7 +112,8 @@ class DeferredPerformerTests(SynchronousTestCase, TestCase):
         """
         deferred = fail(ValueError('foo'))
         e = Effect('meaningless').on(error=lambda e: ('error', e))
-        dispatcher = lambda i: deferred_performer(lambda dispatcher, intent: deferred)
+        dispatcher = lambda i: deferred_performer(
+            lambda dispatcher, intent: deferred)
         result = self.successResultOf(perform(dispatcher, e))
         self.assertThat(result,
                          MatchesListwise([
@@ -125,3 +138,77 @@ class ExcInfoToFailureTests(TestCase):
         self.assertIs(failure.type, RuntimeError)
         self.assertEqual(str(failure.value), "foo")
         self.assertIs(failure.tb, exc_info[2])
+
+
+@attributes(['result'])
+class _LegacyIntent(object):
+    def perform_effect(self, dispatcher):
+        return self.result
+
+
+class _LegacyDispatchReturningIntent(object):
+    def perform_effect(self, dispatcher):
+        return dispatcher
+
+
+class _LegacyErrorIntent(object):
+    def perform_effect(self, dispatcher):
+        raise ValueError('oh dear')
+
+
+class LegacyDispatcherTests(TestCase):
+    """Tests for :func:`legacy_dispatcher`."""
+
+    def test_no_dispatcher(self):
+        """
+        None is returned when there's no perform_effect method on the intent.
+        """
+        self.assertEqual(legacy_dispatcher(None), None)
+
+    def test_find_dispatcher(self):
+        """
+        When there's a perform_effect method, the returned callable invokes it
+        with the dispatcher.
+        """
+        intent = _LegacyDispatchReturningIntent()
+        d = perform(legacy_dispatcher, Effect(intent))
+        self.assertEqual(self.successResultOf(d), legacy_dispatcher)
+
+    def test_performer_deferred_result(self):
+        """
+        When a legacy perform_effect method returns a Deferred, its result
+        becomes the result of the Effect.
+        """
+        intent = _LegacyIntent(result=succeed('foo'))
+        d = perform(legacy_dispatcher, Effect(intent))
+        self.assertEqual(self.successResultOf(d), 'foo')
+
+    def test_performer_sync_exception(self):
+        """
+        When a legacy perform_effect method raises an exception synchronously,
+        the effect fails with the exception info.
+        """
+        intent = _LegacyErrorIntent()
+        eff = Effect(intent).on(error=lambda e: ('error', e))
+        d = perform(legacy_dispatcher, eff)
+        result = self.successResultOf(d)
+        self.assertThat(result,
+                         MatchesListwise([
+                             Equals('error'),
+                             MatchesException(ValueError('oh dear'))]))
+
+    def test_performer_async_exception(self):
+        """
+        When a legacy perform_effect method returns a failing Deferred,
+        the effect fails with the exception info.
+        """
+        d = fail(ValueError('oh dear!'))
+        intent = _LegacyIntent(result=d)
+        eff = Effect(intent).on(error=lambda e: ('error', e))
+        d = perform(legacy_dispatcher, eff)
+        result = self.successResultOf(d)
+        self.assertThat(
+            result,
+            MatchesListwise([
+                Equals('error'),
+                MatchesException(ValueError('oh dear!'))]))
