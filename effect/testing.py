@@ -98,8 +98,7 @@ def resolve_stub(real_dispatcher, effect):
 	return lambda d, _, box: real_dispatcher(i.intent)(d, i.intent, box)
 
     if type(effect.intent) is StubIntent:
-        is_error, result = guard(sync_perform, stub_dispatcher, effect, recurse_effects=False)
-        return resolve_effect(effect, result, is_error=is_error)
+        return sync_perform(stub_dispatcher, effect, recurse_effects=False)
     else:
         raise TypeError("resolve_stub can only resolve stubs, not %r"
                         % (effect,))

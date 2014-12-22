@@ -170,6 +170,16 @@ class ResolveStubsTests(TestCase):
         eff = Constant("foo").on(success=lambda r: None["foo"])
         self.assertRaises(TypeError, resolve_stubs, base_dispatcher, eff)
 
+    def test_resolve_stubs_callbacks_only_invoked_once(self):
+        """
+        Callbacks are run only once.
+
+        This is a regression test for a really dumb bug.
+        """
+        eff = Constant("foo").on(success=lambda r: ("got it", r))
+        self.assertEqual(resolve_stubs(base_dispatcher, eff),
+                         ("got it", "foo"))
+
     def test_parallel_stubs(self):
         """Parallel effects are recursively resolved."""
         p_eff = parallel([Constant(1), Constant(2)])
