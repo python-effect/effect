@@ -78,7 +78,7 @@ def main(reactor):
         }),
         make_twisted_dispatcher(reactor)
     ])
-    return perform(dispatcher, main_effect()).addBoth(print)
+    return perform(dispatcher, main_effect()).addCallback(print)
 
 if __name__ == '__main__':
     from twisted.internet.task import react
