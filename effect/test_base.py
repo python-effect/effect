@@ -80,9 +80,81 @@ class EffectPerformTests(TestCase):
             MatchesListwise([
                 MatchesException(ValueError('dispatched'))]))
 
+    def test_success_propagates_effect_exception(self):
+        """
+        If an succes callback is specified, but a exception result occurs,
+        the exception is passed to the next callback.
+        """
+
+        calls = []
+        intent = lambda box: box.fail(
+            (ValueError, ValueError('dispatched'), None))
+        perform(func_dispatcher,
+                Effect(intent)
+                .on(success=lambda box: calls.append("foo"))
+                .on(error=calls.append))
+        self.assertThat(
+            calls,
+            MatchesListwise([
+                MatchesException(ValueError('dispatched'))]))
+
+    def test_error_propagates_effect_result(self):
+        """
+        If an error callback is specified, but a succesful result occurs,
+        the success is passed to the next callback.
+        """
+        calls = []
+        intent = lambda box: box.succeed("dispatched")
+        perform(func_dispatcher,
+                Effect(intent)
+                .on(error=lambda box: calls.append("foo"))
+                .on(success=calls.append))
+        self.assertEqual(calls, ["dispatched"])
+
+    def test_callback_sucecss_exception(self):
+        """
+        If a success callback raises an error, the exception is passed to the
+        error callback.
+        """
+        calls = []
+
+        def raise_(_):
+            raise ValueError("oh dear")
+
+        perform(func_dispatcher,
+                Effect(lambda box: box.succeed("foo"))
+                .on(success=lambda _: raise_(ValueError("oh dear")))
+                .on(error=calls.append))
+        self.assertThat(
+            calls,
+            MatchesListwise([
+                MatchesException(ValueError('oh dear'))]))
+
+    def test_callback_error_exception(self):
+        """
+        If a error callback raises an error, the exception is passed to the
+        error callback.
+        """
+        calls = []
+
+        def raise_(_):
+            raise ValueError("oh dear")
+
+        intent = lambda box: box.fail(
+            (ValueError, ValueError('dispatched'), None))
+
+        perform(func_dispatcher,
+                Effect(intent)
+                .on(error=lambda _: raise_(ValueError("oh dear")))
+                .on(error=calls.append))
+        self.assertThat(
+            calls,
+            MatchesListwise([
+                MatchesException(ValueError('oh dear'))]))
+
     def test_effects_returning_effects(self):
         """
-        When the effect dispatcher returns another effect,
+        When the effect performer returns another effect,
         - that effect is immediately performed with the same dispatcher,
         - the result of that is returned.
         """
@@ -104,6 +176,22 @@ class EffectPerformTests(TestCase):
                     Effect(lambda box: box.succeed(
                         Effect(lambda box: calls.append("foo")))))))
         self.assertEqual(calls, ['foo'])
+
+    def test_nested_effect_exception_passes_to_outer_error_handler(self):
+        """
+        If an inner effect raises an exception, it bubbles up and the
+        exc_info is passed to the outer effect's error handlers.
+        """
+        calls = []
+        intent = lambda box: box.fail(
+            (ValueError, ValueError('oh dear'), None))
+        perform(func_dispatcher,
+                Effect(lambda box: box.succeed(Effect(intent)))
+                .on(error=calls.append))
+        self.assertThat(
+            calls,
+            MatchesListwise([
+                MatchesException(ValueError('oh dear'))]))
 
     def test_recurse_effects(self):
         """
@@ -157,21 +245,34 @@ class EffectPerformTests(TestCase):
                 Effect(get_stack).on(success=lambda _: Effect(get_stack)))
         self.assertEqual(calls[0], calls[1])
 
-    def test_callback_error(self):
+    def test_asynchronous_callback_invocation(self):
         """
-        If a callback raises an error, the exception is passed to the error
-        callback.
+        When an Effect that is returned by a callback is resolved
+        *asynchronously*, the callbacks will run.
+        """
+        results = []
+        boxes = []
+        dispatcher = lambda i: lambda d, i, box: boxes.append(box)
+        intent = object()
+        eff = Effect(intent).on(success=results.append)
+        perform(dispatcher, eff)
+        boxes[0].succeed('foo')
+        self.assertEqual(results, ['foo'])
+
+    def test_asynchronous_callback_bounced(self):
+        """
+        When an Effect that is returned by a callback is resolved
+        *asynchronously*, the callbacks are performed at the same stack depth.
         """
         calls = []
 
-        def raise_(_):
-            raise ValueError("oh dear")
+        def get_stack(_):
+            calls.append(traceback.extract_stack())
 
-        perform(func_dispatcher,
-                Effect(lambda box: box.succeed("foo"))
-                .on(success=lambda _: raise_(ValueError("oh dear")))
-                .on(error=calls.append))
-        self.assertThat(
-            calls,
-            MatchesListwise([
-                MatchesException(ValueError('oh dear'))]))
+        boxes = []
+        dispatcher = lambda i: lambda d, i, box: boxes.append(box)
+        intent = object()
+        eff = Effect(intent).on(success=get_stack).on(success=get_stack)
+        perform(dispatcher, eff)
+        boxes[0].succeed('foo')
+        self.assertEqual(calls[0], calls[1])
