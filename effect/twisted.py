@@ -17,12 +17,9 @@ from __future__ import absolute_import
 
 from functools import partial
 import sys
-import warnings
 
 from twisted.internet.defer import Deferred, gatherResults
 from twisted.python.failure import Failure
-from twisted.python.deprecate import deprecated
-from twisted.python.versions import Version
 from twisted.internet.task import deferLater
 
 from ._base import perform as base_perform
