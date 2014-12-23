@@ -38,6 +38,11 @@ class EffectPerformTests(TestCase):
             ]))
 
     def test_dispatcher(self):
+        """
+        ``perform`` calls the provided dispatcher, with the intent of the
+        provided effect. The returned perform is called with the dispatcher and
+        intent.
+        """
         calls = []
 
         def dispatcher(intent):
