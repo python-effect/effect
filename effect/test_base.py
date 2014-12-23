@@ -253,10 +253,8 @@ class EffectPerformTests(TestCase):
         """
         results = []
         boxes = []
-        dispatcher = lambda i: lambda d, i, box: boxes.append(box)
-        intent = object()
-        eff = Effect(intent).on(success=results.append)
-        perform(dispatcher, eff)
+        eff = Effect(boxes.append).on(success=results.append)
+        perform(func_dispatcher, eff)
         boxes[0].succeed('foo')
         self.assertEqual(results, ['foo'])
 
@@ -271,9 +269,7 @@ class EffectPerformTests(TestCase):
             calls.append(traceback.extract_stack())
 
         boxes = []
-        dispatcher = lambda i: lambda d, i, box: boxes.append(box)
-        intent = object()
-        eff = Effect(intent).on(success=get_stack).on(success=get_stack)
-        perform(dispatcher, eff)
+        eff = Effect(boxes.append).on(success=get_stack).on(success=get_stack)
+        perform(func_dispatcher, eff)
         boxes[0].succeed('foo')
         self.assertEqual(calls[0], calls[1])

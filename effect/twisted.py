@@ -19,7 +19,7 @@ from functools import partial
 import sys
 import warnings
 
-from twisted.internet.defer import Deferred, maybeDeferred, gatherResults
+from twisted.internet.defer import Deferred, gatherResults
 from twisted.python.failure import Failure
 from twisted.python.deprecate import deprecated
 from twisted.python.versions import Version
@@ -98,7 +98,7 @@ def perform_parallel(dispatcher, parallel):
         :func:`twisted.internet.defer.gatherResults`.
     """
     return gatherResults(
-        map(partial(maybeDeferred, perform, dispatcher), parallel.effects))
+        map(partial(perform, dispatcher), parallel.effects))
 
 
 def perform_delay(reactor, dispatcher, delay):
