@@ -8,10 +8,6 @@ from testtools.matchers import MatchesException, MatchesListwise
 from ._base import Effect, NoPerformerFoundError, perform
 
 
-class POPOIntent(object):
-    """An example effect intent."""
-
-
 def func_dispatcher(intent):
     """
     Simple effect dispatcher that takes callables taking a box,
