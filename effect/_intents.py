@@ -1,5 +1,20 @@
 # -*- test-case-name: effect.test_intents -*-
 
+"""
+Standard intents and some of their performers.
+
+The :obj:`base_dispatcher` object in this module is a dispatcher which provides
+standard performers for intents which really only have one reasonable way to be
+performed, sunch as :class:`FuncIntent`, :class:`ErrorIntent`, and
+:class:`ConstantIntent`.
+
+Other intents, such as :class:`ParallelEffects` and :class:`Delay`, need to
+have a performer specified elsewhere, since the performers are reliant on
+choices made by the application author. :module:`effect.twisted` provides a
+Twisted-specific dispatcher for these.
+"""
+
+
 from __future__ import print_function, absolute_import
 from characteristic import attributes
 
@@ -14,24 +29,27 @@ class ParallelEffects(object):
     An effect intent that asks for a number of effects to be run in parallel,
     and for their results to be gathered up into a sequence.
 
-    There is an implementation of this intent for Twisted, as long as the
-    effect.twisted.perform function is used to perform the effect.
-
-    Alternative implementations could run the child effects in threads, or use
-    some other concurrency mechanism. Of course, the implementation strategy
-    for this effect will need to cooperate with the effects being parallelized
-    -- there's not much use running a Deferred-returning effect in a thread.
+    Performers for this intent could perform the child effects in threads, or
+    use some other concurrency mechanism like Twisted's ``gatherResults``. Of
+    course, the implementation strategy for this effect will need to cooperate
+    with the performers of the Effects being parallelized -- e.g., a
+    ``@deferred_performer`` performer for a child intent should not be used
+    with a thread-dispatching performer for :class:`ParallelEffects`.
     """
     def __init__(self, effects):
+        """
+        :param effects: Effects which should be performed in parallel.
+        """
         self.effects = effects
 
 
 def parallel(effects):
     """
     Given multiple Effects, return one Effect that represents the aggregate of
-    all of their effects.
-    The result of the aggregate Effect will be a list of their results, in
-    the same order as the input to this function.
+    all of their effects.  The result of the aggregate Effect will be a list of
+    their results, in the same order as the input to this function.
+
+    :param effects: Effects which should be performed in parallel.
     """
     return Effect(ParallelEffects(list(effects)))
 
@@ -45,6 +63,9 @@ class Delay(object):
     result in None.
     """
     def __init__(self, delay):
+        """
+        :param float delay: The number of seconds to delay.
+        """
         self.delay = delay
 
 
@@ -52,11 +73,15 @@ class Delay(object):
 class ConstantIntent(object):
     """An intent that returns a pre-specified result when performed."""
     def __init__(self, result):
+        """
+        :param result: The object which the Effect should result in.
+        """
         self.result = result
 
 
 @sync_performer
 def perform_constant(dispatcher, intent):
+    """Performer for :class:`ConstantIntent`."""
     return intent.result
 
 
@@ -69,6 +94,7 @@ class ErrorIntent(object):
 
 @sync_performer
 def perform_error(dispatcher, intent):
+    """Performer for :class:`ErrorIntent`."""
     raise intent.exception
 
 
@@ -93,11 +119,15 @@ class FuncIntent(object):
     way.
     """
     def __init__(self, func):
+        """
+        :param func: The function to call when this intent is performed.
+        """
         self.func = func
 
 
 @sync_performer
 def perform_func(dispatcher, intent):
+    """Performer for :class:`FuncIntent`."""
     return intent.func()
 
 

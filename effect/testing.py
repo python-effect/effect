@@ -26,10 +26,14 @@ class StubIntent(object):
     An intent which wraps another intent, to flag that the intent should
     be automatically resolved by :func:`resolve_stub`.
 
-    This intent is intentionally not performable by any default mechanism.
+    :class:`StubIntent` is intentionally not performable by any default
+    mechanism.
     """
 
     def __init__(self, intent):
+        """
+        :param intent: The intent to perform with :func:`resolve_stub`.
+        """
         self.intent = intent
 
 

@@ -81,7 +81,7 @@ def perform_parallel(dispatcher, parallel):
 
 def perform_delay(reactor, dispatcher, delay):
     """
-    Perform a :obj:`Delay` with Twisted's
+    Perform a :obj:`effect.Delay` with Twisted's
         :func:`twisted.internet.task.deferLater`.
     """
     return deferLater(reactor, delay.delay, lambda: None)

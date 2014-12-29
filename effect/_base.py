@@ -88,8 +88,8 @@ def perform(dispatcher, effect, recurse_effects=True):
     """
     Perform an effect and invoke callbacks bound to it.
 
-    The dispatcher will be passed the intent, and is expected to return a
-    performer (a callable). See :obj:`TypeDispatcher` and
+    The dispatcher will be called with the intent, and is expected to return a
+    performer (another callable). See :obj:`TypeDispatcher` and
     :obj:`ComposedDispatcher` for some implementations of dispatchers, and
     :obj:`effect.base_dispatcher` for a dispatcher supporting basic intents
     like :obj:`ConstantIntent` et al.
@@ -98,8 +98,8 @@ def perform(dispatcher, effect, recurse_effects=True):
     the box, and should perform the desired effect.
 
     The dispatcher is passed so the performer can make recursive calls to
-    perform, if it needs to perform other effects (see :func:`parallel` and
-    :func:`perform_parallel` for an example of this).
+    :func:`perform`, if it needs to perform other effects (see :func:`parallel`
+    and :func:`perform_parallel` for an example of this).
 
     The box is an object that lets the performer provide the result (optionally
     asynchronously). See :func:`_Box.succeed` and :func:`_Box.fail`. Usually
