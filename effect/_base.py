@@ -52,6 +52,9 @@ class _Box(object):
     An object into which an effect dispatcher can place a result.
     """
     def __init__(self, cont):
+        """
+        :param callable cont: Called with (bool is_error, result)
+        """
         self._cont = cont
 
     def succeed(self, result):
