@@ -15,3 +15,10 @@ script:
     - python -mtesttools.run discover --list
     - python -mtesttools.run discover
     - make doc
+
+notifications:
+  irc:
+    channels:
+    - "chat.freenode.net#python-effect"
+    skip_join: true
+    use_notice: true

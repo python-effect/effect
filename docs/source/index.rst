@@ -6,10 +6,12 @@
 Effect
 ======
 
-API documentation is here: :ref:`modindex`.
+API documentation!
 
 .. toctree::
    :maxdepth: 2
+
+   api/modules
 
 
 Indices and tables

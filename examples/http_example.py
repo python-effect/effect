@@ -1,6 +1,9 @@
+from effect.twisted import deferred_performer
+
+
 class HTTPRequest(object):
     """
-    An HTTP request intent. Default implementation uses treq.
+    An HTTP request intent.
     """
 
     def __init__(self, method, url, headers=None, data=None):
@@ -13,10 +16,20 @@ class HTTPRequest(object):
         return "HTTPRequest(%r, %r, headers=%r, data=%r)" % (
             self.method, self.url, self.headers, self.data)
 
-    def perform_effect(self, dispatcher):
-        import treq
-        headers = self.headers.copy() if self.headers is not None else {}
-        if 'user-agent' not in headers:
-            headers['user-agent'] = ['Effect example']
-        return treq.request(self.method.lower(), self.url, headers=headers,
-                            data=self.data).addCallback(treq.content)
+
+@deferred_performer
+def treq_http_request(dispatcher, http_request):
+    """A performer for :obj:`HTTPRequest` that uses the ``treq`` library."""
+    import treq
+    headers = (
+        http_request.headers.copy()
+        if http_request.headers is not None
+        else {})
+    if 'user-agent' not in headers:
+        headers['user-agent'] = ['Effect example']
+    d = treq.request(
+        http_request.method.lower(),
+        http_request.url,
+        headers=headers,
+        data=http_request.data).addCallback(treq.content)
+    return d

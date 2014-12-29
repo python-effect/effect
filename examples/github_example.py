@@ -15,11 +15,14 @@ import operator
 import json
 from functools import reduce
 
-from six.moves import input
-
-from effect import Effect, parallel
-from effect.twisted import perform
-from .http_example import HTTPRequest
+from effect import (
+    ComposedDispatcher,
+    Effect,
+    TypeDispatcher,
+    parallel)
+from effect.twisted import perform, make_twisted_dispatcher
+from .http_example import HTTPRequest, treq_http_request
+from .readline_example import ReadLine, stdin_read_line
 
 
 def get_orgs(name):
@@ -52,48 +55,30 @@ def get_orgs_repos(name):
     Fetch ALL of the repos that a user has access to, in any organization.
     """
     req = get_orgs(name)
-    req = req.on(
-        success=lambda org_names:
-            parallel(map(get_org_repos, org_names)))
-    req = req.on(
-        success=lambda repo_lists: reduce(operator.add, repo_lists))
+    req = req.on(lambda org_names: parallel(map(get_org_repos, org_names)))
+    req = req.on(lambda repo_lists: reduce(operator.add, repo_lists))
     return req
 
 
-def get_first_org_repos(name):
-    """
-    A silly function that fetches the repositories that belong to the
-    first organization found that a user is in.
-
-    This demonstrates how to chain effects.
-    """
-    req = get_orgs(name)
-    return req.on(success=lambda orgs: get_org_repos(orgs[0]))
-
-
-class ReadLine(object):
-    """An effect intent for getting input from the user."""
-
-    def __init__(self, prompt):
-        self.prompt = prompt
-
-    def perform_effect(self, dispatcher):
-        return input(self.prompt)
-
-
 def main_effect():
-    return Effect(ReadLine("Enter GitHub Username> ")).on(
-        success=get_first_org_repos)
-
-
-def main_effect_2():
+    """
+    Let the user enter a username, and then list all repos in all of that
+    username's organizations.
+    """
     return Effect(ReadLine("Enter GitHub Username> ")).on(
         success=get_orgs_repos)
 
 
 # Only the code below here depends on Twisted.
 def main(reactor):
-    return perform(main_effect_2()).addCallback(print)
+    dispatcher = ComposedDispatcher([
+        TypeDispatcher({
+            ReadLine: stdin_read_line,
+            HTTPRequest: treq_http_request,
+        }),
+        make_twisted_dispatcher(reactor)
+    ])
+    return perform(dispatcher, main_effect()).addCallback(print)
 
 if __name__ == '__main__':
     from twisted.internet.task import react

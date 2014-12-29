@@ -2,7 +2,7 @@ from testtools import TestCase
 from testtools.matchers import raises
 
 from .retry import retry
-from . import Effect, ErrorIntent, FuncIntent, ConstantIntent
+from . import Effect, ErrorIntent, FuncIntent, ConstantIntent, base_dispatcher
 from .testing import StubIntent, resolve_stubs
 
 
@@ -15,7 +15,7 @@ class RetryTests(TestCase):
         """retry raises the last error if should_retry returns False."""
         result = retry(Effect(StubIntent(ErrorIntent(RuntimeError("oh no!")))),
                        lambda e: Effect(StubIntent(ConstantIntent(False))))
-        self.assertThat(lambda: resolve_stubs(result),
+        self.assertThat(lambda: resolve_stubs(base_dispatcher, result),
                         raises(RuntimeError("oh no!")))
 
     def _repeated_effect_func(self, *funcs):
@@ -42,7 +42,7 @@ class RetryTests(TestCase):
             lambda: "final")
         result = retry(Effect(StubIntent(FuncIntent(func))),
                        lambda e: Effect(StubIntent(ConstantIntent(True))))
-        self.assertEqual(resolve_stubs(result), "final")
+        self.assertEqual(resolve_stubs(base_dispatcher, result), "final")
 
     def test_continue_retrying(self):
         """
@@ -59,7 +59,7 @@ class RetryTests(TestCase):
             return Effect(StubIntent(ConstantIntent(str(e[1]) != "3")))
 
         result = retry(Effect(StubIntent(FuncIntent(func))), should_retry)
-        self.assertThat(lambda: resolve_stubs(result),
+        self.assertThat(lambda: resolve_stubs(base_dispatcher, result),
                         raises(RuntimeError("3")))
 
 
