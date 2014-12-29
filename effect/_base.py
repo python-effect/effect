@@ -111,8 +111,9 @@ def perform(dispatcher, effect, recurse_effects=True):
     you can ignore the box by using a decorator like :func:`sync_performer` or
     :func:`effect.twisted.deferred_performer`.
 
-    Callbacks can return Effects, and those effects will immediately performed.
-    The result of the returned Effect will be passed to the next callback.
+    Unless ``recurse_effects`` is ``False``, Callbacks can return Effects, and
+    those effects will immediately performed.  The result of the returned
+    Effect will be passed to the next callback.
 
     Note that this function does _not_ return the final result of the effect.
     You may instead want to use :func:`effect.sync_perform` or

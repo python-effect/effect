@@ -17,12 +17,9 @@ from __future__ import absolute_import
 
 from functools import partial
 import sys
-import warnings
 
-from twisted.internet.defer import Deferred, maybeDeferred, gatherResults
+from twisted.internet.defer import Deferred, gatherResults
 from twisted.python.failure import Failure
-from twisted.python.deprecate import deprecated
-from twisted.python.versions import Version
 from twisted.internet.task import deferLater
 
 from ._base import perform as base_perform
@@ -47,25 +44,6 @@ def make_twisted_dispatcher(reactor):
         ParallelEffects: perform_parallel,
         Delay: deferred_performer(partial(perform_delay, reactor)),
     })
-
-
-@deprecated(Version('effect', 0, 1, 12),
-            "put performers in a TypedDispatcher and pass to perform")
-def legacy_dispatcher(intent):
-    """
-    DEPRECATED.
-
-    A dispatcher that supports the old 'perform_effect' methods on intent
-    objects. We recommend specifying your performers in a
-    :obj:`TypeDispatcher`.
-    """
-    method = getattr(intent, 'perform_effect', None)
-    if method is not None:
-        warnings.warn(
-            "Intent %r has a deprecated perform_effect method." % (intent,),
-            DeprecationWarning)
-        return deferred_performer(
-            lambda dispatcher, intent: method(dispatcher))
 
 
 def deferred_performer(f):
@@ -98,7 +76,7 @@ def perform_parallel(dispatcher, parallel):
         :func:`twisted.internet.defer.gatherResults`.
     """
     return gatherResults(
-        map(partial(maybeDeferred, perform, dispatcher), parallel.effects))
+        map(partial(perform, dispatcher), parallel.effects))
 
 
 def perform_delay(reactor, dispatcher, delay):
