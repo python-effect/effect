@@ -69,8 +69,8 @@ class EffectPerformTests(TestCase):
 
     def test_error_with_callback(self):
         """
-        When effect performance fails, the exception is passed to the error
-        callback.
+        When an effect performer calls ``box.fail``, the exception is passed to
+        the error callback.
         """
         calls = []
         intent = lambda box: box.fail(
@@ -81,12 +81,44 @@ class EffectPerformTests(TestCase):
             MatchesListwise([
                 MatchesException(ValueError('dispatched'))]))
 
+    def test_dispatcher_raises(self):
+        """
+        When a dispatcher raises an exception, the exc_info is passed to the
+        error handler.
+        """
+        calls = []
+        eff = Effect('meaningless').on(error=calls.append)
+        dispatcher = lambda i: raise_(ValueError('oh dear'))
+        perform(dispatcher, eff)
+        self.assertThat(
+            calls,
+            MatchesListwise([
+                MatchesException(ValueError('oh dear'))
+            ])
+        )
+
+    def test_performer_raises(self):
+        """
+        When a performer raises an exception, the exc_info is passed to the
+        error handler.
+        """
+        calls = []
+        eff = Effect('meaningless').on(error=calls.append)
+        performer = lambda d, i, box: raise_(ValueError('oh dear'))
+        dispatcher = lambda i: performer
+        perform(dispatcher, eff)
+        self.assertThat(
+            calls,
+            MatchesListwise([
+                MatchesException(ValueError('oh dear'))
+            ])
+        )
+
     def test_success_propagates_effect_exception(self):
         """
         If an succes callback is specified, but a exception result occurs,
         the exception is passed to the next callback.
         """
-
         calls = []
         intent = lambda box: box.fail(
             (ValueError, ValueError('dispatched'), None))
@@ -119,9 +151,6 @@ class EffectPerformTests(TestCase):
         """
         calls = []
 
-        def raise_(_):
-            raise ValueError("oh dear")
-
         perform(func_dispatcher,
                 Effect(lambda box: box.succeed("foo"))
                 .on(success=lambda _: raise_(ValueError("oh dear")))
@@ -137,9 +166,6 @@ class EffectPerformTests(TestCase):
         error callback.
         """
         calls = []
-
-        def raise_(_):
-            raise ValueError("oh dear")
 
         intent = lambda box: box.fail(
             (ValueError, ValueError('dispatched'), None))
@@ -273,3 +299,7 @@ class EffectPerformTests(TestCase):
         perform(func_dispatcher, eff)
         boxes[0].succeed('foo')
         self.assertEqual(calls[0], calls[1])
+
+
+def raise_(e):
+    raise e
