@@ -19,15 +19,10 @@ class Effect(object):
     allow binding callbacks to be called with the result of the effect.
 
     Effects can be performed with :func:`perform`.
-
-    (You're an object-oriented programmer.
-     You probably want to subclass this.
-     Don't.)
     """
     def __init__(self, intent, callbacks=None):
         """
-        :param intent: An object that describes an effect to be
-            performed.
+        :param intent: An object that describes an effect to be performed.
         """
         self.intent = intent
         if callbacks is None:

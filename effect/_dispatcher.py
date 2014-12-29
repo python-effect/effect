@@ -13,8 +13,7 @@ class TypeDispatcher(object):
     """
     def __init__(self, mapping):
         """
-        :param collections.Mapping mapping: A mapping of intent type to
-        performer.
+        :param collections.Mapping mapping: mapping of intent type to performer
         """
         self.mapping = mapping
 
