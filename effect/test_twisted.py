@@ -13,7 +13,7 @@ from twisted.python.failure import Failure
 
 from ._base import Effect
 from ._intents import (
-    ConstantIntent,
+    Constant,
     Delay,
     base_dispatcher,
     parallel)
@@ -48,8 +48,8 @@ class ParallelTests(TestCase):
         """
         d = perform(
             _dispatcher(None),
-            parallel([Effect(ConstantIntent('a')),
-                      Effect(ConstantIntent('b'))]))
+            parallel([Effect(Constant('a')),
+                      Effect(Constant('b'))]))
         self.assertEqual(self.successResultOf(d), ['a', 'b'])
 
 

@@ -21,12 +21,12 @@ import six
 
 
 @attributes(['intent'], apply_with_init=False)
-class StubIntent(object):
+class Stub(object):
     """
     An intent which wraps another intent, to flag that the intent should
     be automatically resolved by :func:`resolve_stub`.
 
-    :class:`StubIntent` is intentionally not performable by any default
+    :class:`Stub` is intentionally not performable by any default
     mechanism.
     """
 
@@ -93,7 +93,7 @@ def fail_effect(effect, exception):
 
 def resolve_stub(real_dispatcher, effect):
     """
-    Automatically perform an effect, if its intent is a StubIntent.
+    Automatically perform an effect, if its intent is a :obj:`Stub`.
 
     Note that resolve_stubs is preferred to this function, since it handles
     chains of stub effects.
@@ -101,7 +101,7 @@ def resolve_stub(real_dispatcher, effect):
     def stub_dispatcher(i):
         return lambda d, _, box: real_dispatcher(i.intent)(d, i.intent, box)
 
-    if type(effect.intent) is StubIntent:
+    if type(effect.intent) is Stub:
         return sync_perform(stub_dispatcher, effect, recurse_effects=False)
     else:
         raise TypeError("resolve_stub can only resolve stubs, not %r"
@@ -120,10 +120,10 @@ def resolve_stubs(dispatcher, effect):
         raise TypeError("effect must be Effect: %r" % (effect,))
 
     while type(effect) is Effect:
-        if type(effect.intent) is StubIntent:
+        if type(effect.intent) is Stub:
             effect = resolve_stub(dispatcher, effect)
         elif type(effect.intent) is ParallelEffects:
-            if not all(isinstance(x.intent, StubIntent)
+            if not all(isinstance(x.intent, Stub)
                        for x in effect.intent.effects):
                 break
             else:

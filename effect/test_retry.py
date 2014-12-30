@@ -2,19 +2,21 @@ from testtools import TestCase
 from testtools.matchers import raises
 
 from .retry import retry
-from . import Effect, ErrorIntent, FuncIntent, ConstantIntent, base_dispatcher
-from .testing import StubIntent, resolve_stubs
+from . import Effect, Error, Func, Constant, base_dispatcher
+from .testing import Stub, resolve_stubs
 
 
-Constant = lambda x: StubIntent(ConstantIntent(x))
+ESConstant = lambda x: Effect(Stub(Constant(x)))
+ESError = lambda x: Effect(Stub(Error(x)))
+ESFunc = lambda x: Effect(Stub(Func(x)))
 
 
 class RetryTests(TestCase):
 
     def test_should_not_retry(self):
         """retry raises the last error if should_retry returns False."""
-        result = retry(Effect(StubIntent(ErrorIntent(RuntimeError("oh no!")))),
-                       lambda e: Effect(StubIntent(ConstantIntent(False))))
+        result = retry(ESError(RuntimeError("oh no!")),
+                       lambda e: ESConstant(False))
         self.assertThat(lambda: resolve_stubs(base_dispatcher, result),
                         raises(RuntimeError("oh no!")))
 
@@ -40,8 +42,8 @@ class RetryTests(TestCase):
         func = self._repeated_effect_func(
             lambda: raise_(RuntimeError("foo")),
             lambda: "final")
-        result = retry(Effect(StubIntent(FuncIntent(func))),
-                       lambda e: Effect(StubIntent(ConstantIntent(True))))
+        result = retry(ESFunc(func),
+                       lambda e: ESConstant(True))
         self.assertEqual(resolve_stubs(base_dispatcher, result), "final")
 
     def test_continue_retrying(self):
@@ -56,9 +58,9 @@ class RetryTests(TestCase):
             lambda: raise_(RuntimeError("3")))
 
         def should_retry(e):
-            return Effect(StubIntent(ConstantIntent(str(e[1]) != "3")))
+            return ESConstant(str(e[1]) != "3")
 
-        result = retry(Effect(StubIntent(FuncIntent(func))), should_retry)
+        result = retry(ESFunc(func), should_retry)
         self.assertThat(lambda: resolve_stubs(base_dispatcher, result),
                         raises(RuntimeError("3")))
 

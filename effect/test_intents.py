@@ -7,9 +7,9 @@ from ._sync import sync_perform
 from ._dispatcher import TypeDispatcher
 
 from ._intents import (
-    ConstantIntent, perform_constant,
-    ErrorIntent, perform_error,
-    FuncIntent, perform_func,
+    Constant, perform_constant,
+    Error, perform_error,
+    Func, perform_func,
 )
 
 
@@ -18,31 +18,31 @@ class IntentTests(TestCase):
 
     def test_perform_constant(self):
         """
-        perform_constant returns the result of a ConstantIntent.
+        perform_constant returns the result of a Constant.
         """
-        intent = ConstantIntent("foo")
+        intent = Constant("foo")
         result = sync_perform(
-            TypeDispatcher({ConstantIntent: perform_constant}),
+            TypeDispatcher({Constant: perform_constant}),
             Effect(intent))
         self.assertEqual(result, "foo")
 
     def test_perform_error(self):
         """
-        perform_error raises the exception of a ErrorIntent.
+        perform_error raises the exception of a Error.
         """
-        intent = ErrorIntent(ValueError("foo"))
+        intent = Error(ValueError("foo"))
         self.assertRaises(
             ValueError,
             lambda: sync_perform(
-                TypeDispatcher({ErrorIntent: perform_error}),
+                TypeDispatcher({Error: perform_error}),
                 Effect(intent)))
 
     def test_perform_func(self):
         """
-        perform_func calls the function given in a FuncIntent.
+        perform_func calls the function given in a Func.
         """
-        intent = FuncIntent(lambda: "foo")
+        intent = Func(lambda: "foo")
         result = sync_perform(
-            TypeDispatcher({FuncIntent: perform_func}),
+            TypeDispatcher({Func: perform_func}),
             Effect(intent))
         self.assertEqual(result, "foo")

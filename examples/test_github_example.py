@@ -5,12 +5,9 @@ import json
 
 from testtools import TestCase
 
-from effect import Effect, ParallelEffects, ConstantIntent
-from effect.testing import StubIntent, resolve_effect
+from effect import Effect, ParallelEffects, Constant
+from effect.testing import resolve_effect
 from . import github_example
-
-
-Constant = lambda x: Effect(StubIntent(ConstantIntent(x)))
 
 
 class GithubTests(TestCase):

@@ -5,8 +5,8 @@ Standard intents and some of their performers.
 
 The :obj:`base_dispatcher` object in this module is a dispatcher which provides
 standard performers for intents which really only have one reasonable way to be
-performed, sunch as :class:`FuncIntent`, :class:`ErrorIntent`, and
-:class:`ConstantIntent`.
+performed, sunch as :class:`Func`, :class:`Error`, and
+:class:`Constant`.
 
 Other intents, such as :class:`ParallelEffects` and :class:`Delay`, need to
 have a performer specified elsewhere, since the performers are reliant on
@@ -70,7 +70,7 @@ class Delay(object):
 
 
 @attributes(['result'], apply_with_init=False, apply_immutable=True)
-class ConstantIntent(object):
+class Constant(object):
     """An intent that returns a pre-specified result when performed."""
     def __init__(self, result):
         """
@@ -81,12 +81,12 @@ class ConstantIntent(object):
 
 @sync_performer
 def perform_constant(dispatcher, intent):
-    """Performer for :class:`ConstantIntent`."""
+    """Performer for :class:`Constant`."""
     return intent.result
 
 
 @attributes(['exception'], apply_with_init=False, apply_immutable=True)
-class ErrorIntent(object):
+class Error(object):
     """An intent that raises a pre-specified exception when performed."""
     def __init__(self, exception):
         self.exception = exception
@@ -94,16 +94,16 @@ class ErrorIntent(object):
 
 @sync_performer
 def perform_error(dispatcher, intent):
-    """Performer for :class:`ErrorIntent`."""
+    """Performer for :class:`Error`."""
     raise intent.exception
 
 
 @attributes(['func'], apply_with_init=False, apply_immutable=True)
-class FuncIntent(object):
+class Func(object):
     """
     An intent that returns the result of the specified function.
 
-    Note that FuncIntent is something of a cop-out. It doesn't follow the
+    Note that Func is something of a cop-out. It doesn't follow the
     convention of an intent being transparent data that is easy to introspect,
     since it just wraps an opaque callable. This has two drawbacks:
 
@@ -112,7 +112,7 @@ class FuncIntent(object):
     - it doesn't offer any ability for changing the way the effect is
       performed.
 
-    If you use FuncIntent in your application code, know that you are giving
+    If you use Func in your application code, know that you are giving
     up some ease of testing and flexibility. It's preferable to represent your
     intents as inert objects with public attributes of simple data. However,
     this is useful for integrating wih "legacy" side-effecting code in a quick
@@ -127,12 +127,12 @@ class FuncIntent(object):
 
 @sync_performer
 def perform_func(dispatcher, intent):
-    """Performer for :class:`FuncIntent`."""
+    """Performer for :class:`Func`."""
     return intent.func()
 
 
 base_dispatcher = TypeDispatcher({
-    ConstantIntent: perform_constant,
-    ErrorIntent: perform_error,
-    FuncIntent: perform_func,
+    Constant: perform_constant,
+    Error: perform_error,
+    Func: perform_func,
 })
