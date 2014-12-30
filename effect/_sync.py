@@ -8,6 +8,7 @@ import six
 import sys
 
 from ._base import perform
+from ._utils import wraps
 
 
 class NotSynchronousError(Exception):
@@ -45,11 +46,12 @@ def sync_performer(f):
     not a box), and should return or raise normally. The decorator deals with
     putting the result or exception into the box.
     """
-    def inner(*args):
+    @wraps(f)
+    def sync_wrapper(*args):
         box = args[-1]
         pass_args = args[:-1]
         try:
             box.succeed(f(*pass_args))
         except:
             box.fail(sys.exc_info())
-    return inner
+    return sync_wrapper

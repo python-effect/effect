@@ -22,10 +22,10 @@ from twisted.internet.defer import Deferred, gatherResults
 from twisted.python.failure import Failure
 from twisted.internet.task import deferLater
 
+from ._intents import Delay, ParallelEffects
 from ._base import perform as base_perform
-from . import Delay
 from ._dispatcher import TypeDispatcher
-from effect import ParallelEffects
+from ._utils import wraps
 
 
 def deferred_to_box(d, box):
@@ -54,7 +54,8 @@ def deferred_performer(f):
     not a box), and may return a Deferred. This decorator deals with putting
     the Deferred's result into the box.
     """
-    def inner(*args):
+    @wraps(f)
+    def deferred_wrapper(*args):
         box = args[-1]
         pass_args = args[:-1]
         try:
@@ -66,7 +67,7 @@ def deferred_performer(f):
                 deferred_to_box(result, box)
             else:
                 box.succeed(result)
-    return inner
+    return deferred_wrapper
 
 
 @deferred_performer

@@ -1,3 +1,5 @@
+from functools import partial
+
 from testtools import TestCase
 from testtools.matchers import (
     MatchesException, raises)
@@ -86,3 +88,30 @@ class SyncPerformerTests(TestCase):
         dispatcher = lambda i: container.performer
         result = sync_perform(dispatcher, eff)
         self.assertEqual(result, (container, dispatcher, 'meaningless'))
+
+    def test_promote_metadata(self):
+        """
+        The decorator copies metadata from the wrapped function onto the
+        wrapper.
+        """
+        def original(dispatcher, intent):
+            """Original!"""
+            pass
+        original.attr = 1
+        wrapped = sync_performer(original)
+        self.assertEqual(wrapped.__name__, 'original')
+        self.assertEqual(wrapped.attr, 1)
+        self.assertEqual(wrapped.__doc__, 'Original!')
+
+    def test_ignore_lack_of_metadata(self):
+        """
+        When the original callable is not a function, a new function is still
+        returned.
+        """
+        def original(something, dispatcher, intent):
+            """Original!"""
+            pass
+        new_func = partial(original, 'something')
+        original.attr = 1
+        wrapped = sync_performer(new_func)
+        self.assertEqual(wrapped.__name__, 'sync_wrapper')

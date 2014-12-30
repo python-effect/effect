@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from functools import partial
 import sys
 
 from testtools import TestCase
@@ -175,6 +176,33 @@ class DeferredPerformerTests(TestCase):
         dispatcher = lambda i: container.performer
         result = self.successResultOf(perform(dispatcher, eff))
         self.assertEqual(result, (container, dispatcher, 'meaningless'))
+
+    def test_promote_metadata(self):
+        """
+        The decorator copies metadata from the wrapped function onto the
+        wrapper.
+        """
+        def original(dispatcher, intent):
+            """Original!"""
+            pass
+        original.attr = 1
+        wrapped = deferred_performer(original)
+        self.assertEqual(wrapped.__name__, 'original')
+        self.assertEqual(wrapped.attr, 1)
+        self.assertEqual(wrapped.__doc__, 'Original!')
+
+    def test_ignore_lack_of_metadata(self):
+        """
+        When the original callable is not a function, a new function is still
+        returned.
+        """
+        def original(something, dispatcher, intent):
+            """Original!"""
+            pass
+        new_func = partial(original, 'something')
+        original.attr = 1
+        wrapped = deferred_performer(new_func)
+        self.assertEqual(wrapped.__name__, 'deferred_wrapper')
 
 
 class ExcInfoToFailureTests(TestCase):
