@@ -42,9 +42,11 @@ There is a ``#python-effect`` IRC channel on irc.freenode.net.
 What Is It?
 ===========
 
-Effect lets you isolate your IO and state-manipulation code, by using a
-system somewhat similar to Haskell's ``IO`` monad. It also has similarities
-to Twisted's Deferred objects.
+Effect lets you isolate your IO and state-manipulation code, by using a system
+somewhat similar to Haskell's ``IO`` monad (and `IOSpec`_). It also has
+similarities to Twisted's Deferred objects.
+
+.. _`IOSpec`:: http://hackage.haskell.org/package/IOSpec
 
 The benefits of this are many: first, the majority of your code can become
 purely functional, leading to easier testing and ability to reason about your
