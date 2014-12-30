@@ -5,7 +5,7 @@ import json
 
 from testtools import TestCase
 
-from effect import Effect, ParallelEffects, Constant
+from effect import ParallelEffects
 from effect.testing import resolve_effect
 from . import github_example
 
