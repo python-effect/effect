@@ -4,6 +4,7 @@
 Tools for dealing with Effects synchronously.
 """
 
+from functools import partial
 import six
 import sys
 
@@ -55,3 +56,24 @@ def sync_performer(f):
         except:
             box.fail(sys.exc_info())
     return sync_wrapper
+
+
+@sync_performer
+def perform_parallel_with_pool(pool, dispatcher, parallel_effects):
+    """
+    A performer for :obj:`effect.ParallelEffects` which uses a
+    ``multiprocessing.pool.ThreadPool`` to perform the child effects in
+    parallel.
+
+    Note that this _can't_ be used with a ``multiprocessing.Pool``, since
+    you can't pass closures to its ``map`` method.
+
+    This function takes the pool as its first argument, so you'll need to
+    partially apply it when registering it in your dispatcher, like so::
+
+        my_pool = ThreadPool()
+        parallel_performer = functools.partial(
+            perform_parallel_effects_with_pool, my_pool)
+        dispatcher = TypeDispatcher({ParallelEffects: parallel_performer, ...})
+    """
+    return pool.map(partial(sync_perform, dispatcher), parallel_effects.effects)
