@@ -4,24 +4,26 @@
 # - usage of HTTP effects
 # - chaining effects with callbacks that return more effects
 # - a custom effect that reads from the console
-# - very simple Twisted-based usage
 
-# Unfortunately python3 is not yet supported by this example since treq
-# has not been ported.
 
 from __future__ import print_function
 
-import operator
+from functools import reduce, partial
+from multiprocessing.pool import ThreadPool
 import json
-from functools import reduce
+import operator
 
 from effect import (
     ComposedDispatcher,
     Effect,
     TypeDispatcher,
-    parallel)
-from effect.twisted import perform, make_twisted_dispatcher
-from .http_example import HTTPRequest, treq_http_request
+    parallel,
+    perform,
+    perform_parallel_with_pool,
+    ParallelEffects)
+
+from .http_example import HTTPRequest
+from .sync_http import perform_request_with_requests
 from .readline_example import ReadLine, stdin_read_line
 
 
@@ -65,21 +67,42 @@ def main_effect():
     Let the user enter a username, and then list all repos in all of that
     username's organizations.
     """
-    return Effect(ReadLine("Enter GitHub Username> ")).on(
-        success=get_orgs_repos)
+    return Effect(ReadLine("Enter GitHub Username> ")
+    ).on(
+        success=get_orgs_repos
+    ).on(
+        success=print, error=print)
 
 
-# Only the code below here depends on Twisted.
-def main(reactor):
+def main(effect):
+    my_pool = ThreadPool()
+    pool_performer = partial(perform_parallel_with_pool, my_pool)
     dispatcher = ComposedDispatcher([
         TypeDispatcher({
             ReadLine: stdin_read_line,
-            HTTPRequest: treq_http_request,
-        }),
-        make_twisted_dispatcher(reactor)
+            HTTPRequest: perform_request_with_requests,
+            ParallelEffects: pool_performer,
+        })
     ])
-    return perform(dispatcher, main_effect()).addCallback(print)
+    perform(dispatcher, effect)
+
+
+def twisted_main(reactor, effect):
+    from effect.twisted import make_twisted_dispatcher, perform
+    from .twisted_http import perform_request_with_treq
+    dispatcher = ComposedDispatcher([
+        TypeDispatcher({
+            ReadLine: stdin_read_line,
+            HTTPRequest: perform_request_with_treq,
+        }),
+        make_twisted_dispatcher(reactor),
+    ])
+    return perform(dispatcher, effect)
 
 if __name__ == '__main__':
-    from twisted.internet.task import react
-    react(main, [])
+    import sys
+    if '--twisted' in sys.argv:
+        from twisted.internet.task import react
+        react(lambda reactor: twisted_main(reactor, main_effect()), [])
+    else:
+        main(main_effect())
