@@ -3,6 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+Effect
+======
+Effect is a library for helping you write purely functional code by
+isolating the effects (that is, IO or state manipulation) in your code.
+
+
 API
 ===
 
