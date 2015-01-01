@@ -16,29 +16,6 @@ being used in production and the API seems pretty good, a final version will be
 released.
 
 
-Authors
-=======
-
-Effect was originally written by `Christopher Armstrong`_,
-but now has contributions from the following people:
-
-.. _`Christopher Armstrong`: https://github.com/radix
-
-- `lvh`_
-- `Manish Tomar`_
-- `Tom Prince`_
-
-.. _`lvh`: https://github.com/lvh
-.. _`Manish Tomar`: https://github.com/manishtomar
-.. _`Tom Prince`: https://github.com/tomprince
-
-
-IRC
-===
-
-There is a ``#python-effect`` IRC channel on irc.freenode.net.
-
-
 What Is It?
 ===========
 
@@ -49,8 +26,8 @@ similarities to Twisted's Deferred objects.
 .. _`IOSpec`: http://hackage.haskell.org/package/IOSpec
 
 The benefits of this are many: first, the majority of your code can become
-purely functional, leading to easier testing and ability to reason about your
-code. Also, because it separates the specification of an effect from the
+purely functional, leading to easier testing and ability to reason about
+behavior. Also, because it separates the specification of an effect from the
 performance of the effect, there are two more benefits: testing becomes easier
 still, and it's easy to provide alternative implementations of effects.
 
@@ -118,6 +95,29 @@ Thanks to Rackspace for allowing me to work on this project, and having an
 *excellent* `open source employee contribution policy`_
 
 .. _`open source employee contribution policy`: https://www.rackspace.com/blog/rackspaces-policy-on-contributing-to-open-source/
+
+
+Authors
+=======
+
+Effect was originally written by `Christopher Armstrong`_,
+but now has contributions from the following people:
+
+.. _`Christopher Armstrong`: https://github.com/radix
+
+- `lvh`_
+- `Manish Tomar`_
+- `Tom Prince`_
+
+.. _`lvh`: https://github.com/lvh
+.. _`Manish Tomar`: https://github.com/manishtomar
+.. _`Tom Prince`: https://github.com/tomprince
+
+
+IRC
+===
+
+There is a ``#python-effect`` IRC channel on irc.freenode.net.
 
 
 See Also
