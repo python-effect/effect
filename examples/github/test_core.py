@@ -8,7 +8,7 @@ from testtools import TestCase
 from effect import ParallelEffects
 from effect.testing import resolve_effect
 
-from .github_api import get_orgs, get_org_repos, get_orgs_repos
+from .core import get_orgs, get_org_repos, get_orgs_repos
 
 
 class GithubTests(TestCase):
