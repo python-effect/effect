@@ -1,6 +1,6 @@
 """
 Run this example with:
-    python -m examples.sync_main
+    python -m examples.github.sync_main
 
 This is an example of using Effect in a normal program that uses
 synchronous/blocking functions to do I/O.

@@ -1,6 +1,6 @@
 """
 Run this example with:
-    python -m examples.twisted_main
+    python -m examples.github.twisted_main
 
 This is an example of using Effect with Twisted.
 
