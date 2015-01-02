@@ -7,7 +7,8 @@ from testtools import TestCase
 
 from effect import ParallelEffects
 from effect.testing import resolve_effect
-from . import github_example
+
+from .github_api import get_orgs, get_org_repos, get_orgs_repos
 
 
 class GithubTests(TestCase):
@@ -16,14 +17,14 @@ class GithubTests(TestCase):
         get_orgs returns an effect that makes an HTTP request to
         the GitHub API to look up organizations for a user.
         """
-        eff = github_example.get_orgs('radix')
+        eff = get_orgs('radix')
         http = eff.intent
         self.assertEqual(http.method, 'get')
         self.assertEqual(http.url, 'https://api.github.com/users/radix/orgs')
 
     def test_get_orgs_success(self):
         """get_orgs extracts the result into a simple list of orgs."""
-        eff = github_example.get_orgs('radix')
+        eff = get_orgs('radix')
         self.assertEqual(
             resolve_effect(eff, json.dumps([{'login': 'twisted'},
                                             {'login': 'rackerlabs'}])),
@@ -34,14 +35,14 @@ class GithubTests(TestCase):
         get_org_repos returns an effect that makes an HTTP request to
         the GitHub API to look up repos in an org.
         """
-        eff = github_example.get_org_repos('twisted')
+        eff = get_org_repos('twisted')
         http = eff.intent
         self.assertEqual(http.method, 'get')
         self.assertEqual(http.url, 'https://api.github.com/orgs/twisted/repos')
 
     def test_get_org_repos_success(self):
         """get_org_repos extracts the result into a simple list of repos."""
-        eff = github_example.get_org_repos('radix')
+        eff = get_org_repos('radix')
         self.assertEqual(
             resolve_effect(eff, json.dumps([{'name': 'twisted'},
                                             {'name': 'txstuff'}])),
@@ -53,7 +54,7 @@ class GithubTests(TestCase):
         a user, and then looks up all of the repositories of those orgs in
         parallel, and returns a single flat list of all repos.
         """
-        effect = github_example.get_orgs_repos('radix')
+        effect = get_orgs_repos('radix')
         self.assertEqual(effect.intent.method, 'get')
         self.assertEqual(effect.intent.url,
                          'https://api.github.com/users/radix/orgs')

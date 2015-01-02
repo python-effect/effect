@@ -76,4 +76,5 @@ def perform_parallel_with_pool(pool, dispatcher, parallel_effects):
             perform_parallel_effects_with_pool, my_pool)
         dispatcher = TypeDispatcher({ParallelEffects: parallel_performer, ...})
     """
-    return pool.map(partial(sync_perform, dispatcher), parallel_effects.effects)
+    return pool.map(partial(sync_perform, dispatcher),
+                    parallel_effects.effects)

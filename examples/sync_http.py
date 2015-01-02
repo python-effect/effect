@@ -4,7 +4,7 @@ import requests
 
 
 @sync_performer
-def perform_request_with_requests(dispatcher, http_request):
+def perform_request_requests(dispatcher, http_request):
     """
     A performer for :obj:`HTTPRequest` that uses the ``requests`` library.
     """
