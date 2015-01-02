@@ -14,6 +14,7 @@ This code has these responsibilities:
   result of the effect (or raises an exception it it failed).
 """
 
+from __future__ import print_function
 
 from functools import partial
 from multiprocessing.pool import ThreadPool
@@ -53,7 +54,7 @@ def get_dispatcher():
 def main():
     dispatcher = get_dispatcher()
     eff = main_effect()
-    print sync_perform(dispatcher, eff)
+    print(sync_perform(dispatcher, eff))
 
 
 if __name__ == '__main__':

@@ -33,3 +33,7 @@ To run them:
 or
 
     python -m examples.github.twisted_main
+
+
+Note that the twisted example does not run on Python 3, but all other examples
+do.

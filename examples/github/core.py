@@ -9,6 +9,7 @@ different performers for the :obj:`HTTPRequest` intent.
 
 from __future__ import print_function
 
+from functools import reduce
 import json
 import operator
 
