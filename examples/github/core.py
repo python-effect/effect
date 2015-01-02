@@ -7,6 +7,7 @@ or Tornado implementations of an HTTP client with this code, by providing
 different performers for the :obj:`HTTPRequest` intent.
 """
 
+from __future__ import print_function
 
 import json
 import operator

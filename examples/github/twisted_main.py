@@ -29,7 +29,7 @@ from effect import (
 
 from .http_intent import HTTPRequest
 from .twisted_http import perform_request_with_treq
-from .github_example import main_effect
+from .core import main_effect
 from .readline_intent import ReadLine, perform_readline_stdin
 
 

@@ -25,7 +25,7 @@ from effect import (
     perform_parallel_with_pool,
     sync_perform)
 
-from .github_example import main_effect
+from .core import main_effect
 from .http_intent import HTTPRequest
 from .readline_intent import ReadLine, perform_readline_stdin
 from .sync_http import perform_request_requests
