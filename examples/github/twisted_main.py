@@ -29,9 +29,9 @@ from effect import (
 
 from ..http.http_intent import HTTPRequest
 from ..http.twisted_http import perform_request_with_treq
+from ..readline_intent import ReadLine, perform_readline_stdin
 
 from .core import main_effect
-from ..readline_intent import ReadLine, perform_readline_stdin
 
 
 def get_dispatcher(reactor):

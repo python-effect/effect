@@ -25,10 +25,11 @@ from effect import (
     perform_parallel_with_pool,
     sync_perform)
 
-from .core import main_effect
 from ..http.http_intent import HTTPRequest
 from ..http.sync_http import perform_request_requests
 from ..readline_intent import ReadLine, perform_readline_stdin
+
+from .core import main_effect
 
 
 def get_dispatcher():
