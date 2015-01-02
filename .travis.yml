@@ -23,4 +23,4 @@ notifications:
     skip_join: true
     use_notice: true
     template:
-      - "(%{branch}@ %{commit} by %{author}): %{message} - %{build_url}"
+      - "%{repository} %{branch} %{commit} by %{author}: %{message}  %{build_url}"
