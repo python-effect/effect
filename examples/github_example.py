@@ -1,15 +1,19 @@
 """
-Functions for interacting with the GitHub API.
+Core application / API interaction logic of the GitHub example.
 
 None of this code needs to change based on your I/O strategy -- you can
-use blocking interfaces (e.g. the ``requests`` library) or Twisted, asyncio,
-or Tornado implementations of an HTTP client with this code.
+use blocking API (e.g. the ``requests`` library) or Twisted, asyncio,
+or Tornado implementations of an HTTP client with this code, by providing
+different performers for the :obj:`HTTPRequest` intent.
 """
+
 
 import json
 import operator
 
 from effect import Effect, parallel
+
+from .readline_intent import ReadLine
 from .http_intent import HTTPRequest
 
 
@@ -48,3 +52,16 @@ def get_orgs_repos(name):
     req = req.on(lambda org_names: parallel(map(get_org_repos, org_names)))
     req = req.on(lambda repo_lists: reduce(operator.add, repo_lists))
     return req
+
+
+def main_effect():
+    """
+    Request a username from the keyboard, and look up all repos in all of
+    that user's organizations.
+
+    :return: an Effect resulting in a list of repositories.
+    """
+    intent = ReadLine("Enter Github Username> ")
+    read_eff = Effect(intent)
+    org_repos_eff = read_eff.on(success=get_orgs_repos)
+    return org_repos_eff
