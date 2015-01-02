@@ -1,0 +1,20 @@
+Examples of using Effect.
+
+The "github" directory contains a simple application that lets the user input a
+GitHub username, and prints out a list of all repositories that that user has
+access to.
+
+There are two entrypoints into the example: examples.github.sync_main and
+examples.github.twisted_main. sync_main does typical blocking IO, and
+twisted_main uses asynchronous IO. Note that the vast majority of the code
+doesn't need to care about this difference; the only part that cares about it
+is the *_main.py files.
+
+To run them:
+
+    python -m examples.github.sync_main
+
+or
+
+    python -m examples.github.twisted_main
+
