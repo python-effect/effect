@@ -65,7 +65,7 @@ def perform_parallel_with_pool(pool, dispatcher, parallel_effects):
     ``multiprocessing.pool.ThreadPool`` to perform the child effects in
     parallel.
 
-    Note that this _can't_ be used with a ``multiprocessing.Pool``, since
+    Note that this *can't* be used with a ``multiprocessing.Pool``, since
     you can't pass closures to its ``map`` method.
 
     This function takes the pool as its first argument, so you'll need to
