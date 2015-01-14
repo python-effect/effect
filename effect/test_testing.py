@@ -9,16 +9,15 @@ from testtools.matchers import (MatchesListwise, Equals, MatchesException,
 from . import (
     Constant,
     Effect,
-    Error,
-    Func,
     base_dispatcher,
     parallel)
-from .testing import resolve_effect, fail_effect, resolve_stubs, Stub
-
-
-ESConstant = lambda x: Effect(Stub(Constant(x)))
-ESError = lambda x: Effect(Stub(Error(x)))
-ESFunc = lambda x: Effect(Stub(Func(x)))
+from .testing import (
+    ESConstant,
+    ESError,
+    ESFunc,
+    fail_effect,
+    resolve_effect,
+    resolve_stubs)
 
 
 class ResolveEffectTests(TestCase):

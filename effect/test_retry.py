@@ -2,13 +2,8 @@ from testtools import TestCase
 from testtools.matchers import raises
 
 from .retry import retry
-from . import Effect, Error, Func, Constant, base_dispatcher
-from .testing import Stub, resolve_stubs
-
-
-ESConstant = lambda x: Effect(Stub(Constant(x)))
-ESError = lambda x: Effect(Stub(Error(x)))
-ESFunc = lambda x: Effect(Stub(Func(x)))
+from . import base_dispatcher
+from .testing import ESConstant, ESError, ESFunc, resolve_stubs
 
 
 class RetryTests(TestCase):

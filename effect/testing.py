@@ -15,7 +15,7 @@ from characteristic import attributes
 
 from ._base import Effect, guard, _Box, NoPerformerFoundError
 from ._sync import NotSynchronousError
-from ._intents import ParallelEffects
+from ._intents import Constant, Error, Func, ParallelEffects
 
 import six
 
@@ -35,6 +35,21 @@ class Stub(object):
         :param intent: The intent to perform with :func:`resolve_stub`.
         """
         self.intent = intent
+
+
+def ESConstant(x):
+    """Return Effect(Stub(Constant(x)))"""
+    return Effect(Stub(Constant(x)))
+
+
+def ESError(x):
+    """Return Effect(Stub(Error(x)))"""
+    return Effect(Stub(Error(x)))
+
+
+def ESFunc(x):
+    """Return Effect(Stub(Func(x)))"""
+    return Effect(Stub(Func(x)))
 
 
 def resolve_effect(effect, result, is_error=False):
