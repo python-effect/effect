@@ -1,3 +1,10 @@
+"""
+An imperative-looking notation for Effectful code.
+
+See :func:`do`.
+"""
+
+
 from __future__ import print_function
 
 import types
@@ -28,7 +35,7 @@ def do(f):
     will no longer return a generator, but instead it will return an Effect,
     which must be used just like any other Effect.
 
-    Errors are also converted to normal exceptions:
+    Errors are also converted to normal exceptions::
 
         @do
         def foo():
@@ -36,6 +43,9 @@ def do(f):
                 thing = yield Effect(Error(RuntimeError('foo')))
             except RuntimeError:
                 yield do_return('got a RuntimeError as expected')
+
+    (This decorator is named for Haskell's ``do`` notation, which is similar in
+    spirit).
     """
     def inner(*args, **kwargs):
         gen = f(*args, **kwargs)
