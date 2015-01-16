@@ -50,9 +50,17 @@ def deferred_performer(f):
     """
     A decorator for performers that return Deferreds.
 
-    The wrapped function is expected to take a dispatcher and an intent (and
-    not a box), and may return a Deferred. This decorator deals with putting
-    the Deferred's result into the box.
+    The function being decorated is expected to take a dispatcher and an intent
+    (and not a box), and may return a Deferred. The wrapper function
+    that this decorator returns will accept a dispatcher, an intent, and a box
+    (conforming to the performer interface). The wrapper deals with
+    putting the Deferred's result into the box.
+
+    Example::
+
+        @deferred_performer
+        def perform_foo(dispatcher, foo):
+            return do_side_effecting_deferred_operation(foo)
     """
     @wraps(f)
     def deferred_wrapper(*args):
