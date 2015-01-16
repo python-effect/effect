@@ -42,9 +42,17 @@ def sync_performer(f):
     """
     A decorator for performers that return a value synchronously.
 
-    The wrapped function is expected to take a dispatcher and an intent (and
-    not a box), and should return or raise normally. The decorator deals with
-    putting the result or exception into the box.
+    The function being decorated is expected to take a dispatcher and an intent
+    (and not a box), and should return or raise normally. The wrapper function
+    that this decorator returns will accept a dispatcher, an intent, and a box
+    (conforming to the performer interface). The wrapper deals with putting the
+    return value or exception into the box.
+
+    Example::
+
+        @sync_performer
+        def perform_foo(dispatcher, foo):
+            return do_side_effect(foo)
     """
     @wraps(f)
     def sync_wrapper(*args):
