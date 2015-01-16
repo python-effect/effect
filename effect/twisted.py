@@ -55,6 +55,12 @@ def deferred_performer(f):
     that this decorator returns will accept a dispatcher, an intent, and a box
     (conforming to the performer interface). The wrapper deals with
     putting the Deferred's result into the box.
+
+    Example::
+
+        @deferred_performer
+        def perform_foo(dispatcher, foo):
+            return do_side_effecting_deferred_operation(foo)
     """
     @wraps(f)
     def deferred_wrapper(*args):
