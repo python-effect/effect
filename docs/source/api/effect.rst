@@ -6,6 +6,7 @@ Submodules
 
 .. toctree::
 
+   effect.do
    effect.retry
    effect.testing
    effect.twisted
