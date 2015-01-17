@@ -10,6 +10,7 @@ from __future__ import print_function
 import types
 
 from . import Effect, Constant
+from ._utils import wraps
 
 
 def do(f):
@@ -47,13 +48,14 @@ def do(f):
     (This decorator is named for Haskell's ``do`` notation, which is similar in
     spirit).
     """
-    def inner(*args, **kwargs):
+    @wraps(f)
+    def do_wrapper(*args, **kwargs):
         gen = f(*args, **kwargs)
         if not isinstance(gen, types.GeneratorType):
             raise TypeError(
                 "%r is not a generator function. It returned %r." % (f, gen))
         return Effect(Constant(None)).on(lambda r: _do(r, gen, False))
-    return inner
+    return do_wrapper
 
 
 class _ReturnSentinel(object):
