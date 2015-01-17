@@ -56,11 +56,22 @@ def do(f):
     return inner
 
 
-_return_sentinel = object()
+class _ReturnSentinel(object):
+    def __init__(self, result):
+        self.result = result
 
 
 def do_return(val):
-    return (_return_sentinel, val)
+    """
+    Specify a return value for a @do function.
+
+    The result of this function must be yielded.  e.g.::
+
+        @do
+        def foo():
+            yield do_return('hello')
+    """
+    return _ReturnSentinel(val)
 
 
 def _do(result, generator, is_error):
@@ -71,8 +82,8 @@ def _do(result, generator, is_error):
             val = generator.send(result)
     except StopIteration:
         return None
-    if type(val) is tuple and val[0] is _return_sentinel:
-        return val[1]
+    if type(val) is _ReturnSentinel:
+        return val.result
     elif type(val) is Effect:
         return val.on(success=lambda r: _do(r, generator, False),
                       error=lambda e: _do(e, generator, True))

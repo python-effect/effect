@@ -52,8 +52,9 @@ class DoTests(TestCase):
         @do
         def f():
             yield 1
+        result = f()
         self.assertThat(
-            lambda: perf(f()),
+            lambda: perf(result),
             raises(TypeError(
                 "@do functions must only yield Effects or results of "
                 "do_return. Got 1")))
