@@ -9,7 +9,7 @@ from __future__ import print_function
 
 import types
 
-from . import Effect, Constant
+from . import Effect, Func
 from ._utils import wraps
 
 
@@ -50,11 +50,16 @@ def do(f):
     """
     @wraps(f)
     def do_wrapper(*args, **kwargs):
-        gen = f(*args, **kwargs)
-        if not isinstance(gen, types.GeneratorType):
-            raise TypeError(
-                "%r is not a generator function. It returned %r." % (f, gen))
-        return Effect(Constant(None)).on(lambda r: _do(r, gen, False))
+
+        def doit():
+            gen = f(*args, **kwargs)
+            if not isinstance(gen, types.GeneratorType):
+                raise TypeError(
+                    "%r is not a generator function. It returned %r."
+                    % (f, gen))
+            return _do(None, gen, False)
+
+        return Effect(Func(doit))
     return do_wrapper
 
 

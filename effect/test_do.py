@@ -20,7 +20,7 @@ class DoTests(TestCase):
         """When do is passed a non-generator function, it raises an error."""
         f = lambda: None
         self.assertThat(
-            do(f),
+            lambda: perf(do(f)()),
             raises(TypeError(
                 "%r is not a generator function. It returned None." % (f,)
             )))
@@ -121,3 +121,15 @@ class DoTests(TestCase):
         original.attr = 1
         wrapped = do(new_func)
         self.assertEqual(wrapped.__name__, 'do_wrapper')
+
+    def test_repeatable_effect(self):
+        """
+        The Effect returned by the call to the @do function is repeatable.
+        """
+        @do
+        def f():
+            x = yield Effect(Constant('foo'))
+            yield do_return(x)
+        eff = f()
+        self.assertEqual(perf(eff), 'foo')
+        self.assertEqual(perf(eff), 'foo')
