@@ -16,7 +16,7 @@ Twisted-specific dispatcher for these.
 
 
 from __future__ import print_function, absolute_import
-from characteristic import attributes, Attribute
+from characteristic import attributes
 from functools import partial
 from itertools import count
 

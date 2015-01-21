@@ -87,8 +87,8 @@ class ParallelTests(TestCase):
 
     def test_error(self):
         """
-        When given an effect that results in a Error, ``perform_parallel_async``
-        result in ``FirstError``.
+        When given an effect that results in a Error,
+        ``perform_parallel_async`` result in ``FirstError``.
         """
         self.assertThat(
             lambda: sync_perform(
@@ -109,7 +109,7 @@ class ParallelTests(TestCase):
         eff = parallel([
             Effect(lambda box: boxes.__setitem__(0, box)),
             Effect(lambda box: boxes.__setitem__(1, box)),
-            ])
+        ])
         perform(
             ComposedDispatcher([
                 TypeDispatcher({ParallelEffects: perform_parallel_async}),

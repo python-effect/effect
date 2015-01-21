@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from functools import partial
 import sys
 
-from twisted.internet.defer import Deferred, gatherResults
+from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
 from twisted.internet.task import deferLater
 
