@@ -22,7 +22,7 @@ from twisted.internet.defer import Deferred, gatherResults
 from twisted.python.failure import Failure
 from twisted.internet.task import deferLater
 
-from ._intents import Delay, ParallelEffects
+from ._intents import Delay, ParallelEffects, perform_parallel_async
 from ._base import perform as base_perform
 from ._dispatcher import TypeDispatcher
 from ._utils import wraps
@@ -41,7 +41,7 @@ def make_twisted_dispatcher(reactor):
     with Twisted-specific implementations.
     """
     return TypeDispatcher({
-        ParallelEffects: perform_parallel,
+        ParallelEffects: perform_parallel_async,
         Delay: deferred_performer(partial(perform_delay, reactor)),
     })
 
@@ -76,16 +76,6 @@ def deferred_performer(f):
             else:
                 box.succeed(result)
     return deferred_wrapper
-
-
-@deferred_performer
-def perform_parallel(dispatcher, parallel):
-    """
-    Perform a :obj:`ParallelEffects` intent by using Twisted's
-        :func:`twisted.internet.defer.gatherResults`.
-    """
-    return gatherResults(
-        map(partial(perform, dispatcher), parallel.effects))
 
 
 def perform_delay(reactor, dispatcher, delay):
