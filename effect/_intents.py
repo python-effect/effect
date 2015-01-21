@@ -16,9 +16,10 @@ Twisted-specific dispatcher for these.
 
 
 from __future__ import print_function, absolute_import
-from characteristic import attributes
+from characteristic import attributes, Attribute
+from functools import partial
 
-from ._base import Effect
+from ._base import Effect, perform
 from ._sync import sync_performer
 from ._dispatcher import TypeDispatcher
 
@@ -52,6 +53,60 @@ def parallel(effects):
     :param effects: Effects which should be performed in parallel.
     """
     return Effect(ParallelEffects(list(effects)))
+
+
+@attributes(['failure', 'index'])
+class FirstError(Exception):
+    pass
+
+
+@attributes([
+    Attribute('count'),
+    Attribute('box'),
+    Attribute('results', exclude_from_init=True),
+    Attribute('finished', exclude_from_init=True),
+])
+class _ParallelHelper(object):
+
+    def __init__(self):
+        self.results = [None] * self.count
+        self.finished = 0
+
+    def succeed(self, result, index):
+        self.finished += 1
+        if self.box is None:
+            return
+
+        self.results[index] = result
+        if self.finished == self.count:
+            box, self.box = self.box, None
+            box.succeed(self.results)
+
+    def fail(self, result, index):
+        self.finished += 1
+        if self.box is None:
+            return
+
+        box, self.box = self.box, None
+        box.fail(
+            (FirstError, FirstError(failure=result, index=index), result[2]))
+
+
+def perform_parallel(dispatcher, intent, box):
+    effects = list(intent.effects)
+
+    if not effects:
+        box.succeed([])
+        return
+
+    helper = _ParallelHelper(count=len(effects), box=box)
+
+    for index, effect in enumerate(effects):
+        perform(
+            dispatcher,
+            effect.on(
+                success=partial(helper.succeed, index=index),
+                error=partial(helper.fail, index=index)))
 
 
 @attributes(['delay'], apply_with_init=False, apply_immutable=True)
