@@ -12,7 +12,6 @@ from __future__ import absolute_import
 from ._base import Effect, perform, NoPerformerFoundError
 from ._sync import (
     NotSynchronousError,
-    perform_parallel_with_pool,
     sync_perform,
     sync_performer)
 from ._intents import (
