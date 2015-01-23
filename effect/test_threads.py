@@ -30,6 +30,8 @@ class ParallelPoolPerformerTests(TestCase):
     def test_error(self):
         peff = parallel([Effect(Constant(1)),
                           Effect(Error(EquibleException(message="foo")))])
+        # XXX RADIX - this assertion doesn't work, it's not checking that the
+        # arguments to FirstError are correct.
         self.assertThat(
             lambda: sync_perform(self.dispatcher, peff),
             raises(FirstError(exception=EquibleException(message='foo'),
