@@ -13,9 +13,9 @@ import sys
 
 from characteristic import attributes
 
-from ._base import Effect, guard
-from ._sync import sync_perform
-from ._intents import ParallelEffects
+from ._base import Effect, guard, _Box, NoPerformerFoundError
+from ._sync import NotSynchronousError
+from ._intents import Constant, Error, Func, ParallelEffects
 
 import six
 
@@ -35,6 +35,21 @@ class Stub(object):
         :param intent: The intent to perform with :func:`resolve_stub`.
         """
         self.intent = intent
+
+
+def ESConstant(x):
+    """Return Effect(Stub(Constant(x)))"""
+    return Effect(Stub(Constant(x)))
+
+
+def ESError(x):
+    """Return Effect(Stub(Error(x)))"""
+    return Effect(Stub(Error(x)))
+
+
+def ESFunc(x):
+    """Return Effect(Stub(Func(x)))"""
+    return Effect(Stub(Func(x)))
 
 
 def resolve_effect(effect, result, is_error=False):
@@ -91,18 +106,32 @@ def fail_effect(effect, exception):
         return resolve_effect(effect, sys.exc_info(), is_error=True)
 
 
-def resolve_stub(real_dispatcher, effect):
+def resolve_stub(dispatcher, effect):
     """
     Automatically perform an effect, if its intent is a :obj:`Stub`.
 
     Note that resolve_stubs is preferred to this function, since it handles
     chains of stub effects.
     """
-    def stub_dispatcher(i):
-        return lambda d, _, box: real_dispatcher(i.intent)(d, i.intent, box)
-
     if type(effect.intent) is Stub:
-        return sync_perform(stub_dispatcher, effect, recurse_effects=False)
+        performer = dispatcher(effect.intent.intent)
+        if performer is None:
+            raise NoPerformerFoundError(effect.intent.intent)
+        result_slot = []
+        box = _Box(result_slot.append)
+        performer(dispatcher, effect.intent.intent, box)
+        if len(result_slot) == 0:
+            raise NotSynchronousError(
+                "Performer %r was not synchronous during stub resolution for "
+                "effect %r"
+                % (performer, effect))
+        if len(result_slot) > 1:
+            raise RuntimeError(
+                "Pathological error (too many box results) while running "
+                "performer %r for effect %r"
+                % (performer, effect))
+        return resolve_effect(effect, result_slot[0][1],
+                              is_error=result_slot[0][0])
     else:
         raise TypeError("resolve_stub can only resolve stubs, not %r"
                         % (effect,))

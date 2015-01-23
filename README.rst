@@ -7,6 +7,10 @@ Effect
 Effect is a library for helping you write purely functional code by
 isolating the effects (that is, IO or state manipulation) in your code.
 
+.. image:: https://radix.github.io/effect/sigh-defects.png
+    :target: https://twitter.com/extempore2/status/553597279463305218
+
+
 
 Status: Alpha
 =============

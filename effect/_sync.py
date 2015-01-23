@@ -16,7 +16,7 @@ class NotSynchronousError(Exception):
     """Performing an effect did not immediately return a value."""
 
 
-def sync_perform(dispatcher, effect, recurse_effects=True):
+def sync_perform(dispatcher, effect):
     """
     Perform an effect, and return its ultimate result. If the final result is
     an error, the exception will be raised. This is useful for testing, and
@@ -29,7 +29,7 @@ def sync_perform(dispatcher, effect, recurse_effects=True):
     successes = []
     errors = []
     effect = effect.on(success=successes.append, error=errors.append)
-    perform(dispatcher, effect, recurse_effects=recurse_effects)
+    perform(dispatcher, effect)
     if successes:
         return successes[0]
     elif errors:
@@ -43,9 +43,17 @@ def sync_performer(f):
     """
     A decorator for performers that return a value synchronously.
 
-    The wrapped function is expected to take a dispatcher and an intent (and
-    not a box), and should return or raise normally. The decorator deals with
-    putting the result or exception into the box.
+    The function being decorated is expected to take a dispatcher and an intent
+    (and not a box), and should return or raise normally. The wrapper function
+    that this decorator returns will accept a dispatcher, an intent, and a box
+    (conforming to the performer interface). The wrapper deals with putting the
+    return value or exception into the box.
+
+    Example::
+
+        @sync_performer
+        def perform_foo(dispatcher, foo):
+            return do_side_effect(foo)
     """
     @wraps(f)
     def sync_wrapper(*args):

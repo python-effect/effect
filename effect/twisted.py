@@ -18,11 +18,11 @@ from __future__ import absolute_import
 from functools import partial
 import sys
 
-from twisted.internet.defer import Deferred, gatherResults
+from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
 from twisted.internet.task import deferLater
 
-from ._intents import Delay, ParallelEffects
+from ._intents import Delay, ParallelEffects, perform_parallel_async
 from ._base import perform as base_perform
 from ._dispatcher import TypeDispatcher
 from ._utils import wraps
@@ -41,7 +41,7 @@ def make_twisted_dispatcher(reactor):
     with Twisted-specific implementations.
     """
     return TypeDispatcher({
-        ParallelEffects: perform_parallel,
+        ParallelEffects: perform_parallel_async,
         Delay: deferred_performer(partial(perform_delay, reactor)),
     })
 
@@ -50,9 +50,17 @@ def deferred_performer(f):
     """
     A decorator for performers that return Deferreds.
 
-    The wrapped function is expected to take a dispatcher and an intent (and
-    not a box), and may return a Deferred. This decorator deals with putting
-    the Deferred's result into the box.
+    The function being decorated is expected to take a dispatcher and an intent
+    (and not a box), and may return a Deferred. The wrapper function
+    that this decorator returns will accept a dispatcher, an intent, and a box
+    (conforming to the performer interface). The wrapper deals with
+    putting the Deferred's result into the box.
+
+    Example::
+
+        @deferred_performer
+        def perform_foo(dispatcher, foo):
+            return do_side_effecting_deferred_operation(foo)
     """
     @wraps(f)
     def deferred_wrapper(*args):
@@ -68,16 +76,6 @@ def deferred_performer(f):
             else:
                 box.succeed(result)
     return deferred_wrapper
-
-
-@deferred_performer
-def perform_parallel(dispatcher, parallel):
-    """
-    Perform a :obj:`ParallelEffects` intent by using Twisted's
-        :func:`twisted.internet.defer.gatherResults`.
-    """
-    return gatherResults(
-        map(partial(perform, dispatcher), parallel.effects))
 
 
 def perform_delay(reactor, dispatcher, delay):

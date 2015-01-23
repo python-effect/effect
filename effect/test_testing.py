@@ -9,16 +9,15 @@ from testtools.matchers import (MatchesListwise, Equals, MatchesException,
 from . import (
     Constant,
     Effect,
-    Error,
-    Func,
     base_dispatcher,
     parallel)
-from .testing import resolve_effect, fail_effect, resolve_stubs, Stub
-
-
-ESConstant = lambda x: Effect(Stub(Constant(x)))
-ESError = lambda x: Effect(Stub(Error(x)))
-ESFunc = lambda x: Effect(Stub(Func(x)))
+from .testing import (
+    ESConstant,
+    ESError,
+    ESFunc,
+    fail_effect,
+    resolve_effect,
+    resolve_stubs)
 
 
 class ResolveEffectTests(TestCase):
@@ -185,6 +184,22 @@ class ResolveStubsTests(TestCase):
         eff = ESConstant("foo").on(success=lambda r: ("got it", r))
         self.assertEqual(resolve_stubs(base_dispatcher, eff),
                          ("got it", "foo"))
+
+    def test_outer_callbacks_after_intermediate_effect(self):
+        """
+        When a callback returns an effect, and the outer effect has further
+        callbacks, the remaining callbacks will be wrapped around the returned
+        effect.
+        """
+        eff = ESConstant("foo").on(
+            success=lambda r: Effect("something")
+        ).on(
+            lambda r: ("callbacked", r))
+        result = resolve_stubs(base_dispatcher, eff)
+        self.assertIs(type(result), Effect)
+        self.assertEqual(result.intent, "something")
+        result2 = resolve_effect(result, "bar")
+        self.assertEqual(result2, ("callbacked", "bar"))
 
     def test_parallel_stubs(self):
         """Parallel effects are recursively resolved."""

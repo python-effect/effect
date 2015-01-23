@@ -87,7 +87,7 @@ class NoPerformerFoundError(Exception):
     """Raised when a performer for an intent couldn't be found."""
 
 
-def perform(dispatcher, effect, recurse_effects=True):
+def perform(dispatcher, effect):
     """
     Perform an effect and invoke callbacks bound to it.
 
@@ -109,10 +109,6 @@ def perform(dispatcher, effect, recurse_effects=True):
     you can ignore the box by using a decorator like :func:`sync_performer` or
     :func:`effect.twisted.deferred_performer`.
 
-    Unless ``recurse_effects`` is ``False``, Callbacks can return Effects, and
-    those effects will immediately performed.  The result of the returned
-    Effect will be passed to the next callback.
-
     Note that this function does _not_ return the final result of the effect.
     You may instead want to use :func:`effect.sync_perform` or
     :func:`effect.twisted.perform`.
@@ -122,7 +118,7 @@ def perform(dispatcher, effect, recurse_effects=True):
     def _run_callbacks(bouncer, chain, result):
         is_error, value = result
 
-        if recurse_effects and type(value) is Effect:
+        if type(value) is Effect:
             bouncer.bounce(
                 _perform,
                 Effect(value.intent, callbacks=value.callbacks + chain))

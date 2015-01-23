@@ -17,8 +17,10 @@ Twisted-specific dispatcher for these.
 
 from __future__ import print_function, absolute_import
 from characteristic import attributes
+from functools import partial
+from itertools import count
 
-from ._base import Effect
+from ._base import Effect, perform
 from ._sync import sync_performer
 from ._dispatcher import TypeDispatcher
 
@@ -29,12 +31,8 @@ class ParallelEffects(object):
     An effect intent that asks for a number of effects to be run in parallel,
     and for their results to be gathered up into a sequence.
 
-    Performers for this intent could perform the child effects in threads, or
-    use some other concurrency mechanism like Twisted's ``gatherResults``. Of
-    course, the implementation strategy for this effect will need to cooperate
-    with the performers of the Effects being parallelized -- e.g., a
-    ``@deferred_performer`` performer for a child intent should not be used
-    with a thread-dispatching performer for :class:`ParallelEffects`.
+    :func:`perform_parallel_async` can perform this Intent assuming all child
+    effects have asynchronous performers.
     """
     def __init__(self, effects):
         """
@@ -52,6 +50,50 @@ def parallel(effects):
     :param effects: Effects which should be performed in parallel.
     """
     return Effect(ParallelEffects(list(effects)))
+
+
+@attributes(['exception', 'index'])
+class FirstError(Exception):
+    """
+    One of the effects in a :obj:`ParallelEffects` resulted in an error. This
+    represents the first such error that occurred.
+    """
+    def __str__(self):
+        return '(index=%s) %s: %s' % (
+            self.index, type(self.exception).__name__, self.exception)
+
+
+def perform_parallel_async(dispatcher, intent, box):
+    """
+    A performer for :obj:`ParallelEffects` which works if all child Effects are
+    intrinsically asynchronous. Use this for things like Twisted, asyncio, etc.
+
+    WARNING: If this is used when child Effects have blocking performers, it
+    will run them in serial, not parallel.
+    """
+    effects = list(intent.effects)
+    if not effects:
+        box.succeed([])
+        return
+    num_results = count()
+    results = [None] * len(effects)
+
+    def succeed(index, result):
+        results[index] = result
+        if next(num_results) + 1 == len(effects):
+            box.succeed(results)
+
+    def fail(index, result):
+        box.fail((FirstError,
+                  FirstError(exception=result[1], index=index),
+                  result[2]))
+
+    for index, effect in enumerate(effects):
+        perform(
+            dispatcher,
+            effect.on(
+                success=partial(succeed, index),
+                error=partial(fail, index)))
 
 
 @attributes(['delay'], apply_with_init=False, apply_immutable=True)

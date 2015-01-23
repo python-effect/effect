@@ -220,18 +220,6 @@ class EffectPerformTests(TestCase):
             MatchesListwise([
                 MatchesException(ValueError('oh dear'))]))
 
-    def test_recurse_effects(self):
-        """
-        If ``recurse_effects`` is ``False``, and an effect returns another
-        effect, that effect returned.
-        """
-        calls = []
-        effect = Effect(lambda box: calls.append("foo"))
-        perform(func_dispatcher,
-                Effect(lambda box: box.succeed(effect)).on(calls.append),
-                recurse_effects=False)
-        self.assertEqual(calls, [effect])
-
     def test_bounced(self):
         """
         The callbacks of a performer are called after the performer returns.
