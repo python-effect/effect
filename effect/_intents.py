@@ -17,10 +17,8 @@ Twisted-specific dispatcher for these.
 
 from __future__ import print_function, absolute_import
 from characteristic import attributes
-from functools import partial
-from itertools import count
 
-from ._base import Effect, perform
+from ._base import Effect
 from ._sync import sync_performer
 from ._dispatcher import TypeDispatcher
 
@@ -31,8 +29,8 @@ class ParallelEffects(object):
     An effect intent that asks for a number of effects to be run in parallel,
     and for their results to be gathered up into a sequence.
 
-    :func:`perform_parallel_async` can perform this Intent assuming all child
-    effects have asynchronous performers.
+    :func:`effect.async.perform_parallel_async` can perform this Intent
+    assuming all child effects have asynchronous performers.
     """
     def __init__(self, effects):
         """
@@ -48,6 +46,8 @@ def parallel(effects):
     their results, in the same order as the input to this function.
 
     :param effects: Effects which should be performed in parallel.
+    :return: An Effect that results in a list of results, or which fails with
+        a :obj:`FirstError`.
     """
     return Effect(ParallelEffects(list(effects)))
 
@@ -61,39 +61,6 @@ class FirstError(Exception):
     def __str__(self):
         return '(index=%s) %s: %s' % (
             self.index, type(self.exception).__name__, self.exception)
-
-
-def perform_parallel_async(dispatcher, intent, box):
-    """
-    A performer for :obj:`ParallelEffects` which works if all child Effects are
-    intrinsically asynchronous. Use this for things like Twisted, asyncio, etc.
-
-    WARNING: If this is used when child Effects have blocking performers, it
-    will run them in serial, not parallel.
-    """
-    effects = list(intent.effects)
-    if not effects:
-        box.succeed([])
-        return
-    num_results = count()
-    results = [None] * len(effects)
-
-    def succeed(index, result):
-        results[index] = result
-        if next(num_results) + 1 == len(effects):
-            box.succeed(results)
-
-    def fail(index, result):
-        box.fail((FirstError,
-                  FirstError(exception=result[1], index=index),
-                  result[2]))
-
-    for index, effect in enumerate(effects):
-        perform(
-            dispatcher,
-            effect.on(
-                success=partial(succeed, index),
-                error=partial(fail, index)))
 
 
 @attributes(['delay'], apply_with_init=False, apply_immutable=True)
