@@ -51,7 +51,6 @@ class IntentTests(TestCase):
 class ParallelTests(TestCase):
     """Tests for :func:`parallel`."""
 
-
     def test_first_error_str(self):
         """FirstErrors have a pleasing format."""
         fe = FirstError(exception=ValueError('foo'), index=150)

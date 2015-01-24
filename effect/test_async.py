@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-from testtools.matchers import raises
 from testtools.testcase import TestCase
 
 from characteristic import attributes
@@ -13,10 +12,10 @@ from ._sync import sync_perform
 from .async import perform_parallel_async
 from .test_base import func_dispatcher
 
+
 @attributes(['message'])
 class EquitableException(Exception):
     pass
-
 
 
 class PerformParallelAsyncTests(TestCase):
@@ -65,8 +64,8 @@ class PerformParallelAsyncTests(TestCase):
 
     def test_error_index(self):
         """
-        The ``index`` of a :obj:`FirstError` is the index of the effect that failed
-        in the list.
+        The ``index`` of a :obj:`FirstError` is the index of the effect that
+        failed in the list.
         """
         try:
             sync_perform(
