@@ -3,14 +3,13 @@ from multiprocessing.pool import ThreadPool
 from functools import partial
 
 from testtools import TestCase
-from testtools.matchers import raises
 
 from . import Effect, base_dispatcher
 from ._dispatcher import ComposedDispatcher, TypeDispatcher
 from ._intents import Constant, Error, ParallelEffects, FirstError, parallel
 from ._sync import sync_perform
 from .threads import perform_parallel_with_pool
-from .test_intents import EquibleException
+from .test_async import EquitableException
 
 
 class ParallelPoolPerformerTests(TestCase):
@@ -28,11 +27,34 @@ class ParallelPoolPerformerTests(TestCase):
         self.assertEqual(sync_perform(self.dispatcher, peff), [1, 2])
 
     def test_error(self):
-        peff = parallel([Effect(Constant(1)),
-                          Effect(Error(EquibleException(message="foo")))])
-        # XXX RADIX - this assertion doesn't work, it's not checking that the
-        # arguments to FirstError are correct.
-        self.assertThat(
-            lambda: sync_perform(self.dispatcher, peff),
-            raises(FirstError(exception=EquibleException(message='foo'),
-                              index=1)))
+        """
+        When given an effect that results in a Error, :obj:`FirstError` is
+        raised.
+        """
+        try:
+            sync_perform(
+                self.dispatcher,
+                parallel([Effect(Error(EquitableException(message="foo")))]))
+        except FirstError as fe:
+            self.assertEqual(
+                fe,
+                FirstError(exception=EquitableException(message='foo'),
+                           index=0))
+
+    def test_error_index(self):
+        """
+        The ``index`` of a :obj:`FirstError` is the index of the effect that
+        failed in the list.
+        """
+        try:
+            sync_perform(
+                self.dispatcher,
+                parallel([
+                    Effect(Constant(1)),
+                    Effect(Error(EquitableException(message="foo"))),
+                    Effect(Constant(2))]))
+        except FirstError as fe:
+            self.assertEqual(
+                fe,
+                FirstError(exception=EquitableException(message='foo'),
+                           index=1))

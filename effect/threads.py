@@ -1,7 +1,5 @@
 import sys
 
-from functools import partial
-
 import six
 
 from ._intents import FirstError
@@ -26,10 +24,17 @@ def perform_parallel_with_pool(pool, dispatcher, parallel_effects):
             perform_parallel_effects_with_pool, my_pool)
         dispatcher = TypeDispatcher({ParallelEffects: parallel_performer, ...})
     """
-    try:
-        return pool.map(partial(sync_perform, dispatcher),
-                        parallel_effects.effects)
-    except:
-        exc_info = sys.exc_info()
-        six.reraise(FirstError, FirstError(exception=exc_info[1], index=0),
-                    exc_info[2])
+
+    # pool.map raises whatever exception is raised first, which is the exact
+    # behavior we want to get this performer -- we just need to translate it to
+    # a FirstError exception.
+    def perform_child(index_and_effect):
+        index, effect = index_and_effect
+        try:
+            return sync_perform(dispatcher, effect)
+        except:
+            exc_info = sys.exc_info()
+            six.reraise(FirstError,
+                        FirstError(exception=exc_info[1], index=index),
+                        exc_info[2])
+    return pool.map(perform_child, enumerate(parallel_effects.effects))
