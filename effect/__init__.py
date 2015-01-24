@@ -28,5 +28,4 @@ __all__ = [
     "Constant", "Error", "FirstError", "Func",
     "base_dispatcher",
     "TypeDispatcher", "ComposedDispatcher",
-    "perform_parallel_with_pool"
 ]
