@@ -53,12 +53,33 @@ class PerformParallelAsyncTests(TestCase):
         When given an effect that results in a Error,
         ``perform_parallel_async`` result in ``FirstError``.
         """
-        self.assertThat(
-            lambda: sync_perform(
+        try:
+            sync_perform(
                 self.dispatcher,
-                parallel([Effect(Error(EquitableException(message="foo")))])),
-            raises(FirstError(exception=EquitableException(message='foo'),
-                              index=0)))
+                parallel([Effect(Error(EquitableException(message="foo")))]))
+        except FirstError as fe:
+            self.assertEqual(
+                fe,
+                FirstError(exception=EquitableException(message='foo'),
+                           index=0))
+
+    def test_error_index(self):
+        """
+        The ``index`` of a :obj:`FirstError` is the index of the effect that failed
+        in the list.
+        """
+        try:
+            sync_perform(
+                self.dispatcher,
+                parallel([
+                    Effect(Constant(1)),
+                    Effect(Error(EquitableException(message="foo"))),
+                    Effect(Constant(2))]))
+        except FirstError as fe:
+            self.assertEqual(
+                fe,
+                FirstError(exception=EquitableException(message='foo'),
+                           index=1))
 
     def test_out_of_order(self):
         """
