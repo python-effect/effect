@@ -17,7 +17,6 @@ class EquitableException(Exception):
     pass
 
 
-
 class ParallelPerformerTestsMixin(object):
     """Common tests for any performer of :obj:`effect.ParallelEffects`."""
 
