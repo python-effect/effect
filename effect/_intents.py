@@ -31,6 +31,12 @@ class ParallelEffects(object):
 
     :func:`effect.async.perform_parallel_async` can perform this Intent
     assuming all child effects have asynchronous performers.
+
+    Note that any performer for this intent will need to be compatible with
+    performers for all of its child effects' intents. Notably, if child effects
+    have blocking performers, it's useless to use
+    :func:`effect.async.perform_parallel_async`, and if they're asynchronous,
+    it's useless to perform them with a threaded performer.
     """
     def __init__(self, effects):
         """
