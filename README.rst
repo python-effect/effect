@@ -18,7 +18,10 @@ Status: Alpha
 
 Right now Effect is in alpha, and is likely to change incompatibly. Once it's
 being used in production and the API seems pretty good, a final version will be
-released.
+released. Because it's in alpha, ``pip`` requires that you explicitly specify
+the version number when specifying a dependency. This means that you won't
+automatically get upgraded to newer versions that potentially break the API.
+e.g., use `pip install effect==0.1aN`.
 
 
 What Is It?
