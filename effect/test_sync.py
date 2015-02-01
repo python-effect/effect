@@ -1,11 +1,10 @@
 from functools import partial
 
 from testtools import TestCase
-from testtools.matchers import (
-    MatchesException, raises)
+from testtools.matchers import MatchesException, raises
 
-from . import Effect
-from ._sync import sync_perform, NotSynchronousError, sync_performer
+from ._base import Effect
+from ._sync import NotSynchronousError, sync_perform, sync_performer
 
 
 def func_dispatcher(intent):
