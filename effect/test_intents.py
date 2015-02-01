@@ -10,7 +10,7 @@ from ._intents import (
     Constant, perform_constant,
     Error, perform_error,
     Func, perform_func,
-)
+    FirstError)
 
 
 class IntentTests(TestCase):
@@ -46,3 +46,15 @@ class IntentTests(TestCase):
             TypeDispatcher({Func: perform_func}),
             Effect(intent))
         self.assertEqual(result, "foo")
+
+
+class ParallelTests(TestCase):
+    """Tests for :func:`parallel`."""
+
+    def test_first_error_str(self):
+        """FirstErrors have a pleasing format."""
+        fe = FirstError(exc_info=(ValueError, ValueError('foo'), None),
+                        index=150)
+        self.assertEqual(
+            str(fe),
+            '(index=150) ValueError: foo')
