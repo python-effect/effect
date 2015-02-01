@@ -6,6 +6,7 @@ from testtools import TestCase
 from testtools.matchers import MatchesException, MatchesListwise
 
 from ._base import Effect, NoPerformerFoundError, perform
+from ._test_utils import raise_
 
 
 def func_dispatcher(intent):
@@ -287,7 +288,3 @@ class EffectPerformTests(TestCase):
         perform(func_dispatcher, eff)
         boxes[0].succeed('foo')
         self.assertEqual(calls[0], calls[1])
-
-
-def raise_(e):
-    raise e
