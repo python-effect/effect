@@ -6,6 +6,7 @@ Submodules
 
 .. toctree::
 
+   effect.async
    effect.do
    effect.retry
    effect.testing
