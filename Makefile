@@ -9,6 +9,7 @@ upload-dist:
 	twine upload dist/*
 	echo
 	echo "Don't forget to add a git tag."
+	echo "And don't forget to bump the version in setup.py and docs/source/conf.py."
 
 doc:
 	rm -rf docs/build
