@@ -35,6 +35,6 @@ def perform_parallel_with_pool(pool, dispatcher, parallel_effects):
         except:
             exc_info = sys.exc_info()
             six.reraise(FirstError,
-                        FirstError(exception=exc_info[1], index=index),
+                        FirstError(exc_info=exc_info, index=index),
                         exc_info[2])
     return pool.map(perform_child, enumerate(parallel_effects.effects))
