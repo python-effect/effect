@@ -23,11 +23,15 @@ def perform_parallel_with_pool(pool, dispatcher, parallel_effects):
         parallel_performer = functools.partial(
             perform_parallel_effects_with_pool, my_pool)
         dispatcher = TypeDispatcher({ParallelEffects: parallel_performer, ...})
+
+    NOTE: ``ThreadPool`` was broken in Python 3.4.0, but fixed by 3.4.1. This
+    performer should work for any version of Python supported by Effect other
+    than 3.4.0.
     """
 
     # pool.map raises whatever exception is raised first, which is the exact
-    # behavior we want to get this performer -- we just need to translate it to
-    # a FirstError exception.
+    # behavior we want in this performer -- we just need to translate it to a
+    # FirstError exception.
     def perform_child(index_and_effect):
         index, effect = index_and_effect
         try:
