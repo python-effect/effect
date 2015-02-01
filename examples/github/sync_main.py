@@ -23,8 +23,9 @@ from effect import (
     ComposedDispatcher,
     ParallelEffects,
     TypeDispatcher,
-    perform_parallel_with_pool,
     sync_perform)
+from effect.threads import perform_parallel_with_pool
+
 
 from ..http.http_intent import HTTPRequest
 from ..http.sync_http import perform_request_requests
