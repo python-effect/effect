@@ -11,6 +11,6 @@ class ReadLine(object):
 
 
 @sync_performer
-def stdin_read_line(dispatcher, readline):
-    """Perform a :obj:`ReadLine` intent by reading from STDIN."""
+def perform_readline_stdin(dispatcher, readline):
+    """Perform a :obj:`ReadLine` intent by reading from stdin."""
     return input(readline.prompt)
