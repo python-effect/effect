@@ -53,7 +53,8 @@ class ParallelTests(TestCase):
 
     def test_first_error_str(self):
         """FirstErrors have a pleasing format."""
-        fe = FirstError(exception=ValueError('foo'), index=150)
+        fe = FirstError(exc_info=(ValueError, ValueError('foo'), None),
+                        index=150)
         self.assertEqual(
             str(fe),
             '(index=150) ValueError: foo')

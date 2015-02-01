@@ -29,7 +29,7 @@ def perform_parallel_async(dispatcher, intent, box):
 
     def fail(index, result):
         box.fail((FirstError,
-                  FirstError(exception=result[1], index=index),
+                  FirstError(exc_info=result, index=index),
                   result[2]))
 
     for index, effect in enumerate(effects):
