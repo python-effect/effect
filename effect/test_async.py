@@ -1,21 +1,36 @@
 from __future__ import print_function
 
-from testtools.testcase import TestCase
+import sys
+from functools import partial
 
 from characteristic import attributes
+
+import six
+
+from testtools.testcase import TestCase
+from testtools.matchers import Equals, MatchesStructure
 
 from ._base import Effect, perform
 from ._dispatcher import ComposedDispatcher, TypeDispatcher
 from ._intents import (
-    Constant, Error, FirstError, ParallelEffects, parallel, base_dispatcher)
+    Constant, FirstError, Func, ParallelEffects, base_dispatcher,
+    parallel)
 from ._sync import sync_perform
 from .async import perform_parallel_async
 from .test_base import func_dispatcher
+from ._test_utils import MatchesReraisedExcInfo
 
 
 @attributes(['message'])
 class EquitableException(Exception):
     pass
+
+
+def get_exc_info(exception):
+    try:
+        raise exception
+    except:
+        return sys.exc_info()
 
 
 class PerformParallelAsyncTests(TestCase):
@@ -52,33 +67,41 @@ class PerformParallelAsyncTests(TestCase):
         When given an effect that results in a Error,
         ``perform_parallel_async`` result in ``FirstError``.
         """
+        expected_exc_info = get_exc_info(EquitableException(message='foo'))
+        reraise = partial(six.reraise, *expected_exc_info)
         try:
             sync_perform(
                 self.dispatcher,
-                parallel([Effect(Error(EquitableException(message="foo")))]))
+                parallel([Effect(Func(reraise))]))
         except FirstError as fe:
-            self.assertEqual(
+            self.assertThat(
                 fe,
-                FirstError(exception=EquitableException(message='foo'),
-                           index=0))
+                MatchesStructure(
+                    index=Equals(0),
+                    exc_info=MatchesReraisedExcInfo(expected_exc_info)))
+        else:
+            self.fail("sync_perform should have raised FirstError.")
 
     def test_error_index(self):
         """
         The ``index`` of a :obj:`FirstError` is the index of the effect that
         failed in the list.
         """
+        expected_exc_info = get_exc_info(EquitableException(message='foo'))
+        reraise = partial(six.reraise, *expected_exc_info)
         try:
             sync_perform(
                 self.dispatcher,
                 parallel([
                     Effect(Constant(1)),
-                    Effect(Error(EquitableException(message="foo"))),
+                    Effect(Func(reraise)),
                     Effect(Constant(2))]))
         except FirstError as fe:
-            self.assertEqual(
+            self.assertThat(
                 fe,
-                FirstError(exception=EquitableException(message='foo'),
-                           index=1))
+                MatchesStructure(
+                    index=Equals(1),
+                    exc_info=MatchesReraisedExcInfo(expected_exc_info)))
 
     def test_out_of_order(self):
         """

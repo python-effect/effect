@@ -37,6 +37,9 @@ class ParallelEffects(object):
     have blocking performers, it's useless to use
     :func:`effect.async.perform_parallel_async`, and if they're asynchronous,
     it's useless to perform them with a threaded performer.
+
+    Performers of this intent must fail with a :obj:`FirstError` exception when
+    any child effect fails, representing the first error.
     """
     def __init__(self, effects):
         """
@@ -49,7 +52,10 @@ def parallel(effects):
     """
     Given multiple Effects, return one Effect that represents the aggregate of
     all of their effects.  The result of the aggregate Effect will be a list of
-    their results, in the same order as the input to this function.
+    their results, in the same order as the input to this function. If any
+    child effect fails, the first such failure will be propagated as a
+    :obj:`FirstError` exception. If additional error information is desired,
+    error handler callbacks can be attached to each child effect.
 
     :param effects: Effects which should be performed in parallel.
     :return: An Effect that results in a list of results, or which fails with
@@ -58,7 +64,7 @@ def parallel(effects):
     return Effect(ParallelEffects(list(effects)))
 
 
-@attributes(['exception', 'index'])
+@attributes(['exc_info', 'index'])
 class FirstError(Exception):
     """
     One of the effects in a :obj:`ParallelEffects` resulted in an error. This
@@ -66,7 +72,7 @@ class FirstError(Exception):
     """
     def __str__(self):
         return '(index=%s) %s: %s' % (
-            self.index, type(self.exception).__name__, self.exception)
+            self.index, self.exc_info[0].__name__, self.exc_info[1])
 
 
 @attributes(['delay'], apply_with_init=False, apply_immutable=True)
