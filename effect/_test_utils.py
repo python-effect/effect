@@ -26,11 +26,9 @@ class MatchesReraisedExcInfo(object):
     def match(self, actual):
         valcheck = Equals(self.expected[1]).match(actual[1])
         if valcheck is not None:
-            print "val doesn't match", valcheck
             return valcheck
         typecheck = Equals(self.expected[0]).match(actual[0])
         if typecheck is not None:
-            print "type doesn't match", typecheck
             return typecheck
         expected = traceback.format_exception(*self.expected)
         new = traceback.format_exception(*actual)
