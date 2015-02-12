@@ -8,7 +8,7 @@ from testtools import TestCase
 
 from ._intents import ParallelEffects, base_dispatcher
 from ._dispatcher import ComposedDispatcher, TypeDispatcher
-from .threads import perform_parallel_with_pool
+from .threads import perform_parallel_with_pool, perform_serially
 from .test_parallel_performers import ParallelPerformerTestsMixin
 
 
@@ -22,3 +22,13 @@ class ParallelPoolPerformerTests(TestCase, ParallelPerformerTestsMixin):
         self.dispatcher = ComposedDispatcher([
             base_dispatcher,
             TypeDispatcher({ParallelEffects: self.p_performer})])
+
+
+class SeriallyPerformerTests(TestCase, ParallelPerformerTestsMixin):
+    """Tests for :func:`perform_serially`."""
+
+    def setUp(self):
+        super(SeriallyPerformerTests, self).setUp()
+        self.dispatcher = ComposedDispatcher([
+             base_dispatcher,
+             TypeDispatcher({ParallelEffects: perform_serially})])

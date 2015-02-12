@@ -1,9 +1,25 @@
 import sys
+from functools import partial
 
 import six
 
 from ._intents import FirstError
 from ._sync import sync_perform, sync_performer
+
+
+def perform_child(dispatcher, index_and_effect):
+    """
+    Perform child effect with given dispatcher and raise `FirstError` on
+    any error
+    """
+    index, effect = index_and_effect
+    try:
+        return sync_perform(dispatcher, effect)
+    except:
+        exc_info = sys.exc_info()
+        six.reraise(FirstError,
+                    FirstError(exc_info=exc_info, index=index),
+                    exc_info[2])
 
 
 @sync_performer
@@ -32,13 +48,13 @@ def perform_parallel_with_pool(pool, dispatcher, parallel_effects):
     # pool.map raises whatever exception is raised first, which is the exact
     # behavior we want in this performer -- we just need to translate it to a
     # FirstError exception.
-    def perform_child(index_and_effect):
-        index, effect = index_and_effect
-        try:
-            return sync_perform(dispatcher, effect)
-        except:
-            exc_info = sys.exc_info()
-            six.reraise(FirstError,
-                        FirstError(exc_info=exc_info, index=index),
-                        exc_info[2])
-    return pool.map(perform_child, enumerate(parallel_effects.effects))
+    return pool.map(partial(perform_child, dispatcher),
+                    enumerate(parallel_effects.effects))
+
+
+@sync_performer
+def perform_serially(disp, intent):
+    """
+    Performs parallel effects serially. Useful when testing or simple cases
+    """
+    return map(partial(perform_child, disp), enumerate(intent.effects))
