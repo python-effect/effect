@@ -9,7 +9,6 @@ from testtools.matchers import (MatchesListwise, Equals, MatchesException,
 from . import (
     Constant,
     Effect,
-    NoPerformerFoundError,
     base_dispatcher,
     parallel,
     sync_perform)
