@@ -1,5 +1,5 @@
 lint:
-	flake8 --ignore=E131 effect/ examples/
+	flake8 --ignore=E131,E731,W503 effect/ examples/
 
 build-dist:
 	rm -rf dist
