@@ -72,8 +72,8 @@ the ``on`` method:
 
 (Here we assume another intent, ``Print``, which shows some text to the user.)
 
-A (sometimes) nicer syntax is provided for adding callbacks, called ``do``
-notation.
+A (sometimes) nicer syntax is provided for adding callbacks, with the
+:func:`effect.do.do` decorator.
 
 .. code:: python
 
