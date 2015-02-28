@@ -14,7 +14,7 @@ import sys
 from characteristic import attributes
 
 from ._base import Effect, guard, _Box, NoPerformerFoundError
-from ._sync import NotSynchronousError
+from ._sync import NotSynchronousError, sync_performer
 from ._intents import Constant, Error, Func, ParallelEffects
 
 import six
@@ -164,3 +164,31 @@ def resolve_stubs(dispatcher, effect):
             break
 
     return effect
+
+
+class EQDispatcher(object):
+    """
+    A dispatcher that looks up intents by equality and performs them by
+    returning constant values.
+
+    Users provide a mapping of intents to results, where the intents are
+    matched against the intents being performed with a simple equality check
+    (not a type check!).
+
+    e.g.::
+
+        >>> sync_perform(EQDispatcher({MyIntent(1, 2): 'the-result'}),
+                         Effect(MyIntent(1, 2)))
+        'the-result'
+
+    assuming MyIntent supports ``__eq__`` by value.
+    """
+    def __init__(self, mapping):
+        """
+        :param mapping: Mapping of intents to results.
+        """
+        self.mapping = mapping
+
+    def __call__(self, intent):
+        if intent in self.mapping:
+            return sync_performer(lambda d, i: self.mapping[intent])
