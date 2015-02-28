@@ -58,17 +58,44 @@ To perform the ReadLine intent, we must implement a performer function:
     def perform_read_line(dispatcher, readline):
 	return raw_input(readline.prompt)
 
-``Effect`` objects can be passed to :func:`effect.perform`, along with a
-dispatcher which looks up the performer based on the intent.
+
+To do something with the result of the effect, we must attach callbacks with
+the ``on`` method:
+
+.. code:: python
+
+    def greet():
+        return get_user_name().on(
+            success=lambda r: Effect(Print("Hello,", r)),
+	    error=lambda exc_info: Effect(Print("There was an error!", exc_info[1])))
+
+
+(Here we assume another intent, ``Print``, which shows some text to the user.)
+
+A (sometimes) nicer syntax is provided for adding callbacks, called ``do``
+notation.
+
+.. code:: python
+
+    from effect.do import do
+
+    @do
+    def greet():
+        try:
+            name = yield get_user_name()
+        except Exception as e:
+            yield Effect(Print("There was an error!", e))
+        else:
+            yield Effect(Print("Hello,", name))
+
+Finally, to actually perform these effects, they can be passed to
+:func:`effect.perform`, along with a dispatcher which looks up the performer
+based on the intent.
 
 .. code:: python
 
     def main():
-        eff = get_user_name()
-	eff = effect.on(
-	    success=lambda result: print("I like {} too!".format(result)),
-	    error=lambda e: print("sorry, there was an error. {}".format(e)))
-
+        eff = greet()
 	dispatcher = TypeDispatcher({ReadLine: perform_read_line})
         perform(dispatcher, effect)
 
