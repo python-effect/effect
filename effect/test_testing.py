@@ -164,7 +164,7 @@ class ResolveStubsTests(TestCase):
         eff = ESConstant("foo").on(success=lambda r: bare_effect)
         result_eff = resolve_stubs(base_dispatcher, eff)
         self.assertIs(result_eff.intent, bare_effect.intent)
-        self.assertEqual(result_eff.callbacks, ())
+        self.assertEqual(result_eff.callbacks, [])
 
     def test_type_error(self):
         """
