@@ -190,6 +190,6 @@ class EQDispatcher(object):
         self.mapping = mapping
 
     def __call__(self, intent):
-        for k, v in self.mapping.iteritems():
+        for k, v in self.mapping.items():
             if k == intent:
                 return sync_performer(lambda d, i: v)
