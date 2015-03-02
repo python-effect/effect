@@ -288,3 +288,14 @@ class EffectPerformTests(TestCase):
         perform(func_dispatcher, eff)
         boxes[0].succeed('foo')
         self.assertEqual(calls[0], calls[1])
+
+
+class HashTests(TestCase):
+    """Tests for hashing of effects."""
+
+    def test_hashable(self):
+        """
+        Effects are hashable, despite the fact that the callbacks are stored as
+        a list.
+        """
+        hash(Effect(None))

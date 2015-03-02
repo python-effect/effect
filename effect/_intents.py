@@ -45,7 +45,7 @@ class ParallelEffects(object):
         """
         :param effects: Effects which should be performed in parallel.
         """
-        self.effects = effects
+        self.effects = tuple(effects)
 
 
 def parallel(effects):

@@ -26,7 +26,7 @@ class Effect(object):
         """
         self.intent = intent
         if callbacks is None:
-            callbacks = []
+            callbacks = ()
         self.callbacks = callbacks
 
     def on(self, success=None, error=None):
@@ -44,7 +44,7 @@ class Effect(object):
         :obj:`Effect` will be passed to the next callback.
         """
         return Effect(self.intent,
-                      callbacks=self.callbacks + [(success, error)])
+                      callbacks=self.callbacks + ((success, error),))
 
 
 class _Box(object):

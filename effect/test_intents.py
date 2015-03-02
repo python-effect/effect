@@ -10,6 +10,7 @@ from ._intents import (
     Constant, perform_constant,
     Error, perform_error,
     Func, perform_func,
+    parallel,
     FirstError)
 
 
@@ -58,3 +59,7 @@ class ParallelTests(TestCase):
         self.assertEqual(
             str(fe),
             '(index=150) ValueError: foo')
+
+    def test_hashable(self):
+        """ParallelIntents are hashable."""
+        hash(parallel([Effect(None), Effect(None)]))
