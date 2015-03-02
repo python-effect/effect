@@ -190,6 +190,7 @@ class EQDispatcher(object):
         self.mapping = mapping
 
     def __call__(self, intent):
+        # Avoid hashing, because a lot of intents aren't hashable.
         for k, v in self.mapping.items():
             if k == intent:
                 return sync_performer(lambda d, i: v)
