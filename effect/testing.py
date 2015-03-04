@@ -178,7 +178,7 @@ class EQDispatcher(object):
     e.g.::
 
         >>> sync_perform(EQDispatcher({MyIntent(1, 2): 'the-result'}),
-                         Effect(MyIntent(1, 2)))
+        ...              Effect(MyIntent(1, 2)))
         'the-result'
 
     assuming MyIntent supports ``__eq__`` by value.
@@ -194,3 +194,35 @@ class EQDispatcher(object):
         for k, v in self.mapping.items():
             if k == intent:
                 return sync_performer(lambda d, i: v)
+
+
+class EQFDispatcher(object):
+    """
+    A dispatcher that looks up intents by equality and performs them by
+    invoking a provided function.
+
+    Users provide a mapping of intents to functions, where the intents are
+    matched against the intents being performed with a simple equality check
+    (not a type check!).
+
+    e.g.::
+
+        >>> sync_perform(
+        ...     EQFDispatcher({
+        ...         MyIntent(1, 2): lambda i: 'the-result'}),
+        ...     Effect(MyIntent(1, 2)))
+        'the-result'
+
+    assuming MyIntent supports ``__eq__`` by value.
+    """
+    def __init__(self, mapping):
+        """
+        :param mapping: Mapping of intents to results.
+        """
+        self.mapping = mapping
+
+    def __call__(self, intent):
+        # Avoid hashing, because a lot of intents aren't hashable.
+        for k, v in self.mapping.items():
+            if k == intent:
+                return sync_performer(lambda d, i: v(i))
