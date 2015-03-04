@@ -56,11 +56,11 @@ class DoTests(TestCase):
         def f():
             yield 1
         result = f()
-        self.assertThat(
-            lambda: perf(result),
-            raises(TypeError(
-                "@do functions must only yield Effects or results of "
-                "do_return. Got 1")))
+        e = self.assertRaises(TypeError, lambda: perf(result))
+        self.assertTrue(
+            str(e).startswith(
+                '@do functions must only yield Effects or results of '
+                'do_return. Got 1 from <generator object f at'))
 
     def test_raise_from_effect(self):
         """

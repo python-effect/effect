@@ -97,4 +97,4 @@ def _do(result, generator, is_error):
     else:
         raise TypeError(
             "@do functions must only yield Effects or results of do_return. "
-            "Got %r" % (val,))
+            "Got %r from %r" % (val, generator))
