@@ -168,8 +168,10 @@ def resolve_stubs(dispatcher, effect):
 
 class EQDispatcher(object):
     """
-    A dispatcher that looks up intents by equality and performs them by
-    returning constant values.
+    An equality-based (constant) dispatcher.
+
+    This dispatcher looks up intents by equality and performs them by returning
+    an associated constant value.
 
     Users provide a mapping of intents to results, where the intents are
     matched against the intents being performed with a simple equality check
@@ -198,8 +200,10 @@ class EQDispatcher(object):
 
 class EQFDispatcher(object):
     """
-    A dispatcher that looks up intents by equality and performs them by
-    invoking a provided function.
+    An Equality-based function dispatcher.
+
+    This dispatcher looks up intents by equality and performs them by invoking
+    an associated function.
 
     Users provide a mapping of intents to functions, where the intents are
     matched against the intents being performed with a simple equality check
