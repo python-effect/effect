@@ -7,7 +7,9 @@ from ._sync import sync_performer
 
 class ERef(object):
     """
-    An effectful mutable variable.
+    An effectful mutable variable, suitable for sharing between multiple
+    logical threads of execution, that can be read and modified in a purely
+    functional way.
 
     Compare to Haskell's ``IORef`` or Clojure's ``atom``.
     """
