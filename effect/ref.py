@@ -5,7 +5,7 @@ from ._dispatcher import TypeDispatcher
 from ._sync import sync_performer
 
 
-class ERef(object):
+class Reference(object):
     """
     An effectful mutable variable, suitable for sharing between multiple
     logical threads of execution, that can be read and modified in a purely
@@ -19,44 +19,47 @@ class ERef(object):
 
     def read(self):
         """Return an Effect that results in the current value."""
-        return Effect(ReadERef(eref=self))
+        return Effect(ReadReference(ref=self))
 
     def modify(self, transformer):
         """
         Return an Effect that updates the value with ``fn(old_value)``.
         """
-        return Effect(ModifyERef(eref=self, transformer=transformer))
+        return Effect(ModifyReference(ref=self, transformer=transformer))
 
 
-@attributes(['eref'])
-class ReadERef(object):
-    """Intent that gets an ERef value."""
+@attributes(['ref'])
+class ReadReference(object):
+    """Intent that gets a Reference's current value."""
 
 
-@attributes(['eref', 'transformer'])
-class ModifyERef(object):
-    """Intent that modifies an ERef value in-place with a transformer func."""
+@attributes(['ref', 'transformer'])
+class ModifyReference(object):
+    """
+    Intent that modifies a Reference value in-place with a transformer func.
+    """
 
 
 @sync_performer
-def perform_read_eref(dispatcher, intent):
-    """Performer for :obj:`ReadERef`."""
-    return intent.eref._value
+def perform_read_reference(dispatcher, intent):
+    """Performer for :obj:`ReadReference`."""
+    return intent.ref._value
 
 
 @sync_performer
-def perform_modify_eref(dispatcher, intent):
+def perform_modify_reference(dispatcher, intent):
     """
-    Performer for :obj:`ModifyERef`.
+    Performer for :obj:`ModifyReference`.
 
-    Note that while :obj:`ModifyERef` is designed to allow strong consistency,
-    this performer is _not_ threadsafe, in the sense that it's possible to
-    overwrite unobserved values. This may change in the future.
+    Note that while :obj:`ModifyReference` is designed to allow strong
+    consistency, this performer is _not_ threadsafe, in the sense that it's
+    possible to overwrite unobserved values. This may change in the future.
     """
-    new_value = intent.transformer(intent.eref._value)
-    intent.eref._value = new_value
+    new_value = intent.transformer(intent.ref._value)
+    intent.ref._value = new_value
     return new_value
 
 
-eref_dispatcher = TypeDispatcher({ReadERef: perform_read_eref,
-                                  ModifyERef: perform_modify_eref})
+reference_dispatcher = TypeDispatcher({
+    ReadReference: perform_read_reference,
+    ModifyReference: perform_modify_reference})

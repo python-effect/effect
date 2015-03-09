@@ -3,30 +3,31 @@ from testtools import TestCase
 from ._base import Effect
 from ._sync import sync_perform
 from .ref import (
-    ERef, ModifyERef, ReadERef,
-    eref_dispatcher)
+    Reference, ModifyReference, ReadReference,
+    reference_dispatcher)
 
 
-class ERefTests(TestCase):
-    """Tests for :obj:`ERef`."""
+class ReferenceTests(TestCase):
+    """Tests for :obj:`Reference`."""
 
     def test_read(self):
         """``read`` returns an Effect that represents the current value."""
-        ref = ERef('initial')
-        self.assertEqual(ref.read(), Effect(ReadERef(eref=ref)))
+        ref = Reference('initial')
+        self.assertEqual(ref.read(), Effect(ReadReference(ref=ref)))
 
     def test_modify(self):
         """``modify`` returns an Effect that represents modification."""
-        ref = ERef(0)
+        ref = Reference(0)
         transformer = lambda x: x + 1
         eff = ref.modify(transformer)
         self.assertEqual(eff,
-                         Effect(ModifyERef(eref=ref, transformer=transformer)))
+                         Effect(ModifyReference(ref=ref,
+                                                transformer=transformer)))
 
     def test_perform_read(self):
         """Performing the reading results in the current value."""
-        ref = ERef('initial')
-        result = sync_perform(eref_dispatcher, ref.read())
+        ref = Reference('initial')
+        result = sync_perform(reference_dispatcher, ref.read())
         self.assertEqual(result, 'initial')
 
     def test_perform_modify(self):
@@ -34,8 +35,8 @@ class ERefTests(TestCase):
         Performing the modification results in transforming the current value,
         and also returns the new value.
         """
-        ref = ERef(0)
+        ref = Reference(0)
         transformer = lambda x: x + 1
-        result = sync_perform(eref_dispatcher, ref.modify(transformer))
+        result = sync_perform(reference_dispatcher, ref.modify(transformer))
         self.assertEqual(result, 1)
-        self.assertEqual(sync_perform(eref_dispatcher, ref.read()), 1)
+        self.assertEqual(sync_perform(reference_dispatcher, ref.read()), 1)
