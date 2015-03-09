@@ -10,11 +10,14 @@ from . import (
     Constant,
     Effect,
     base_dispatcher,
-    parallel)
+    parallel,
+    sync_perform)
 from .testing import (
     ESConstant,
     ESError,
     ESFunc,
+    EQDispatcher,
+    EQFDispatcher,
     fail_effect,
     resolve_effect,
     resolve_stubs)
@@ -245,3 +248,31 @@ class ResolveStubsTests(TestCase):
 
 def _raise(e):
     raise e
+
+
+class EQDispatcherTests(TestCase):
+    """Tests for :obj:`EQDispatcher`."""
+
+    def test_no_intent(self):
+        """When the dispatcher can't match the intent, it returns None."""
+        d = EQDispatcher({})
+        self.assertIs(d('foo'), None)
+
+    def test_perform(self):
+        """When an intent matches, performing it returns the canned result."""
+        d = EQDispatcher({'hello': 'there'})
+        self.assertEqual(sync_perform(d, Effect('hello')), 'there')
+
+
+class EQFDispatcherTests(TestCase):
+    """Tests for :obj:`EQFDispatcher`."""
+
+    def test_no_intent(self):
+        """When the dispatcher can't match the intent, it returns None."""
+        d = EQFDispatcher({})
+        self.assertIs(d('foo'), None)
+
+    def test_perform(self):
+        """When an intent matches, performing it returns the canned result."""
+        d = EQFDispatcher({'hello': lambda i: (i, 'there')})
+        self.assertEqual(sync_perform(d, Effect('hello')), ('hello', 'there'))

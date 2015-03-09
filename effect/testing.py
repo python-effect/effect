@@ -14,7 +14,7 @@ import sys
 from characteristic import attributes
 
 from ._base import Effect, guard, _Box, NoPerformerFoundError
-from ._sync import NotSynchronousError
+from ._sync import NotSynchronousError, sync_performer
 from ._intents import Constant, Error, Func, ParallelEffects
 
 import six
@@ -164,3 +164,70 @@ def resolve_stubs(dispatcher, effect):
             break
 
     return effect
+
+
+class EQDispatcher(object):
+    """
+    An equality-based (constant) dispatcher.
+
+    This dispatcher looks up intents by equality and performs them by returning
+    an associated constant value.
+
+    Users provide a mapping of intents to results, where the intents are
+    matched against the intents being performed with a simple equality check
+    (not a type check!).
+
+    e.g.::
+
+        >>> sync_perform(EQDispatcher({MyIntent(1, 2): 'the-result'}),
+        ...              Effect(MyIntent(1, 2)))
+        'the-result'
+
+    assuming MyIntent supports ``__eq__`` by value.
+    """
+    def __init__(self, mapping):
+        """
+        :param mapping: Mapping of intents to results.
+        """
+        self.mapping = mapping
+
+    def __call__(self, intent):
+        # Avoid hashing, because a lot of intents aren't hashable.
+        for k, v in self.mapping.items():
+            if k == intent:
+                return sync_performer(lambda d, i: v)
+
+
+class EQFDispatcher(object):
+    """
+    An Equality-based function dispatcher.
+
+    This dispatcher looks up intents by equality and performs them by invoking
+    an associated function.
+
+    Users provide a mapping of intents to functions, where the intents are
+    matched against the intents being performed with a simple equality check
+    (not a type check!). The functions in the mapping will be passed only the
+    intent and are expected to return the result or raise an exception.
+
+    e.g.::
+
+        >>> sync_perform(
+        ...     EQFDispatcher({
+        ...         MyIntent(1, 2): lambda i: 'the-result'}),
+        ...     Effect(MyIntent(1, 2)))
+        'the-result'
+
+    assuming MyIntent supports ``__eq__`` by value.
+    """
+    def __init__(self, mapping):
+        """
+        :param mapping: Mapping of intents to results.
+        """
+        self.mapping = mapping
+
+    def __call__(self, intent):
+        # Avoid hashing, because a lot of intents aren't hashable.
+        for k, v in self.mapping.items():
+            if k == intent:
+                return sync_performer(lambda d, i: v(i))
