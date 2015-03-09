@@ -7,6 +7,8 @@ from functools import partial
 
 from characteristic import attributes
 
+import six
+
 from ._continuation import trampoline
 
 
@@ -149,3 +151,20 @@ def perform(dispatcher, effect):
             _run_callbacks(bouncer, effect.callbacks, (True, e))
 
     trampoline(_perform, effect)
+
+
+def catch(exc_type, callable):
+    """
+    A helper for handling errors of a specific type.
+
+        eff.on(error=catch(SpecificException,
+                           lambda exc_info: "got an error!"))
+
+    If any exception other than a ``SpecificException`` is thrown, it will be
+    ignored by this handler and propogate further down the chain of callbacks.
+    """
+    def catcher(exc_info):
+        if isinstance(exc_info[1], exc_type):
+            return callable(exc_info)
+        six.reraise(*exc_info)
+    return catcher
