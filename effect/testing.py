@@ -207,7 +207,8 @@ class EQFDispatcher(object):
 
     Users provide a mapping of intents to functions, where the intents are
     matched against the intents being performed with a simple equality check
-    (not a type check!).
+    (not a type check!). The functions in the mapping will be passed only the
+    intent and are expected to return the result or raise an exception.
 
     e.g.::
 

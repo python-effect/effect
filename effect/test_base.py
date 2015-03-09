@@ -1,11 +1,12 @@
 from __future__ import print_function, absolute_import
 
+import sys
 import traceback
 
 from testtools import TestCase
 from testtools.matchers import MatchesException, MatchesListwise
 
-from ._base import Effect, NoPerformerFoundError, perform
+from ._base import Effect, NoPerformerFoundError, catch, perform
 from ._test_utils import raise_
 
 
@@ -288,3 +289,34 @@ class EffectPerformTests(TestCase):
         perform(func_dispatcher, eff)
         boxes[0].succeed('foo')
         self.assertEqual(calls[0], calls[1])
+
+
+class CatchTests(TestCase):
+    """Tests for :func:`catch`."""
+
+    def test_caught(self):
+        """
+        When the exception type matches the type in the ``exc_info`` tuple, the
+        callable is invoked and its result is returned.
+        """
+        try:
+            raise RuntimeError('foo')
+        except:
+            exc_info = sys.exc_info()
+        result = catch(RuntimeError, lambda e: ('caught', e))(exc_info)
+        self.assertEqual(result, ('caught', exc_info))
+
+    def test_missed(self):
+        """
+        When the exception type does not match the type in the ``exc_info``
+        tuple, the callable is not invoked and the original exception is
+        reraised.
+        """
+        try:
+            raise ZeroDivisionError('foo')
+        except:
+            exc_info = sys.exc_info()
+        e = self.assertRaises(
+            ZeroDivisionError,
+            lambda: catch(RuntimeError, lambda e: ('caught', e))(exc_info))
+        self.assertEqual(str(e), 'foo')
