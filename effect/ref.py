@@ -14,6 +14,9 @@ class Reference(object):
     Compare to Haskell's ``IORef`` or Clojure's ``atom``.
     """
 
+    # TODO: Add modify_atomic that either uses a lock or a low-level
+    # compare-and-set operation.
+
     def __init__(self, initial):
         self._value = initial
 
@@ -24,6 +27,9 @@ class Reference(object):
     def modify(self, transformer):
         """
         Return an Effect that updates the value with ``fn(old_value)``.
+
+        This is not guaranteed to be linearizable if multiple threads are
+        modifying the reference at the same time.
         """
         return Effect(ModifyReference(ref=self, transformer=transformer))
 
@@ -37,6 +43,9 @@ class ReadReference(object):
 class ModifyReference(object):
     """
     Intent that modifies a Reference value in-place with a transformer func.
+
+    This intent is not necessarily linearizable if multiple threads are
+    modifying the same reference at the same time.
     """
 
 
@@ -51,9 +60,8 @@ def perform_modify_reference(dispatcher, intent):
     """
     Performer for :obj:`ModifyReference`.
 
-    Note that while :obj:`ModifyReference` is designed to allow strong
-    consistency, this performer is _not_ threadsafe, in the sense that it's
-    possible to overwrite unobserved values. This may change in the future.
+    This performer is not linearizable if multiple physical threads are
+    modifying the same reference at the same time.
     """
     new_value = intent.transformer(intent.ref._value)
     intent.ref._value = new_value
