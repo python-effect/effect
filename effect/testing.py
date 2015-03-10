@@ -177,9 +177,15 @@ class EQDispatcher(object):
     matched against the intents being performed with a simple equality check
     (not a type check!).
 
+    The mapping must be provided as a sequence of two-tuples. We don't use a
+    dict because we don't want to require that the intents be hashable (in
+    practice a lot of them aren't, and it's a pain to require it). If you want
+    to construct your mapping as a dict, you can, just pass in the result of
+    ``d.items()``.
+
     e.g.::
 
-        >>> sync_perform(EQDispatcher({MyIntent(1, 2): 'the-result'}),
+        >>> sync_perform(EQDispatcher([(MyIntent(1, 2), 'the-result')]),
         ...              Effect(MyIntent(1, 2)))
         'the-result'
 
@@ -187,13 +193,13 @@ class EQDispatcher(object):
     """
     def __init__(self, mapping):
         """
-        :param mapping: Mapping of intents to results.
+        :param list mapping: A sequence of tuples of (intent, result).
         """
         self.mapping = mapping
 
     def __call__(self, intent):
         # Avoid hashing, because a lot of intents aren't hashable.
-        for k, v in self.mapping.items():
+        for k, v in self.mapping:
             if k == intent:
                 return sync_performer(lambda d, i: v)
 
@@ -210,11 +216,17 @@ class EQFDispatcher(object):
     (not a type check!). The functions in the mapping will be passed only the
     intent and are expected to return the result or raise an exception.
 
+    The mapping must be provided as a sequence of two-tuples. We don't use a
+    dict because we don't want to require that the intents be hashable (in
+    practice a lot of them aren't, and it's a pain to require it). If you want
+    to construct your mapping as a dict, you can, just pass in the result of
+    ``d.items()``.
+
     e.g.::
 
         >>> sync_perform(
-        ...     EQFDispatcher({
-        ...         MyIntent(1, 2): lambda i: 'the-result'}),
+        ...     EQFDispatcher([(
+        ...         MyIntent(1, 2), lambda i: 'the-result')]),
         ...     Effect(MyIntent(1, 2)))
         'the-result'
 
@@ -222,12 +234,12 @@ class EQFDispatcher(object):
     """
     def __init__(self, mapping):
         """
-        :param mapping: Mapping of intents to results.
+        :param list mapping: A sequence of two-tuples of (intent, function).
         """
         self.mapping = mapping
 
     def __call__(self, intent):
         # Avoid hashing, because a lot of intents aren't hashable.
-        for k, v in self.mapping.items():
+        for k, v in self.mapping:
             if k == intent:
                 return sync_performer(lambda d, i: v(i))
