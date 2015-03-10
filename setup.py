@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="effect",
-    version="0.1a14",
+    version="0.1a15",
     description="pure effects for Python",
     long_description=open('README.rst').read(),
     url="http://github.com/radix/effect/",
