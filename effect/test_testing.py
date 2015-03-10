@@ -255,12 +255,12 @@ class EQDispatcherTests(TestCase):
 
     def test_no_intent(self):
         """When the dispatcher can't match the intent, it returns None."""
-        d = EQDispatcher({})
+        d = EQDispatcher([])
         self.assertIs(d('foo'), None)
 
     def test_perform(self):
         """When an intent matches, performing it returns the canned result."""
-        d = EQDispatcher({'hello': 'there'})
+        d = EQDispatcher([('hello', 'there')])
         self.assertEqual(sync_perform(d, Effect('hello')), 'there')
 
 
@@ -269,10 +269,10 @@ class EQFDispatcherTests(TestCase):
 
     def test_no_intent(self):
         """When the dispatcher can't match the intent, it returns None."""
-        d = EQFDispatcher({})
+        d = EQFDispatcher([])
         self.assertIs(d('foo'), None)
 
     def test_perform(self):
         """When an intent matches, performing it returns the canned result."""
-        d = EQFDispatcher({'hello': lambda i: (i, 'there')})
+        d = EQFDispatcher([('hello', lambda i: (i, 'there'))])
         self.assertEqual(sync_perform(d, Effect('hello')), ('hello', 'there'))
