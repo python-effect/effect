@@ -8,6 +8,7 @@ Submodules
 
    effect.async
    effect.do
+   effect.ref
    effect.retry
    effect.testing
    effect.threads
