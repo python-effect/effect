@@ -245,7 +245,6 @@ class EQFDispatcher(object):
                 return sync_performer(lambda d, i: v(i))
 
 
-
 class IntentMismatchError(Exception):
     def __init__(self, expected_intent, got_intent):
         self.expected_intent = expected_intent

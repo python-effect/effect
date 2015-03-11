@@ -288,7 +288,8 @@ class SequenceDispatcherTests(TestCase):
         When an intent isn't expected, a :obj:`IntentMismatchError` is raised.
         """
         d = SequenceDispatcher([('foo', lambda i: 1 / 0)])
-        e = self.assertRaises(IntentMismatchError, lambda: sync_perform(d, Effect('hello')))
+        e = self.assertRaises(IntentMismatchError,
+                              lambda: sync_perform(d, Effect('hello')))
         self.assertEqual(e.expected_intent, 'foo')
         self.assertEqual(e.got_intent, 'hello')
 
