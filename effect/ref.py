@@ -28,8 +28,13 @@ class Reference(object):
         """
         Return an Effect that updates the value with ``fn(old_value)``.
 
+        :param transformer: Function that takes old value and returns the new
+            value.
+
         This is not guaranteed to be linearizable if multiple threads are
-        modifying the reference at the same time.
+        modifying the reference at the same time. It is safe to assume
+        consistent modification as long as you're not using multiple threads,
+        though.
         """
         return Effect(ModifyReference(ref=self, transformer=transformer))
 
