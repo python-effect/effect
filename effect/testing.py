@@ -243,3 +243,43 @@ class EQFDispatcher(object):
         for k, v in self.mapping:
             if k == intent:
                 return sync_performer(lambda d, i: v(i))
+
+
+
+class IntentMismatchError(Exception):
+    def __init__(self, expected_intent, got_intent):
+        self.expected_intent = expected_intent
+        self.got_intent = got_intent
+        super(IntentMismatchError, self).__init__(
+            'Expected intent %r, got %r' % (expected_intent, got_intent))
+
+
+class SequenceDispatcher(object):
+    """
+    A dispatcher which steps through a sequence of (intent, func) tuples and
+    runs ``func`` to perform intents in strict sequence.
+
+    So, if you expect to first perform an intent like ``MyIntent('a')`` and
+    then an intent like ``OtherIntent('b')``, you can create a dispatcher like
+    this::
+
+        SequenceDispatcher([
+            (MyIntent('a'), lambda i: 'my-intent-result'),
+            (OtherIntent('b'), lambda i: 'other-intent-result')
+        ])
+
+    Unlike most dispatchers, this one raises an exception
+    (:obj:`IntentMismatchError`) when an intent is not found, in the order
+    expected.
+    """
+    def __init__(self, sequence):
+        """:param list sequence: Sequence of (intent, fn)."""
+        self.sequence = sequence
+
+    def __call__(self, intent):
+        exp_intent, func = self.sequence[0]
+        if intent == exp_intent:
+            self.sequence = self.sequence[1:]
+            return sync_performer(lambda d, i: func(i))
+        else:
+            raise IntentMismatchError(exp_intent, intent)

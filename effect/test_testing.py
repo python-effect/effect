@@ -18,6 +18,8 @@ from .testing import (
     ESFunc,
     EQDispatcher,
     EQFDispatcher,
+    IntentMismatchError,
+    SequenceDispatcher,
     fail_effect,
     resolve_effect,
     resolve_stubs)
@@ -276,3 +278,30 @@ class EQFDispatcherTests(TestCase):
         """When an intent matches, performing it returns the canned result."""
         d = EQFDispatcher([('hello', lambda i: (i, 'there'))])
         self.assertEqual(sync_perform(d, Effect('hello')), ('hello', 'there'))
+
+
+class SequenceDispatcherTests(TestCase):
+    """Tests for :obj:`SequenceDispatcher`."""
+
+    def test_mismatch(self):
+        """
+        When an intent isn't expected, a :obj:`IntentMismatchError` is raised.
+        """
+        d = SequenceDispatcher([('foo', lambda i: 1 / 0)])
+        e = self.assertRaises(IntentMismatchError, lambda: sync_perform(d, Effect('hello')))
+        self.assertEqual(e.expected_intent, 'foo')
+        self.assertEqual(e.got_intent, 'hello')
+
+    def test_success(self):
+        """
+        Each intent is performed in sequence with the provided functions, as
+        long as the intents match.
+        """
+        d = SequenceDispatcher([
+            ('foo', lambda i: ('performfoo', i)),
+            ('bar', lambda i: ('performbar', i)),
+        ])
+        eff = Effect('foo').on(lambda r: Effect('bar').on(lambda r2: (r, r2)))
+        self.assertEqual(
+            sync_perform(d, eff),
+            (('performfoo', 'foo'), ('performbar', 'bar')))
