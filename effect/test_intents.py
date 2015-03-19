@@ -94,7 +94,9 @@ class ParallelAllErrorsTests(TestCase):
         self.assertThat(
             sync_perform(dispatcher, eff),
             MatchesListwise([
-                MatchesListwise([Equals(True), MatchesReraisedExcInfo(exc_info1)]),
+                MatchesListwise([Equals(True),
+                                 MatchesReraisedExcInfo(exc_info1)]),
                 Equals((False, 1)),
-                MatchesListwise([Equals(True), MatchesReraisedExcInfo(exc_info2)]),
+                MatchesListwise([Equals(True),
+                                 MatchesReraisedExcInfo(exc_info2)]),
             ]))
