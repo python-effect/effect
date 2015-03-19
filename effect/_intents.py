@@ -55,12 +55,31 @@ def parallel(effects):
     their results, in the same order as the input to this function. If any
     child effect fails, the first such failure will be propagated as a
     :obj:`FirstError` exception. If additional error information is desired,
-    error handler callbacks can be attached to each child effect.
+    use :func:`parallel_all_errors`.
 
     :param effects: Effects which should be performed in parallel.
     :return: An Effect that results in a list of results, or which fails with
         a :obj:`FirstError`.
     """
+    return Effect(ParallelEffects(list(effects)))
+
+
+def parallel_all_errors(effects):
+    """
+    Given multiple Effects, return one Effect that represents the aggregate of
+    all of their effects.  The result of the aggregate Effect will be a list of
+    their results, in the same order as the input to this function.
+
+    :param effects: Effects which should be performed in parallel.
+    :return: An Effect that results in a list of ``(is_error, result)`` tuples,
+        where ``is_error`` is True if the child effect raised an exception, in
+        which case ``result`` will be an exc_info tuple. If ``is_error`` is
+        False, then ``result`` will just be the result as provided by the child
+        effect.
+    """
+    effects = [effect.on(success=lambda r: (False, r),
+                         error=lambda e: (True, e))
+               for effect in effects]
     return Effect(ParallelEffects(list(effects)))
 
 
