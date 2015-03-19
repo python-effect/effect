@@ -1,0 +1,2 @@
+# requirements for Read The Docs
+alabaster
