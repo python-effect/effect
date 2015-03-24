@@ -113,10 +113,12 @@ but now has contributions from the following people:
 
 .. _`Christopher Armstrong`: https://github.com/radix
 
+- `cyli`_
 - `lvh`_
 - `Manish Tomar`_
 - `Tom Prince`_
 
+.. _`cyli`: https://github.com/cyli
 .. _`lvh`: https://github.com/lvh
 .. _`Manish Tomar`: https://github.com/manishtomar
 .. _`Tom Prince`: https://github.com/tomprince
