@@ -38,6 +38,9 @@ class Reference(object):
         """
         return Effect(ModifyReference(ref=self, transformer=transformer))
 
+    def __repr__(self):
+        return "<Reference({})>".format(self._value)
+
 
 @attributes(['ref'])
 class ReadReference(object):
