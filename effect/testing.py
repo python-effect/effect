@@ -258,6 +258,10 @@ class SequenceDispatcher(object):
             (MyIntent('a'), lambda i: 'my-intent-result'),
             (OtherIntent('b'), lambda i: 'other-intent-result')
         ])
+
+    :obj:`None` is returned if the next intent in the sequence is not equal to
+    the intent being performed, or if there are no more items left in the
+    sequence.
     """
     def __init__(self, sequence):
         """:param list sequence: Sequence of (intent, fn)."""

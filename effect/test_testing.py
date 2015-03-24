@@ -284,7 +284,7 @@ class SequenceDispatcherTests(TestCase):
 
     def test_mismatch(self):
         """
-        When an intent isn't expected, a :obj:`None` is returned.
+        When an intent isn't expected, a None is returned.
         """
         d = SequenceDispatcher([('foo', lambda i: 1 / 0)])
         self.assertEqual(d('hello'), None)
@@ -306,4 +306,12 @@ class SequenceDispatcherTests(TestCase):
     def test_ran_out(self):
         """When there are no more items left, None is returned."""
         d = SequenceDispatcher([])
+        self.assertEqual(d('foo'), None)
+
+    def test_out_of_order(self):
+        """Order of items in the sequence matters."""
+        d = SequenceDispatcher([
+            ('bar', lambda i: ('performbar', i)),
+            ('foo', lambda i: ('performfoo', i)),
+        ])
         self.assertEqual(d('foo'), None)
