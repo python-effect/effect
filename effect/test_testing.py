@@ -302,3 +302,8 @@ class SequenceDispatcherTests(TestCase):
         self.assertEqual(
             sync_perform(d, eff),
             (('performfoo', 'foo'), ('performbar', 'bar')))
+
+    def test_ran_out(self):
+        """When there are no more items left, None is returned."""
+        d = SequenceDispatcher([])
+        self.assertEqual(d('foo'), None)

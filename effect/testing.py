@@ -264,6 +264,8 @@ class SequenceDispatcher(object):
         self.sequence = sequence
 
     def __call__(self, intent):
+        if len(self.sequence) == 0:
+            return
         exp_intent, func = self.sequence[0]
         if intent == exp_intent:
             self.sequence = self.sequence[1:]
