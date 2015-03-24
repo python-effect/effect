@@ -1,16 +1,25 @@
 from __future__ import print_function, absolute_import
 
+from functools import partial
+
+import six
+
 from testtools import TestCase
+from testtools.matchers import Equals, MatchesListwise
 
 from ._base import Effect
-from ._sync import sync_perform
-from ._dispatcher import TypeDispatcher
-
+from ._dispatcher import ComposedDispatcher, TypeDispatcher
 from ._intents import (
+    base_dispatcher,
     Constant, perform_constant,
     Error, perform_error,
     Func, perform_func,
-    FirstError)
+    FirstError,
+    ParallelEffects, parallel_all_errors)
+from ._sync import sync_perform
+from ._test_utils import MatchesReraisedExcInfo, get_exc_info
+from .async import perform_parallel_async
+from .test_parallel_performers import EquitableException
 
 
 class IntentTests(TestCase):
@@ -58,3 +67,36 @@ class ParallelTests(TestCase):
         self.assertEqual(
             str(fe),
             '(index=150) ValueError: foo')
+
+
+class ParallelAllErrorsTests(TestCase):
+    """Tests for :func:`parallel_all_errors`."""
+
+    def test_parallel_all_errors(self):
+        """
+        Exceptions raised from child effects get turned into (True, exc_info)
+        results.
+        """
+        exc_info1 = get_exc_info(EquitableException(message='foo'))
+        reraise1 = partial(six.reraise, *exc_info1)
+        exc_info2 = get_exc_info(EquitableException(message='bar'))
+        reraise2 = partial(six.reraise, *exc_info2)
+
+        dispatcher = ComposedDispatcher([
+            TypeDispatcher({
+                ParallelEffects: perform_parallel_async,
+            }),
+            base_dispatcher])
+        es = [Effect(Func(reraise1)),
+              Effect(Constant(1)),
+              Effect(Func(reraise2))]
+        eff = parallel_all_errors(es)
+        self.assertThat(
+            sync_perform(dispatcher, eff),
+            MatchesListwise([
+                MatchesListwise([Equals(True),
+                                 MatchesReraisedExcInfo(exc_info1)]),
+                Equals((False, 1)),
+                MatchesListwise([Equals(True),
+                                 MatchesReraisedExcInfo(exc_info2)]),
+            ]))
