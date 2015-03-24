@@ -18,7 +18,6 @@ from .testing import (
     ESFunc,
     EQDispatcher,
     EQFDispatcher,
-    IntentMismatchError,
     SequenceDispatcher,
     fail_effect,
     resolve_effect,
@@ -285,13 +284,10 @@ class SequenceDispatcherTests(TestCase):
 
     def test_mismatch(self):
         """
-        When an intent isn't expected, a :obj:`IntentMismatchError` is raised.
+        When an intent isn't expected, a :obj:`None` is returned.
         """
         d = SequenceDispatcher([('foo', lambda i: 1 / 0)])
-        e = self.assertRaises(IntentMismatchError,
-                              lambda: sync_perform(d, Effect('hello')))
-        self.assertEqual(e.expected_intent, 'foo')
-        self.assertEqual(e.got_intent, 'hello')
+        self.assertEqual(d('hello'), None)
 
     def test_success(self):
         """
