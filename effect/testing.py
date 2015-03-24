@@ -243,3 +243,34 @@ class EQFDispatcher(object):
         for k, v in self.mapping:
             if k == intent:
                 return sync_performer(lambda d, i: v(i))
+
+
+class SequenceDispatcher(object):
+    """
+    A dispatcher which steps through a sequence of (intent, func) tuples and
+    runs ``func`` to perform intents in strict sequence.
+
+    So, if you expect to first perform an intent like ``MyIntent('a')`` and
+    then an intent like ``OtherIntent('b')``, you can create a dispatcher like
+    this::
+
+        SequenceDispatcher([
+            (MyIntent('a'), lambda i: 'my-intent-result'),
+            (OtherIntent('b'), lambda i: 'other-intent-result')
+        ])
+
+    :obj:`None` is returned if the next intent in the sequence is not equal to
+    the intent being performed, or if there are no more items left in the
+    sequence.
+    """
+    def __init__(self, sequence):
+        """:param list sequence: Sequence of (intent, fn)."""
+        self.sequence = sequence
+
+    def __call__(self, intent):
+        if len(self.sequence) == 0:
+            return
+        exp_intent, func = self.sequence[0]
+        if intent == exp_intent:
+            self.sequence = self.sequence[1:]
+            return sync_performer(lambda d, i: func(i))

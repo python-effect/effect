@@ -18,6 +18,7 @@ from .testing import (
     ESFunc,
     EQDispatcher,
     EQFDispatcher,
+    SequenceDispatcher,
     fail_effect,
     resolve_effect,
     resolve_stubs)
@@ -276,3 +277,41 @@ class EQFDispatcherTests(TestCase):
         """When an intent matches, performing it returns the canned result."""
         d = EQFDispatcher([('hello', lambda i: (i, 'there'))])
         self.assertEqual(sync_perform(d, Effect('hello')), ('hello', 'there'))
+
+
+class SequenceDispatcherTests(TestCase):
+    """Tests for :obj:`SequenceDispatcher`."""
+
+    def test_mismatch(self):
+        """
+        When an intent isn't expected, a None is returned.
+        """
+        d = SequenceDispatcher([('foo', lambda i: 1 / 0)])
+        self.assertEqual(d('hello'), None)
+
+    def test_success(self):
+        """
+        Each intent is performed in sequence with the provided functions, as
+        long as the intents match.
+        """
+        d = SequenceDispatcher([
+            ('foo', lambda i: ('performfoo', i)),
+            ('bar', lambda i: ('performbar', i)),
+        ])
+        eff = Effect('foo').on(lambda r: Effect('bar').on(lambda r2: (r, r2)))
+        self.assertEqual(
+            sync_perform(d, eff),
+            (('performfoo', 'foo'), ('performbar', 'bar')))
+
+    def test_ran_out(self):
+        """When there are no more items left, None is returned."""
+        d = SequenceDispatcher([])
+        self.assertEqual(d('foo'), None)
+
+    def test_out_of_order(self):
+        """Order of items in the sequence matters."""
+        d = SequenceDispatcher([
+            ('bar', lambda i: ('performbar', i)),
+            ('foo', lambda i: ('performfoo', i)),
+        ])
+        self.assertEqual(d('foo'), None)
