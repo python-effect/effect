@@ -15,7 +15,7 @@ from ._sync import (
     sync_perform,
     sync_performer)
 from ._intents import (
-    Delay, ParallelEffects, parallel,
+    Delay, ParallelEffects, parallel, parallel_all_errors,
     Constant, Error, FirstError, Func,
     base_dispatcher)
 from ._dispatcher import ComposedDispatcher, TypeDispatcher
@@ -24,7 +24,7 @@ from ._dispatcher import ComposedDispatcher, TypeDispatcher
 __all__ = [
     "Effect", "perform", "NoPerformerFoundError",
     "NotSynchronousError", "sync_perform", "sync_performer",
-    "Delay", "ParallelEffects", "parallel",
+    "Delay", "ParallelEffects", "parallel", "parallel_all_errors",
     "Constant", "Error", "FirstError", "Func",
     "base_dispatcher",
     "TypeDispatcher", "ComposedDispatcher",
