@@ -16,7 +16,9 @@ Twisted-specific dispatcher for these.
 
 
 from __future__ import print_function, absolute_import
+from functools import partial
 from characteristic import attributes
+from six import reraise
 
 from ._base import Effect
 from ._sync import sync_performer
@@ -171,8 +173,59 @@ def perform_func(dispatcher, intent):
     return intent.func()
 
 
+@attributes(['results', 'exc_info'], apply_immutable=True)
+class SequenceFailed(Exception, object):
+    """
+    Raised if an effect in a :class:``Sequence`` fails.
+
+    :ivar list results: The list of succesful results.
+    :ivar error: The error result of the last run effect.
+    """
+
+
+@attributes(["effects"], apply_with_init=False, apply_immutable=True)
+class Sequence(object):
+    """
+    Runs a sequence of effects serially.
+
+    :returns list: The list of results of the effects.
+    :raises SequenceFailed: If one of the ffects fails.
+    """
+
+    def __init__(self, effects):
+        """
+        :param effects: The list of effects to execute in sequence.
+        """
+        self.effects = effects
+
+
+@sync_performer
+def perform_sequence(dispatcher, intent):
+    effects = list(intent.effects)
+    if not effects:
+        return []
+    results = []
+
+    def succeed(next_effect, result):
+        results.append(result)
+        return next_effect
+
+    def fail(result):
+        reraise(SequenceFailed,
+                SequenceFailed(results=results, exc_info=result),
+                result[2])
+
+    def reducer(next_effect, effect):
+        return effect.on(success=partial(succeed, next_effect),
+                         error=fail)
+
+    effects.reverse()
+    return reduce(reducer, effects, results)
+
+
 base_dispatcher = TypeDispatcher({
     Constant: perform_constant,
     Error: perform_error,
     Func: perform_func,
+    Sequence: perform_sequence,
 })
