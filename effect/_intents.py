@@ -199,6 +199,21 @@ class Sequence(object):
         self.effects = effects
 
 
+def sequence(effects):
+    """
+    Given multiple Effects, return one Effect that represents the sequence of
+    all of their effects.  The result of the aggregate Effect will be a list of
+    their results, in the same order as the input to this function. If any
+    child effect fails, the first such failure will be propagated as a
+    :class:`SequenceFailed` exception.
+
+    :param effects: Effects which should be performed in sequence.
+    :return: An Effect that results in a list of results, or which fails with
+        a :class:`SequenceFailed`.
+    """
+    return Effect(Sequence(list(effects)))
+
+
 @sync_performer
 def perform_sequence(dispatcher, intent):
     """Performer for :class:`Sequence`."""
