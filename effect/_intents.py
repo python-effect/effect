@@ -201,6 +201,7 @@ class Sequence(object):
 
 @sync_performer
 def perform_sequence(dispatcher, intent):
+    """Performer for :class:`Sequence`."""
     effects = list(intent.effects)
     if not effects:
         return []
