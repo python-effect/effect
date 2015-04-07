@@ -236,8 +236,7 @@ def perform_sequence(dispatcher, intent):
         return effect.on(success=partial(succeed, next_effect),
                          error=fail)
 
-    effects.reverse()
-    return reduce(reducer, effects, results)
+    return reduce(reducer, reversed(effects), results)
 
 
 base_dispatcher = TypeDispatcher({
