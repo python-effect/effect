@@ -179,7 +179,7 @@ class SequenceFailed(Exception, object):
     """
     Raised if an effect in a :class:``Sequence`` fails.
 
-    :ivar list results: The list of succesful results.
+    :ivar list results: The list of successful results.
     :ivar error: The error result of the last run effect.
     """
 
@@ -190,7 +190,7 @@ class Sequence(object):
     Runs a sequence of effects serially.
 
     :returns list: The list of results of the effects.
-    :raises SequenceFailed: If one of the ffects fails.
+    :raises SequenceFailed: If one of the effects fails.
     """
 
     def __init__(self, effects):
