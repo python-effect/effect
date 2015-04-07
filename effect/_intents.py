@@ -19,6 +19,7 @@ from __future__ import print_function, absolute_import
 from functools import partial
 from characteristic import attributes
 from six import reraise
+from six.moves import reduce
 
 from ._base import Effect
 from ._sync import sync_performer
