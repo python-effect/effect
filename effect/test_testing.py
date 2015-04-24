@@ -315,3 +315,40 @@ class SequenceDispatcherTests(TestCase):
             ('foo', lambda i: ('performfoo', i)),
         ])
         self.assertEqual(d('foo'), None)
+
+    def test_consumed(self):
+        """`consumed` returns True if there are no more elements."""
+        d = SequenceDispatcher([])
+        self.assertTrue(d.consumed())
+
+    def test_consumed_honors_changes(self):
+        """
+        `consumed` returns True if there are no more elements after performing
+        some..
+        """
+        d = SequenceDispatcher([('foo', lambda i: 'bar')])
+        sync_perform(d, Effect('foo'))
+        self.assertTrue(d.consumed())
+
+    def test_not_consumed(self):
+        """
+        `consumed` returns False if there are more elements.
+        """
+        d = SequenceDispatcher([('foo', lambda i: 'bar')])
+        self.assertFalse(d.consumed())
+
+    def test_consume_good(self):
+        """``consume`` doesn't raise an error if all elements are consumed."""
+        d = SequenceDispatcher([('foo', lambda i: 'bar')])
+        with d.consume():
+            sync_perform(d, Effect('foo'))
+
+    def test_consume_raises(self):
+        """``consume`` raises an error if not all elements are consumed."""
+        d = SequenceDispatcher([('foo', None)])
+
+        def failer():
+            with d.consume():
+                pass
+        e = self.assertRaises(AssertionError, failer)
+        self.assertEqual(str(e), "Not all intents were performed: ['foo']")
