@@ -97,25 +97,31 @@ def perform(dispatcher, effect):
     performer (another callable). See :obj:`TypeDispatcher` and
     :obj:`ComposedDispatcher` for some implementations of dispatchers, and
     :obj:`effect.base_dispatcher` for a dispatcher supporting basic intents
-    like :obj:`ConstantIntent` et al.
+    like :obj:`Constant` et al.
 
-    The performer will then be invoked with the dispatcher, the intent, and
-    the box, and should perform the desired effect.
-
-    The dispatcher is passed so the performer can make recursive calls to
-    :func:`perform`, if it needs to perform other effects (see :func:`parallel`
-    and :func:`perform_parallel` for an example of this).
-
-    The box is an object that lets the performer provide the result (optionally
-    asynchronously). See :func:`_Box.succeed` and :func:`_Box.fail`. Usually
-    you can ignore the box by using a decorator like :func:`sync_performer` or
-    :func:`effect.twisted.deferred_performer`.
+    The performer will often be decorated with :func:`sync_performer` or
+    something like :func:`.deferred_performer`, and will be
+    invoked with the dispatcher [#dispatcher]_ and the intent, and should
+    perform the desired effect. [#box]_
 
     Note that this function does _not_ return the final result of the effect.
-    You may instead want to use :func:`effect.sync_perform` or
+    You may instead want to use :func:`.sync_perform` or
     :func:`effect.twisted.perform`.
 
     :returns: None
+
+    .. [#dispatcher] The dispatcher is passed because some performers need to
+       make recursive calls to :func:`perform`, because they need to perform
+       other effects (see :func:`parallel` and :func:`.perform_parallel_async`
+       for an example of this).
+
+    .. [#box] Without using one of those decorators, the performer is actually
+       passed three arguments, not two: the dispatcher, the intent, and a
+       "box". The box is an object that lets the performer provide the result,
+       optionally asynchronously. To provide the result, use
+       ``box.succeed(result)`` or ``box.fail(exc_info)``, where ``exc_info`` is
+       a ``sys.exc_info()``-style tuple. Decorators like :func:`sync_performer`
+       simply abstract this away.
     """
     def _run_callbacks(bouncer, chain, result):
         is_error, value = result
