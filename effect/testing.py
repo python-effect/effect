@@ -8,6 +8,7 @@ tests.
 
 from __future__ import print_function
 
+from contextlib import contextmanager
 from functools import partial
 import sys
 
@@ -251,17 +252,25 @@ class SequenceDispatcher(object):
     runs ``func`` to perform intents in strict sequence.
 
     So, if you expect to first perform an intent like ``MyIntent('a')`` and
-    then an intent like ``OtherIntent('b')``, you can create a dispatcher like
-    this::
+    then an intent like ``OtherIntent('b')``, you can create and use a
+    dispatcher like this::
 
-        SequenceDispatcher([
+        sequence = SequenceDispatcher([
             (MyIntent('a'), lambda i: 'my-intent-result'),
             (OtherIntent('b'), lambda i: 'other-intent-result')
         ])
 
+        with sequence.consume():
+            perform(eff, sequence)
+
+    It's important to use `with sequence.consume():` to ensure that all of the
+    intents are performed. Otherwise, if your code has a bug that causes it to
+    return before all effects are performed, your test may not fail.
+
     :obj:`None` is returned if the next intent in the sequence is not equal to
     the intent being performed, or if there are no more items left in the
-    sequence.
+    sequence (this is standard behavior for dispatchers that don't handle an
+    intent).
     """
     def __init__(self, sequence):
         """:param list sequence: Sequence of (intent, fn)."""
@@ -274,3 +283,19 @@ class SequenceDispatcher(object):
         if intent == exp_intent:
             self.sequence = self.sequence[1:]
             return sync_performer(lambda d, i: func(i))
+
+    def consumed(self):
+        """Return True if all of the steps were performed."""
+        return len(self.sequence) == 0
+
+    @contextmanager
+    def consume(self):
+        """
+        Return a context manager that can be used with the `with` syntax to
+        ensure that all steps are performed by the end.
+        """
+        yield
+        if not self.consumed():
+            raise AssertionError(
+                "Not all intents were performed: {0}".format(
+                    [x[0] for x in self.sequence]))
