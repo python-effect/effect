@@ -82,6 +82,13 @@ def resolve_effect(effect, result, is_error=False):
     NOTE: parallel effects have no special support. They can be resolved with
     a sequence, and if they're returned from another effect's callback they
     will be returned just like any other effect.
+
+    :param bool is_error: Indicate whether the result should be treated as an
+        exception or a regular result.
+
+    :param result: If ``is_error`` is False, this can be any object and will be
+        treated as the result of the effect. If ``is_error`` is True, this must
+        be a three-tuple in the style of ``sys.exc_info``.
     """
     for i, (callback, errback) in enumerate(effect.callbacks):
         cb = errback if is_error else callback
