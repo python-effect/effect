@@ -261,7 +261,7 @@ class SequenceDispatcher(object):
         ])
 
         with sequence.consume():
-            perform(eff, sequence)
+            perform(sequence, eff)
 
     It's important to use `with sequence.consume():` to ensure that all of the
     intents are performed. Otherwise, if your code has a bug that causes it to
