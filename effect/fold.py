@@ -1,6 +1,6 @@
 from functools import reduce
 
-_sneaky = object()
+from effect import Constant, Effect
 
 
 def fold_effect(f, initial, effects):
@@ -19,15 +19,6 @@ def fold_effect(f, initial, effects):
     """
 
     def folder(acc, element):
-        # A bit of a hack here. We could just wrap `initial` in a
-        # Effect(Constant()), but to simplify testing we avoid the additional
-        # Effect by "sneaking" it in this way.
+        return acc.on(lambda r: element.on(lambda r2: f(r, r2)))
 
-        # This way people can use SequenceDispatcher and not get anything
-        # unexpected.
-        if acc is _sneaky:
-            return element.on(lambda r: f(initial, r))
-        else:
-            return acc.on(lambda r: element.on(lambda r2: f(r, r2)))
-
-    return reduce(folder, effects, _sneaky)
+    return reduce(folder, effects, Effect(Constant(initial)))
