@@ -25,6 +25,5 @@ def fold_effect(f, initial, effects):
 
 
 def sequence(effects):
-    def folder(acc, element):
-        return acc + [element]
-    return fold_effect(folder, [], effects)
+    """Perform each Effect serially, collecting their results into a list."""
+    return fold_effect(lambda acc, el: acc + [el], [], effects)
