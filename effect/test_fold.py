@@ -70,7 +70,6 @@ def test_sequence():
     ])
     eff = sequence(effs)
 
-    print "what the heck is sequence returning?", eff
     with dispatcher.consume():
         result = sync_perform(_disp(dispatcher), eff)
     assert result == ['Ei', 'Bee', 'Cee']
