@@ -49,5 +49,17 @@ def fold_effect(f, initial, effects):
 
 
 def sequence(effects):
-    """Perform each Effect serially, collecting their results into a list."""
-    return fold_effect(lambda acc, el: acc + [el], [], effects)
+    """
+    Perform each Effect serially, collecting their results into a list.
+
+    :raises: :obj:`FoldError` with the list accumulated so far when an effect
+        fails.
+    """
+    # Could be: folder = lambda acc, el: acc + [el]
+    # But, for peformance:
+    l = []
+
+    def folder(acc, el):
+        l.append(el)
+        return l
+    return fold_effect(lambda acc, el: acc + [el], l, effects)

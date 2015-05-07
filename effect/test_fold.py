@@ -13,6 +13,7 @@ from effect.testing import SequenceDispatcher
 def _disp(dispatcher):
     return ComposedDispatcher([dispatcher, base_dispatcher])
 
+
 def test_fold_effect():
     """Behaves like foldM."""
     effs = [Effect('a'), Effect('b'), Effect('c')]
@@ -78,3 +79,24 @@ def test_sequence():
 def test_sequence_empty():
     """Returns an empty list when there are no Effects."""
     assert sync_perform(base_dispatcher, sequence([])) == []
+
+
+def test_sequence_error():
+    """
+    Allows :obj:`FoldError` to be raised when an Effect fails. The list
+    accumulated so far is the `accumulator` value in the :obj:`FoldError`.
+    """
+    effs = [Effect('a'), Effect(Error(ZeroDivisionError('foo'))), Effect('c')]
+
+    dispatcher = SequenceDispatcher([
+        ('a', lambda i: 'Ei'),
+    ])
+
+    eff = sequence(effs)
+
+    with dispatcher.consume():
+        with raises(FoldError) as excinfo:
+            sync_perform(_disp(dispatcher), eff)
+    assert excinfo.value.accumulator == ['Ei']
+    assert excinfo.value.wrapped_exception[0] is ZeroDivisionError
+    assert str(excinfo.value.wrapped_exception[1]) == 'foo'
