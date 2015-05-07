@@ -1,7 +1,5 @@
-from effect import Constant, Effect
-
-
 _sneaky = object()
+
 
 def fold_effect(f, initial, effects):
     """

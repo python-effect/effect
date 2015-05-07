@@ -1,7 +1,7 @@
 
 import operator
 
-from effect import Constant, Effect, sync_perform
+from effect import Effect, sync_perform
 from effect.fold import fold_effect
 from effect.testing import SequenceDispatcher
 
