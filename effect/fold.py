@@ -31,3 +31,9 @@ def fold_effect(f, initial, effects):
             return acc.on(lambda r: element.on(lambda r2: f(r, r2)))
 
     return reduce(folder, effects, _sneaky)
+
+
+def sequence(effects):
+    def folder(acc, element):
+        return acc + [element]
+    return fold_effect(folder, [], effects)
