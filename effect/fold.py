@@ -62,4 +62,4 @@ def sequence(effects):
     def folder(acc, el):
         l.append(el)
         return l
-    return fold_effect(lambda acc, el: acc + [el], l, effects)
+    return fold_effect(folder, l, effects)
