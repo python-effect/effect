@@ -89,10 +89,10 @@ possible to override the way an intent is performed to do whatever you want.
 For more information on how to implement the actual effect-performing code,
 and other details, see the `documentation`_. There is also a full example
 of interacting with the user and using an HTTP client to talk to the GitHub
-API in the `examples`_ directory.
+API in the `effect-examples`_ repository.
 
 .. _`documentation`: https://effect.readthedocs.org/
-.. _`examples`: https://github.com/python-effect/effect/tree/master/examples
+.. _`effect-examples`: https://github.com/python-effect/effect-examples
 
 
 
