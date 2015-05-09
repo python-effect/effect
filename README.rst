@@ -89,10 +89,10 @@ possible to override the way an intent is performed to do whatever you want.
 For more information on how to implement the actual effect-performing code,
 and other details, see the `documentation`_. There is also a full example
 of interacting with the user and using an HTTP client to talk to the GitHub
-API in the `examples`_ directory.
+API in the `effect-examples`_ repository.
 
 .. _`documentation`: https://effect.readthedocs.org/
-.. _`examples`: https://github.com/python-effect/effect/tree/master/examples
+.. _`effect-examples`: https://github.com/python-effect/effect-examples
 
 
 
@@ -132,6 +132,12 @@ There is a ``#python-effect`` IRC channel on irc.freenode.net.
 
 See Also
 ========
+
+For integrating Effect with Twisted's Deferreds, see the ``txEffect`` package
+(`pypi`_, `github`_).
+
+.. _`pypi`: https://warehouse.python.org/project/txeffect
+.. _`github`: https://github.com/python-effect/txeffect
 
 Over the past few years, the ecosystem of libraries to help with functional
 programming in Python has exploded. Here are some libraries I recommend:
