@@ -1,8 +1,8 @@
 Effect
 ======
 
-.. image:: https://travis-ci.org/radix/effect.svg?branch=master
-    :target: https://travis-ci.org/radix/effect
+.. image:: https://travis-ci.org/python-effect/effect.svg?branch=master
+    :target: https://travis-ci.org/python-effect/effect
 
 Effect is a library for helping you write purely functional code by
 isolating the effects (that is, IO or state manipulation) in your code.
@@ -92,7 +92,7 @@ of interacting with the user and using an HTTP client to talk to the GitHub
 API in the `examples`_ directory.
 
 .. _`documentation`: https://effect.readthedocs.org/
-.. _`examples`: https://github.com/radix/effect/tree/master/examples
+.. _`examples`: https://github.com/python-effect/effect/tree/master/examples
 
 
 

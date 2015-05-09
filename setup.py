@@ -6,7 +6,7 @@ setuptools.setup(
     version="0.1a18",
     description="pure effects for Python",
     long_description=open('README.rst').read(),
-    url="http://github.com/radix/effect/",
+    url="http://github.com/python-effect/effect/",
     author="Christopher Armstrong",
     license="MIT",
     classifiers=[
