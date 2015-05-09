@@ -1,6 +1,10 @@
 Effect
 ======
 
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/python-effect/effect
+   :target: https://gitter.im/python-effect/effect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 .. image:: https://travis-ci.org/python-effect/effect.svg?branch=master
     :target: https://travis-ci.org/python-effect/effect
 
