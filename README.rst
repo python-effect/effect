@@ -133,6 +133,12 @@ There is a ``#python-effect`` IRC channel on irc.freenode.net.
 See Also
 ========
 
+For integrating Effect with Twisted's Deferreds, see the ``txEffect`` package
+(`pypi`_, `github`_).
+
+.. _`pypi`: https://warehouse.python.org/project/txeffect
+.. _`github`: https://github.com/python-effect/txeffect
+
 Over the past few years, the ecosystem of libraries to help with functional
 programming in Python has exploded. Here are some libraries I recommend:
 
