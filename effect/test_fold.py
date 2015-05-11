@@ -11,11 +11,15 @@ from effect.testing import SequenceDispatcher
 
 
 def _disp(dispatcher):
+    """Compose base_dispatcher onto the given dispatcher."""
     return ComposedDispatcher([dispatcher, base_dispatcher])
 
 
 def test_fold_effect():
-    """Behaves like foldM."""
+    """
+    :func:`fold_effect` folds the given function over the results of the
+    effects.
+    """
     effs = [Effect('a'), Effect('b'), Effect('c')]
 
     dispatcher = SequenceDispatcher([
