@@ -75,7 +75,7 @@ def test_sequence():
     eff = sequence(effs)
 
     with dispatcher.consume():
-        result = sync_perform(_disp(dispatcher), eff)
+        result = sync_perform(_base_and(dispatcher), eff)
     assert result == ['Ei', 'Bee', 'Cee']
 
 
@@ -99,7 +99,7 @@ def test_sequence_error():
 
     with dispatcher.consume():
         with raises(FoldError) as excinfo:
-            sync_perform(_disp(dispatcher), eff)
+            sync_perform(_base_and(dispatcher), eff)
     assert excinfo.value.accumulator == ['Ei']
     assert excinfo.value.wrapped_exception[0] is ZeroDivisionError
     assert str(excinfo.value.wrapped_exception[1]) == 'foo'
