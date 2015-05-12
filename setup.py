@@ -3,10 +3,10 @@ import setuptools
 
 setuptools.setup(
     name="effect",
-    version="0.1a18",
+    version="0.1a19",
     description="pure effects for Python",
     long_description=open('README.rst').read(),
-    url="http://github.com/radix/effect/",
+    url="http://github.com/python-effect/effect/",
     author="Christopher Armstrong",
     license="MIT",
     classifiers=[

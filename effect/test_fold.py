@@ -10,12 +10,16 @@ from effect.fold import FoldError, fold_effect, sequence
 from effect.testing import SequenceDispatcher
 
 
-def _disp(dispatcher):
+def _base_and(dispatcher):
+    """Compose base_dispatcher onto the given dispatcher."""
     return ComposedDispatcher([dispatcher, base_dispatcher])
 
 
 def test_fold_effect():
-    """Behaves like foldM."""
+    """
+    :func:`fold_effect` folds the given function over the results of the
+    effects.
+    """
     effs = [Effect('a'), Effect('b'), Effect('c')]
 
     dispatcher = SequenceDispatcher([
@@ -26,7 +30,7 @@ def test_fold_effect():
     eff = fold_effect(operator.add, 'Nil', effs)
 
     with dispatcher.consume():
-        result = sync_perform(_disp(dispatcher), eff)
+        result = sync_perform(_base_and(dispatcher), eff)
     assert result == 'NilEiBeeCee'
 
 
@@ -54,7 +58,7 @@ def test_fold_effect_errors():
 
     with dispatcher.consume():
         with raises(FoldError) as excinfo:
-            sync_perform(_disp(dispatcher), eff)
+            sync_perform(_base_and(dispatcher), eff)
     assert excinfo.value.accumulator == 'NilEi'
     assert excinfo.value.wrapped_exception[0] is ZeroDivisionError
     assert str(excinfo.value.wrapped_exception[1]) == 'foo'

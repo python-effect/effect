@@ -25,12 +25,23 @@ class FoldError(Exception):
 
 def fold_effect(f, initial, effects):
     """
-    Fold over effects.
+    Fold over the results of effects, left-to-right.
 
-    The function will be called with the accumulator (starting with
+    This is like :func:`functools.reduce`, but instead of acting on plain
+    values, it acts on the results of effects.
+
+    The function ``f`` will be called with the accumulator (starting with
     ``initial``) and a result of an effect repeatedly for each effect. The
     result of the previous call will be passed as the accumulator to the next
     call.
+
+    For example, the following code evaluates to an Effect of 6::
+
+        fold_effect(operator.add, 0, [Effect(Constant(1)),
+                                      Effect(Constant(2)),
+                                      Effect(Constant(3))])
+
+    If no elements were in the list, Effect would result in 0.
 
     :param callable f: function of ``(accumulator, element) -> accumulator``
     :param initial: The value to be passed as the accumulator to the first
