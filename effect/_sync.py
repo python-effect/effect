@@ -18,8 +18,7 @@ class NotSynchronousError(Exception):
 def sync_perform(dispatcher, effect):
     """
     Perform an effect, and return its ultimate result. If the final result is
-    an error, the exception will be raised. This is useful for testing, and
-    also if you're using blocking effect implementations.
+    an error, the exception will be raised.
 
     This requires that the effect (and all effects returned from any of its
     callbacks) be synchronous. If the result is not available immediately,
@@ -42,9 +41,20 @@ def sync_performer(f):
     """
     A decorator for performers that return a value synchronously.
 
-    The function being decorated is expected to take a dispatcher and an intent
-    (and not a box), and should return or raise normally. The wrapper function
-    that this decorator returns will accept a dispatcher, an intent, and a box
+    This decorator should be used if performing the intent will be synchronous,
+    i.e., it will block until the result is available and the result will be
+    simply returned. This is the common case unless you're using an
+    asynchronous framework like Twisted or asyncio.
+
+    Note that in addition to returning (or raising) values as normal, you can
+    also return another Effect, in which case that Effect will be immediately
+    performed with the same dispatcher. This is useful if you're implementing
+    one intent which is built on top of other effects, without having to
+    explicitly perform them.
+
+    The function being decorated is expected to take a dispatcher and an
+    intent, and should return or raise normally. The wrapper function that this
+    decorator returns will accept a dispatcher, an intent, and a box
     (conforming to the performer interface). The wrapper deals with putting the
     return value or exception into the box.
 

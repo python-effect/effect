@@ -99,10 +99,21 @@ def perform(dispatcher, effect):
     :obj:`effect.base_dispatcher` for a dispatcher supporting basic intents
     like :obj:`Constant` et al.
 
-    The performer will often be decorated with :func:`sync_performer` or
-    something like :func:`.deferred_performer`, and will be
-    invoked with the dispatcher [#dispatcher]_ and the intent, and should
-    perform the desired effect. [#box]_
+    The performer will often be decorated with :func:`sync_performer` or the
+    ``deferred_performer`` from `txeffect`_ and will be invoked with the
+    dispatcher [#dispatcher]_ and the intent, and should perform the desired
+    effect. [#box]_ The performer should return the result of the effect, or
+    raise an exception, and the result will be passed on to the first callback,
+    then the result of the first callback will be passed to the next callback,
+    and so on.
+
+    .. _`txeffect`: https://warehouse.python.org/project/txeffect
+
+    Both performers and callbacks may return regular values, raise exceptions,
+    or return another Effect, which will be recursively performed, such that
+    the result of the returned Effect becomes the result passed to the next
+    callback. In the case of exceptions, the next error-callback will be called
+    with a ``sys.exc_info()``-style tuple.
 
     Note that this function does _not_ return the final result of the effect.
     You may instead want to use :func:`.sync_perform` or
