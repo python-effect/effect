@@ -7,6 +7,7 @@ See :func:`do`.
 
 from __future__ import print_function
 
+import sys
 import types
 
 from . import Effect, Func
@@ -88,7 +89,16 @@ def _do(result, generator, is_error):
         else:
             val = generator.send(result)
     except StopIteration:
-        return None
+        # If the generator we're spinning directly raises StopIteration, we'll
+        # treat it like returning None from the function. But there may be a
+        # case where some other code is raising StopIteration up through this
+        # generator, in which case we shouldn't really treat it like a function
+        # return -- it could quite easily hide bugs.
+        tb = sys.exc_info()[2]
+        if tb.tb_next:
+            raise
+        else:
+            return None
     if type(val) is _ReturnSentinel:
         return val.result
     elif type(val) is Effect:
