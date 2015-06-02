@@ -41,6 +41,8 @@ class ParallelEffects(object):
 
     Performers of this intent must fail with a :obj:`FirstError` exception when
     any child effect fails, representing the first error.
+
+    :param effects: Effects to be performed in parallel.
     """
 
     effects = attr.ib()
@@ -102,13 +104,19 @@ class Delay(object):
 
     When performed, the specified delay will pass and then the effect will
     result in None.
+
+    :param float delay: The number of seconds to delay.
     """
     delay = attr.ib()
 
 
 @attr.s
 class Constant(object):
-    """An intent that returns a pre-specified result when performed."""
+    """
+    An intent that returns a pre-specified result when performed.
+
+    :param result: The object which the Effect will result in.
+    """
     result = attr.ib()
 
 
@@ -120,7 +128,11 @@ def perform_constant(dispatcher, intent):
 
 @attr.s
 class Error(object):
-    """An intent that raises a pre-specified exception when performed."""
+    """
+    An intent that raises a pre-specified exception when performed.
+
+    :param BaseException exception: Exception instance to raise.
+    """
     exception = attr.ib()
 
 
@@ -149,6 +161,8 @@ class Func(object):
     intents as inert objects with public attributes of simple data. However,
     this is useful for integrating wih "legacy" side-effecting code in a quick
     way.
+
+    :param func: The function to call when this intent is performed.
     """
     func = attr.ib()
 

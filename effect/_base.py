@@ -19,6 +19,8 @@ class Effect(object):
     allow binding callbacks to be called with the result of the effect.
 
     Effects can be performed with :func:`perform`.
+
+    :param intent: The intent to be performed.
     """
 
     intent = attr.ib()
