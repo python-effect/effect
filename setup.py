@@ -16,5 +16,5 @@ setuptools.setup(
         'Programming Language :: Python :: 3',
         ],
     packages=['effect'],
-    install_requires=['six', 'characteristic>=14.0.0'],
+    install_requires=['six', 'attrs'],
     )

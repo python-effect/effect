@@ -16,14 +16,15 @@ Twisted-specific dispatcher for these.
 
 
 from __future__ import print_function, absolute_import
-from characteristic import attributes
+
+import attr
 
 from ._base import Effect
 from ._sync import sync_performer
 from ._dispatcher import TypeDispatcher
 
 
-@attributes(['effects'], apply_with_init=False, apply_immutable=True)
+@attr.s
 class ParallelEffects(object):
     """
     An effect intent that asks for a number of effects to be run in parallel,
@@ -41,11 +42,8 @@ class ParallelEffects(object):
     Performers of this intent must fail with a :obj:`FirstError` exception when
     any child effect fails, representing the first error.
     """
-    def __init__(self, effects):
-        """
-        :param effects: Effects which should be performed in parallel.
-        """
-        self.effects = effects
+
+    effects = attr.ib()
 
 
 def parallel(effects):
@@ -83,18 +81,21 @@ def parallel_all_errors(effects):
     return Effect(ParallelEffects(list(effects)))
 
 
-@attributes(['exc_info', 'index'])
+@attr.s
 class FirstError(Exception):
     """
     One of the effects in a :obj:`ParallelEffects` resulted in an error. This
     represents the first such error that occurred.
     """
+    exc_info = attr.ib()
+    index = attr.ib()
+
     def __str__(self):
         return '(index=%s) %s: %s' % (
             self.index, self.exc_info[0].__name__, self.exc_info[1])
 
 
-@attributes(['delay'], apply_with_init=False, apply_immutable=True)
+@attr.s
 class Delay(object):
     """
     An intent which represents a delay in time.
@@ -102,21 +103,13 @@ class Delay(object):
     When performed, the specified delay will pass and then the effect will
     result in None.
     """
-    def __init__(self, delay):
-        """
-        :param float delay: The number of seconds to delay.
-        """
-        self.delay = delay
+    delay = attr.ib()
 
 
-@attributes(['result'], apply_with_init=False, apply_immutable=True)
+@attr.s
 class Constant(object):
     """An intent that returns a pre-specified result when performed."""
-    def __init__(self, result):
-        """
-        :param result: The object which the Effect should result in.
-        """
-        self.result = result
+    result = attr.ib()
 
 
 @sync_performer
@@ -125,11 +118,10 @@ def perform_constant(dispatcher, intent):
     return intent.result
 
 
-@attributes(['exception'], apply_with_init=False, apply_immutable=True)
+@attr.s
 class Error(object):
     """An intent that raises a pre-specified exception when performed."""
-    def __init__(self, exception):
-        self.exception = exception
+    exception = attr.ib()
 
 
 @sync_performer
@@ -138,7 +130,7 @@ def perform_error(dispatcher, intent):
     raise intent.exception
 
 
-@attributes(['func'], apply_with_init=False, apply_immutable=True)
+@attr.s
 class Func(object):
     """
     An intent that returns the result of the specified function.
@@ -158,11 +150,7 @@ class Func(object):
     this is useful for integrating wih "legacy" side-effecting code in a quick
     way.
     """
-    def __init__(self, func):
-        """
-        :param func: The function to call when this intent is performed.
-        """
-        self.func = func
+    func = attr.ib()
 
 
 @sync_performer
