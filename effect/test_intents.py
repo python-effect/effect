@@ -5,7 +5,11 @@ from functools import partial
 import six
 
 from testtools import TestCase
-from testtools.matchers import Equals, MatchesListwise
+from testtools.matchers import (
+    Equals, MatchesListwise,
+    Raises, MatchesException,
+    MatchesStructure,
+)
 
 from ._base import Effect
 from ._dispatcher import ComposedDispatcher, TypeDispatcher
@@ -15,7 +19,8 @@ from ._intents import (
     Error, perform_error,
     Func, perform_func,
     FirstError,
-    ParallelEffects, parallel_all_errors)
+    ParallelEffects, parallel_all_errors,
+    Sequence, SequenceFailed)
 from ._sync import sync_perform
 from ._test_utils import MatchesReraisedExcInfo, get_exc_info
 from .async import perform_parallel_async
@@ -100,3 +105,48 @@ class ParallelAllErrorsTests(TestCase):
                 MatchesListwise([Equals(True),
                                  MatchesReraisedExcInfo(exc_info2)]),
             ]))
+
+
+class SequenceTests(TestCase):
+    """
+    Tests for :class:`Sequence`.
+    """
+
+    def test_no_effects(self):
+        intent = Sequence([])
+        result = sync_perform(base_dispatcher, Effect(intent))
+        self.assertEqual(result, [])
+
+    def test_single_effect(self):
+        """
+        When :class:`Sequence` is given a single effect, the result
+        is  a list with the result of that effect.
+        """
+        intent = Sequence([Effect(Constant("foo"))])
+        result = sync_perform(base_dispatcher, Effect(intent))
+        self.assertEqual(result, ["foo"])
+
+    def test_two_effect(self):
+        """
+        When :class:`Sequence` is given a sequence of effects, the result
+        is the result is the list of results of those effects in order.
+        """
+        intent = Sequence([Effect(Constant("foo")), Effect(Constant("bar"))])
+        result = sync_perform(base_dispatcher, Effect(intent))
+        self.assertEqual(result, ["foo", "bar"])
+
+    def test_error(self):
+        """
+        When an effect given to :class:`Sequence` fails, the effect raises
+        :exception:`SequenceFailed` with the results of the preceding effects,
+        and the triggering error.
+        """
+        intent = Sequence([Effect(Constant("foo")),
+                           Effect(Error(ValueError("bar")))])
+        self.assertThat(
+            lambda: sync_perform(base_dispatcher, Effect(intent)),
+            Raises(MatchesException(
+                SequenceFailed,
+                MatchesStructure(
+                    results=Equals(["foo"]),
+                    exc_info=MatchesException(ValueError, value_re="bar")))))
