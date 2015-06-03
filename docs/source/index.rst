@@ -18,7 +18,7 @@ Effect comes with thorough API documentation.
 .. toctree::
    :maxdepth: 2
 
-   api/modules
+   api/effect
 
 
 
@@ -185,12 +185,10 @@ following:
         """
         Perform an HTTP request where the body is sent as JSON and the response
         is automatically decoded as JSON if the Content-type is
-  application/json.
+        application/json.
         """
         str_body = json.dumps(dict_body)
         return request_200_url(method, url, str_body).on(success=decode_json)
-
-
 
 
 Indices and tables
@@ -198,4 +196,3 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
