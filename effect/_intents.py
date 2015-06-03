@@ -30,14 +30,15 @@ class ParallelEffects(object):
     An effect intent that asks for a number of effects to be run in parallel,
     and for their results to be gathered up into a sequence.
 
-    :func:`effect.async.perform_parallel_async` can perform this Intent
-    assuming all child effects have asynchronous performers.
+    :func:`effect.async.perform_parallel_async` can perform this Intent assuming
+    all child effects have asynchronous performers.
+    :func:`effect.threads.perform_parallel_with_pool` can perform blocking
+    performers in a thread pool.
 
     Note that any performer for this intent will need to be compatible with
     performers for all of its child effects' intents. Notably, if child effects
-    have blocking performers, it's useless to use
-    :func:`effect.async.perform_parallel_async`, and if they're asynchronous,
-    it's useless to perform them with a threaded performer.
+    have blocking performers, the threaded performer should be used, and if
+    they're asynchronous, the asynchronous performer should be used.
 
     Performers of this intent must fail with a :obj:`FirstError` exception when
     any child effect fails, representing the first error.
@@ -57,6 +58,9 @@ def parallel(effects):
     :obj:`FirstError` exception. If additional error information is desired,
     use :func:`parallel_all_errors`.
 
+    This is just a convenience wrapper for returning of Effect of
+    :obj:`ParallelEffects`.
+
     :param effects: Effects which should be performed in parallel.
     :return: An Effect that results in a list of results, or which fails with
         a :obj:`FirstError`.
@@ -69,6 +73,10 @@ def parallel_all_errors(effects):
     Given multiple Effects, return one Effect that represents the aggregate of
     all of their effects.  The result of the aggregate Effect will be a list of
     their results, in the same order as the input to this function.
+
+    This is like :func:`parallel`, but it differs in that exceptions from all
+    child effects will be accumulated and provided in the return value, instead
+    of just the first one.
 
     :param effects: Effects which should be performed in parallel.
     :return: An Effect that results in a list of ``(is_error, result)`` tuples,
