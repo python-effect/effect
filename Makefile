@@ -16,7 +16,10 @@ doc:
 	rm -rf docs/source/api
 	cd docs; sphinx-apidoc -e -o source/api ../effect ../setup.py ../examples ../effect/test_*.py
 	rm docs/source/api/modules.rst
+	rm docs/source/api/effect.rst
 	# can't use sed -i on both linux and mac, so...
-	sed -e 's/Module contents/Core API/' docs/source/api/effect.rst > .effect.rst
-	mv .effect.rst docs/source/api/effect.rst
+	# sed -e 's/Module contents/Core API/' docs/source/api/effect.rst > .effect.rst
+	# mv .effect.rst docs/source/api/effect.rst
+	# sed -e 's/effect package/API docs/' docs/source/api/effect.rst > .effect.rst
+	# mv .effect.rst docs/source/api/effect.rst
 	cd docs; PYTHONPATH=..:$(PYTHONPATH) sphinx-build -W -b html -d build/doctrees source build/html
