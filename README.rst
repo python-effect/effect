@@ -45,27 +45,27 @@ A very quick example of using Effects:
     from effect import perform, sync_performer, Effect, TypeDispatcher
 
     class ReadLine(object):
-	def __init__(self, prompt):
-	    self.prompt = prompt
+  def __init__(self, prompt):
+      self.prompt = prompt
 
     def get_user_name():
-	return Effect(ReadLine("Enter a candy> "))
+  return Effect(ReadLine("Enter a candy> "))
 
     @sync_performer
     def perform_read_line(dispatcher, readline):
-	return raw_input(readline.prompt)
+  return raw_input(readline.prompt)
 
     def main():
-	effect = get_user_name()
-	effect = effect.on(
-	    success=lambda result: print("I like {} too!".format(result)),
-	    error=lambda e: print("sorry, there was an error. {}".format(e)))
+  effect = get_user_name()
+  effect = effect.on(
+      success=lambda result: print("I like {} too!".format(result)),
+      error=lambda e: print("sorry, there was an error. {}".format(e)))
 
-	dispatcher = TypeDispatcher({ReadLine: perform_read_line})
-	perform(dispatcher, effect)
+  dispatcher = TypeDispatcher({ReadLine: perform_read_line})
+  perform(dispatcher, effect)
 
     if __name__ == '__main__':
-	main()
+  main()
 
 
 ``Effect`` takes what we call an ``intent``, which is any object. The
