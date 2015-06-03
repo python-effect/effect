@@ -1,4 +1,4 @@
-from characteristic import attributes
+import attr
 
 from ._base import Effect
 from ._dispatcher import TypeDispatcher
@@ -42,12 +42,14 @@ class Reference(object):
         return "<Reference({})>".format(self._value)
 
 
-@attributes(['ref'])
+@attr.s
 class ReadReference(object):
     """Intent that gets a Reference's current value."""
 
+    ref = attr.ib()
 
-@attributes(['ref', 'transformer'])
+
+@attr.s
 class ModifyReference(object):
     """
     Intent that modifies a Reference value in-place with a transformer func.
@@ -55,6 +57,9 @@ class ModifyReference(object):
     This intent is not necessarily linearizable if multiple threads are
     modifying the same reference at the same time.
     """
+
+    ref = attr.ib()
+    transformer = attr.ib()
 
 
 @sync_performer

@@ -1,6 +1,6 @@
 from functools import partial
 
-from characteristic import attributes
+import attr
 
 import six
 
@@ -12,9 +12,9 @@ from ._sync import sync_perform
 from ._test_utils import MatchesReraisedExcInfo, get_exc_info
 
 
-@attributes(['message'])
+@attr.s
 class EquitableException(Exception):
-    pass
+    message = attr.ib()
 
 
 class ParallelPerformerTestsMixin(object):

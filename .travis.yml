@@ -7,9 +7,8 @@ python:
     - "3.4"
     - "pypy"
 install:
+    - pip install .
     - pip install -r dev-requirements.txt
-    - pip install six
-    - pip install 'characteristic>=14.0.0'
     - pip install sphinx
 script:
     - make lint

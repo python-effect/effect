@@ -5,31 +5,26 @@ import sys
 
 from functools import partial
 
-from characteristic import attributes
+import attr
 
 import six
 
 from ._continuation import trampoline
 
 
-@attributes([
-    'intent', 'callbacks',
-], apply_with_init=False, apply_immutable=True)
+@attr.s
 class Effect(object):
     """
     Take an object that describes a desired effect (called an "Intent"), and
     allow binding callbacks to be called with the result of the effect.
 
     Effects can be performed with :func:`perform`.
+
+    :param intent: The intent to be performed.
     """
-    def __init__(self, intent, callbacks=None):
-        """
-        :param intent: An object that describes an effect to be performed.
-        """
-        self.intent = intent
-        if callbacks is None:
-            callbacks = []
-        self.callbacks = callbacks
+
+    intent = attr.ib()
+    callbacks = attr.ib(default=attr.Factory(list))
 
     def on(self, success=None, error=None):
         """

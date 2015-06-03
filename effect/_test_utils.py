@@ -3,13 +3,16 @@
 import sys
 import traceback
 
-from characteristic import attributes
+import attr
 
 from testtools.matchers import Equals
 
 
-@attributes(['expected_tb', 'got_tb'])
+@attr.s
 class ReraisedTracebackMismatch(object):
+    expected_tb = attr.ib()
+    got_tb = attr.ib()
+
     def describe(self):
         return ("The reference traceback:\n"
                 + ''.join(self.expected_tb)
@@ -18,11 +21,10 @@ class ReraisedTracebackMismatch(object):
                 + "\nbut it doesn't.")
 
 
-@attributes(['expected'], apply_with_init=False)
+@attr.s
 class MatchesReraisedExcInfo(object):
 
-    def __init__(self, expected):
-        self.expected = expected
+    expected = attr.ib()
 
     def match(self, actual):
         valcheck = Equals(self.expected[1]).match(actual[1])
