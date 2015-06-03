@@ -14,7 +14,7 @@ Submodules
    effect.testing
    effect.threads
 
-Module contents
+Core API
 ---------------
 
 .. automodule:: effect

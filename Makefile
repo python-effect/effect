@@ -15,4 +15,6 @@ doc:
 	rm -rf docs/build
 	rm -rf docs/source/api
 	cd docs; sphinx-apidoc -e -o source/api ../effect ../setup.py ../examples ../effect/test_*.py
+	rm docs/source/api/modules.rst
+	sed -i '' -e 's/Module contents/Core API/' docs/source/api/effect.rst
 	cd docs; PYTHONPATH=..:$(PYTHONPATH) sphinx-build -W -b html -d build/doctrees source build/html
