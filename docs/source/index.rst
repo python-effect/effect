@@ -105,11 +105,14 @@ function - you just call ``get_user_name`` and assert that it returns a
 ``ReadLine`` object with the correct 'prompt' value.
 
 Second, you can implement ``ReadLine`` in a number of different ways - it's
-possible to override the way an intent is performed to do whatever you want.
-For example, you could implement an HTTPRequest client either using the popular
-``requests`` package by Kenneth Reitz, or using the Twisted-based ``treq``
-package from David Reid -- without needing to change any of your application
-code, since it's all in terms of the Effect API.
+possible to override the way an intent is performed to do whatever you want. For
+example, you could implement an HTTPRequest client either using the popular
+`requests`_ package, or using the Twisted-based `treq`_ package -- without
+needing to change any of your application code, since it's all in terms of the
+Effect API.
+
+.. _`requests`: https://pypi.python.org/pypi/requests
+.. _`treq`: https://pypi.python.org/pypi/treq
 
 
 A quick tour, with definitions
@@ -195,4 +198,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
