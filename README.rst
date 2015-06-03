@@ -4,34 +4,25 @@ Effect
 .. image:: https://travis-ci.org/python-effect/effect.svg?branch=master
     :target: https://travis-ci.org/python-effect/effect
 
-Effect is a library for helping you write purely functional code by
-isolating the effects (that is, IO or state manipulation) in your code.
-Documentation is available at https://effect.readthedocs.org/.
+Effect is a library for helping you write purely functional code by isolating
+the effects (that is, IO or state manipulation) in your code. Documentation is
+available at https://effect.readthedocs.org/, and its PyPI page is
+https://pypi.python.org/pypi/effect.
+
+It `supports`_ both Python 2.6 and up, and 3.4 and up, as well as PyPy.
+
+.. _`supports`: https://travis-ci.org/python-effect/effect
+
+You can install it by running ``pip install effect``.
 
 .. image:: https://radix.github.io/effect/sigh-defects.png
     :target: https://twitter.com/extempore2/status/553597279463305218
 
 
-
-Status: Alpha
-=============
-
-Right now Effect is in alpha, and is likely to change incompatibly. Once it's
-being used in production and the API seems pretty good, a final version will be
-released. Because it's in alpha, ``pip`` requires that you explicitly specify
-the version number when specifying a dependency. This means that you won't
-automatically get upgraded to newer versions that potentially break the API.
-e.g., use `pip install effect==0.1aN`.
-
-
 What Is It?
 ===========
 
-Effect lets you isolate your IO and state-manipulation code, by using a system
-very similar to Haskell's `extensible-effects`_ package. It also has
-similarities to Twisted's Deferred objects.
-
-.. _`extensible-effects`: https://hackage.haskell.org/package/extensible-effects
+Effect lets you isolate your IO and state-manipulation code.
 
 The benefits of this are many: first, the majority of your code can become
 purely functional, leading to easier testing and ability to reason about
@@ -39,6 +30,9 @@ behavior. Also, because it separates the specification of an effect from the
 performance of the effect, there are two more benefits: testing becomes easier
 still, and it's easy to provide alternative implementations of effects.
 
+Effect is somewhat similar to "algebraic effects", as implemented in various
+typed functional programming languages. It also has similarities to Twisted's
+Deferred objects.
 
 Example
 =======
