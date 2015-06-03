@@ -48,8 +48,8 @@ simple objects with public attributes and no behavior, only data.
 .. code:: python
 
     class ReadLine(object):
-  def __init__(self, prompt):
-      self.prompt = prompt
+        def __init__(self, prompt):
+            self.prompt = prompt
 
 To perform the ReadLine intent, we must implement a performer function:
 
@@ -57,7 +57,7 @@ To perform the ReadLine intent, we must implement a performer function:
 
     @sync_performer
     def perform_read_line(dispatcher, readline):
-  return raw_input(readline.prompt)
+        return raw_input(readline.prompt)
 
 
 To do something with the result of the effect, we must attach callbacks with
@@ -68,7 +68,7 @@ the ``on`` method:
     def greet():
         return get_user_name().on(
             success=lambda r: Effect(Print("Hello,", r)),
-      error=lambda exc_info: Effect(Print("There was an error!", exc_info[1])))
+            error=lambda exc_info: Effect(Print("There was an error!", exc_info[1])))
 
 
 (Here we assume another intent, ``Print``, which shows some text to the user.)
@@ -97,7 +97,7 @@ based on the intent.
 
     def main():
         eff = greet()
-  dispatcher = TypeDispatcher({ReadLine: perform_read_line})
+        dispatcher = TypeDispatcher({ReadLine: perform_read_line})
         perform(dispatcher, effect)
 
 This has a number of advantages. First, your unit tests for ``get_user_name``
