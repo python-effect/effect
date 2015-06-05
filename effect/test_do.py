@@ -157,6 +157,7 @@ def test_stop_iteration_only_local():
 
 @mark.skipif(not six.PY3, reason="Testing a Py3-specific feature")
 def test_py3_return():
+    """The `return x` syntax in Py3 sets the result of the Effect to `x`."""
     from effect._test_do_py3 import py3_generator_with_return
     eff = py3_generator_with_return()
     assert perf(eff) == 2
