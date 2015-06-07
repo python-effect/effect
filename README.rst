@@ -61,8 +61,8 @@ A very quick example of using Effects:
             success=lambda result: print("I like {} too!".format(result)),
             error=lambda e: print("sorry, there was an error. {}".format(e)))
 
-    dispatcher = TypeDispatcher({ReadLine: perform_read_line})
-    perform(dispatcher, effect)
+        dispatcher = TypeDispatcher({ReadLine: perform_read_line})
+        perform(dispatcher, effect)
 
     if __name__ == '__main__':
         main()
