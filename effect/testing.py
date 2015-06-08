@@ -1,9 +1,8 @@
 """
-Various functions for testing effects.
+Various functions and dispatchers for testing effects.
 
-The main goal of this code is to allow you to safely tests your effects
-in a way that makes it hard to *accidentally* perform real effects in your
-tests.
+Usually the best way to test effects is by using :func:`effect.sync_perform`
+with a :obj:`SequenceDispatcher`.
 """
 
 from __future__ import print_function
@@ -19,6 +18,18 @@ from ._sync import NotSynchronousError, sync_performer
 from ._intents import Constant, Error, Func, ParallelEffects
 
 import six
+
+__all__ = [
+    'SequenceDispatcher',
+    'EQDispatcher',
+    'EQFDispatcher',
+    'resolve_effect',
+    'fail_effect',
+    'Stub',
+    'ESConstant', 'ESError', 'ESFunc',
+    'resolve_stubs',
+    'resolve_stub',
+]
 
 
 @attr.s
