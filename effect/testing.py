@@ -292,7 +292,7 @@ class SequenceDispatcher(object):
         ])
 
         with sequence.consume():
-            perform(sequence, eff)
+            sync_perform(sequence, eff)
 
     It's important to use `with sequence.consume():` to ensure that all of the
     intents are performed. Otherwise, if your code has a bug that causes it to
@@ -301,7 +301,7 @@ class SequenceDispatcher(object):
     :obj:`None` is returned if the next intent in the sequence is not equal to
     the intent being performed, or if there are no more items left in the
     sequence (this is standard behavior for dispatchers that don't handle an
-    intent).
+    intent). This lets this dispatcher be composed easily with others.
     """
     def __init__(self, sequence):
         """:param list sequence: Sequence of (intent, fn)."""
