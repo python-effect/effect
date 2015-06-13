@@ -1,8 +1,10 @@
 import sys
 from functools import partial
 
+from py.test import raises as raises
+
 from testtools import TestCase
-from testtools.matchers import raises, MatchesException
+from testtools.matchers import raises as match_raises, MatchesException
 
 from . import (
     ComposedDispatcher, Constant, Effect, Error, TypeDispatcher,
@@ -21,7 +23,7 @@ class DoTests(TestCase):
         f = lambda: None
         self.assertThat(
             lambda: perf(do(f)()),
-            raises(TypeError(
+            match_raises(TypeError(
                 "%r is not a generator function. It returned None." % (f,)
             )))
 
@@ -133,3 +135,18 @@ class DoTests(TestCase):
         eff = f()
         self.assertEqual(perf(eff), 'foo')
         self.assertEqual(perf(eff), 'foo')
+
+
+def test_stop_iteration_only_local():
+    """
+    Arbitrary :obj:`StopIteration` exceptions are not treated the same way as
+    falling off the end of the generator -- they are raised through.
+    """
+    @do
+    def f():
+        raise StopIteration()
+        yield Effect(Constant('foo'))
+
+    eff = f()
+    with raises(StopIteration):
+        perf(eff)

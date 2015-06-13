@@ -7,6 +7,7 @@ See :func:`do`.
 
 from __future__ import print_function
 
+import sys
 import types
 
 from . import Effect, Func
@@ -26,11 +27,12 @@ def do(f):
         eff = foo()
         return eff.on(...)
 
-    ``@do`` must decorate a generator function. Any yielded values must either
-    be Effects or the result of a :func:`do_return` call. The result of a
-    yielded Effect will be passed back into the generator as the result of the
-    ``yield`` expression. Yielded :func:`do_return` values will provide the
-    ultimate result of the Effect that is returned by the decorated function.
+    ``@do`` must decorate a generator function (not any other type of
+    iterator). Any yielded values must either be Effects or the result of a
+    :func:`do_return` call. The result of a yielded Effect will be passed back
+    into the generator as the result of the ``yield`` expression. Yielded
+    :func:`do_return` values will provide the ultimate result of the Effect
+    that is returned by the decorated function.
 
     It's important to note that any generator function decorated by ``@do``
     will no longer return a generator, but instead it will return an Effect,
@@ -88,7 +90,16 @@ def _do(result, generator, is_error):
         else:
             val = generator.send(result)
     except StopIteration:
-        return None
+        # If the generator we're spinning directly raises StopIteration, we'll
+        # treat it like returning None from the function. But there may be a
+        # case where some other code is raising StopIteration up through this
+        # generator, in which case we shouldn't really treat it like a function
+        # return -- it could quite easily hide bugs.
+        tb = sys.exc_info()[2]
+        if tb.tb_next:
+            raise
+        else:
+            return None
     if type(val) is _ReturnSentinel:
         return val.result
     elif type(val) is Effect:
