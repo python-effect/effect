@@ -1,9 +1,8 @@
 """
-Various functions for testing effects.
+Various functions and dispatchers for testing effects.
 
-The main goal of this code is to allow you to safely tests your effects
-in a way that makes it hard to *accidentally* perform real effects in your
-tests.
+Usually the best way to test effects is by using :func:`effect.sync_perform`
+with a :obj:`SequenceDispatcher`.
 """
 
 from __future__ import print_function
@@ -12,7 +11,7 @@ from contextlib import contextmanager
 from functools import partial
 import sys
 
-from characteristic import attributes
+import attr
 
 from ._base import Effect, guard, _Box, NoPerformerFoundError
 from ._sync import NotSynchronousError, sync_performer
@@ -20,42 +19,55 @@ from ._intents import Constant, Error, Func, ParallelEffects
 
 import six
 
+__all__ = [
+    'SequenceDispatcher',
+    'EQDispatcher',
+    'EQFDispatcher',
+    'resolve_effect',
+    'fail_effect',
+    'Stub',
+    'ESConstant', 'ESError', 'ESFunc',
+    'resolve_stubs',
+    'resolve_stub',
+]
 
-@attributes(['intent'], apply_with_init=False)
+
+@attr.s
 class Stub(object):
     """
+    DEPRECATED in favor of using :obj:`SequenceDispatcher`.
+
+
     An intent which wraps another intent, to flag that the intent should
     be automatically resolved by :func:`resolve_stub`.
 
     :class:`Stub` is intentionally not performable by any default
     mechanism.
     """
-
-    def __init__(self, intent):
-        """
-        :param intent: The intent to perform with :func:`resolve_stub`.
-        """
-        self.intent = intent
+    intent = attr.ib()
 
 
 def ESConstant(x):
-    """Return Effect(Stub(Constant(x)))"""
+    """DEPRECATED. Return Effect(Stub(Constant(x)))"""
     return Effect(Stub(Constant(x)))
 
 
 def ESError(x):
-    """Return Effect(Stub(Error(x)))"""
+    """DEPRECATED. Return Effect(Stub(Error(x)))"""
     return Effect(Stub(Error(x)))
 
 
 def ESFunc(x):
-    """Return Effect(Stub(Func(x)))"""
+    """DEPRECATED. Return Effect(Stub(Func(x)))"""
     return Effect(Stub(Func(x)))
 
 
 def resolve_effect(effect, result, is_error=False):
     """
     Supply a result for an effect, allowing its callbacks to run.
+
+    Note that is a pretty low-level testing utility; it's much better to use a
+    higher-level tool like :obj:`SequenceDispatcher` in your tests.
 
     The return value of the last callback is returned, unless any callback
     returns another Effect, in which case an Effect representing that
@@ -116,6 +128,8 @@ def fail_effect(effect, exception):
 
 def resolve_stub(dispatcher, effect):
     """
+    DEPRECATED in favor of obj:`SequenceDispatcher`.
+
     Automatically perform an effect, if its intent is a :obj:`Stub`.
 
     Note that resolve_stubs is preferred to this function, since it handles
@@ -147,6 +161,8 @@ def resolve_stub(dispatcher, effect):
 
 def resolve_stubs(dispatcher, effect):
     """
+    DEPRECATED in favor of obj:`SequenceDispatcher`.
+
     Successively performs effects with resolve_stub until a non-Effect value,
     or an Effect with a non-stub intent is returned, and return that value.
 
@@ -180,6 +196,10 @@ class EQDispatcher(object):
 
     This dispatcher looks up intents by equality and performs them by returning
     an associated constant value.
+
+    This is sometimes useful, but :obj:`SequenceDispatcher` should be
+    preferred, since it constrains the order of effects, which is usually
+    important.
 
     Users provide a mapping of intents to results, where the intents are
     matched against the intents being performed with a simple equality check
@@ -218,6 +238,10 @@ class EQFDispatcher(object):
 
     This dispatcher looks up intents by equality and performs them by invoking
     an associated function.
+
+    This is sometimes useful, but :obj:`SequenceDispatcher` should be
+    preferred, since it constrains the order of effects, which is usually
+    important.
 
     Users provide a mapping of intents to functions, where the intents are
     matched against the intents being performed with a simple equality check
@@ -268,7 +292,7 @@ class SequenceDispatcher(object):
         ])
 
         with sequence.consume():
-            perform(sequence, eff)
+            sync_perform(sequence, eff)
 
     It's important to use `with sequence.consume():` to ensure that all of the
     intents are performed. Otherwise, if your code has a bug that causes it to
@@ -277,7 +301,7 @@ class SequenceDispatcher(object):
     :obj:`None` is returned if the next intent in the sequence is not equal to
     the intent being performed, or if there are no more items left in the
     sequence (this is standard behavior for dispatchers that don't handle an
-    intent).
+    intent). This lets this dispatcher be composed easily with others.
     """
     def __init__(self, sequence):
         """:param list sequence: Sequence of (intent, fn)."""
