@@ -190,6 +190,7 @@ def resolve_stubs(dispatcher, effect):
     return effect
 
 
+@attr.s
 class EQDispatcher(object):
     """
     An equality-based (constant) dispatcher.
@@ -218,12 +219,10 @@ class EQDispatcher(object):
         'the-result'
 
     assuming MyIntent supports ``__eq__`` by value.
+
+    :param list mapping: A sequence of tuples of (intent, result).
     """
-    def __init__(self, mapping):
-        """
-        :param list mapping: A sequence of tuples of (intent, result).
-        """
-        self.mapping = mapping
+    mapping = attr.ib()
 
     def __call__(self, intent):
         # Avoid hashing, because a lot of intents aren't hashable.
@@ -232,6 +231,7 @@ class EQDispatcher(object):
                 return sync_performer(lambda d, i: v)
 
 
+@attr.s
 class EQFDispatcher(object):
     """
     An Equality-based function dispatcher.
@@ -263,12 +263,10 @@ class EQFDispatcher(object):
         'the-result'
 
     assuming MyIntent supports ``__eq__`` by value.
+
+    :param list mapping: A sequence of two-tuples of (intent, function).
     """
-    def __init__(self, mapping):
-        """
-        :param list mapping: A sequence of two-tuples of (intent, function).
-        """
-        self.mapping = mapping
+    mapping = attr.ib()
 
     def __call__(self, intent):
         # Avoid hashing, because a lot of intents aren't hashable.
@@ -276,7 +274,7 @@ class EQFDispatcher(object):
             if k == intent:
                 return sync_performer(lambda d, i: v(i))
 
-
+@attr.s
 class SequenceDispatcher(object):
     """
     A dispatcher which steps through a sequence of (intent, func) tuples and
@@ -302,10 +300,10 @@ class SequenceDispatcher(object):
     the intent being performed, or if there are no more items left in the
     sequence (this is standard behavior for dispatchers that don't handle an
     intent). This lets this dispatcher be composed easily with others.
+
+    :param list sequence: Sequence of (intent, fn).
     """
-    def __init__(self, sequence):
-        """:param list sequence: Sequence of (intent, fn)."""
-        self.sequence = sequence
+    sequence = attr.ib()
 
     def __call__(self, intent):
         if len(self.sequence) == 0:
