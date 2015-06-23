@@ -274,6 +274,7 @@ class EQFDispatcher(object):
             if k == intent:
                 return sync_performer(lambda d, i: v(i))
 
+
 @attr.s
 class SequenceDispatcher(object):
     """
