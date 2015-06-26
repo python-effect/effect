@@ -4,6 +4,9 @@ Effect
 .. image:: https://travis-ci.org/python-effect/effect.svg?branch=master
     :target: https://travis-ci.org/python-effect/effect
 
+.. image:: https://img.shields.io/pypi/v/effect.svg
+    :target: https://pypi.python.org/pypi/effect
+
 Effect is a library for helping you write purely functional code by isolating
 the effects (that is, IO or state manipulation) in your code. Documentation is
 available at https://effect.readthedocs.org/, and its PyPI page is
