@@ -76,8 +76,10 @@ based on the intent.
 
     def main():
         eff = greet()
-        dispatcher = TypeDispatcher({ReadLine: perform_read_line})
-        perform(dispatcher, effect)
+        dispatcher = ComposedDispatcher([
+            TypeDispatcher({ReadLine: perform_read_line}),
+            base_dispatcher])
+        perform(dispatcher, eff)
 
 This has a number of advantages. First, your unit tests for ``get_user_name``
 become simpler. You don't need to mock out or parameterize the ``raw_input``
