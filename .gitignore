@@ -3,3 +3,4 @@ _trial_temp
 build/
 effect.egg-info/
 dist/
+*~
