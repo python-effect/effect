@@ -19,12 +19,11 @@ class Reference(object):
 
     :note: Warning: Instantiating a Reference causes an implicit side-effect.
         In other words, ``Reference`` is not a referentially transparent
-        function, and you can't use equational reasoning on it: the a call to
+        function, and you can't use equational reasoning on it: a call to
         Reference is not interchangeable with the *result of* a call to
         Reference, since identity matters. If you want to create references in
         purely functional code, you can use the :obj:`effect.Func` intent:
         `effect.Effect(effect.Func(Reference))`.
-
     """
 
     # TODO: Add modify_atomic that either uses a lock or a low-level
