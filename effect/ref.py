@@ -4,6 +4,10 @@ from ._base import Effect
 from ._dispatcher import TypeDispatcher
 from ._sync import sync_performer
 
+__all__ = [
+    'Reference', 'ReadReference', 'ModifyReference', 'perform_read_reference',
+    'perform_modify_reference', 'reference_dispatcher']
+
 
 class Reference(object):
     """
@@ -12,6 +16,15 @@ class Reference(object):
     functional way.
 
     Compare to Haskell's ``IORef`` or Clojure's ``atom``.
+
+    :note: Warning: Instantiating a Reference causes an implicit side-effect.
+        In other words, ``Reference`` is not a referentially transparent
+        function, and you can't use equational reasoning on it: the a call to
+        Reference is not interchangeable with the *result of* a call to
+        Reference, since identity matters. If you want to create references in
+        purely functional code, you can use the :obj:`effect.Func` intent:
+        `effect.Effect(effect.Func(Reference))`.
+
     """
 
     # TODO: Add modify_atomic that either uses a lock or a low-level
