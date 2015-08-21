@@ -63,15 +63,15 @@ def test_fold_effect_errors():
     assert excinfo.value.wrapped_exception[0] is ZeroDivisionError
     assert str(excinfo.value.wrapped_exception[1]) == 'foo'
 
-def test_fold_effect_str():
-    effs = [Effect('a'), Effect(Error(ZeroDivisionError('foo'))), Effect('c')]
 
+def test_fold_effect_str():
+    """str()ing a FoldError returns useful traceback/exception info."""
+    effs = [Effect('a'), Effect(Error(ZeroDivisionError('foo'))), Effect('c')]
     dispatcher = SequenceDispatcher([
         ('a', lambda i: 'Ei'),
     ])
 
     eff = fold_effect(operator.add, 'Nil', effs)
-
     with dispatcher.consume():
         with raises(FoldError) as excinfo:
             sync_perform(_base_and(dispatcher), eff)
