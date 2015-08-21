@@ -17,10 +17,12 @@ class FoldError(Exception):
         self.wrapped_exception = wrapped_exception
 
     def __str__(self):
-        tb_lines = traceback.format_tb(self.wrapped_exception[2])
+        tb_lines = traceback.format_exception(*self.wrapped_exception)
         tb = ''.join(tb_lines)
-        return "FoldError(%r, %r) -> ORIGINAL TRACEBACK FOLLOWS\n%s" % (
-            self.accumulator, self.wrapped_exception, tb)
+        st = (
+            "<FoldError after accumulating %r> Original traceback follows:\n%s"
+            % (self.accumulator, tb))
+        return st.rstrip('\n')
 
 
 def fold_effect(f, initial, effects):

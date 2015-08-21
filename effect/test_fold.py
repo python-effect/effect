@@ -63,6 +63,22 @@ def test_fold_effect_errors():
     assert excinfo.value.wrapped_exception[0] is ZeroDivisionError
     assert str(excinfo.value.wrapped_exception[1]) == 'foo'
 
+def test_fold_effect_str():
+    effs = [Effect('a'), Effect(Error(ZeroDivisionError('foo'))), Effect('c')]
+
+    dispatcher = SequenceDispatcher([
+        ('a', lambda i: 'Ei'),
+    ])
+
+    eff = fold_effect(operator.add, 'Nil', effs)
+
+    with dispatcher.consume():
+        with raises(FoldError) as excinfo:
+            sync_perform(_base_and(dispatcher), eff)
+    assert str(excinfo.value).startswith(
+        "<FoldError after accumulating 'NilEi'> Original traceback follows:\n")
+    assert str(excinfo.value).endswith('ZeroDivisionError: foo')
+
 
 def test_sequence():
     """Collects each Effectful result into a list."""
