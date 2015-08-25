@@ -63,6 +63,10 @@ def do(f):
                     % (f, gen))
             return _do(None, gen, False)
 
+        fname = getattr(f, '__name__', None)
+        if fname is not None:
+            doit.__name__ = 'do_' + fname
+
         return Effect(Func(doit))
     return do_wrapper
 

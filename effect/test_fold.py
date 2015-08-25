@@ -3,16 +3,9 @@ import operator
 
 from pytest import raises
 
-from effect import (
-    ComposedDispatcher, Effect, Error,
-    base_dispatcher, sync_perform)
+from effect import Effect, Error, base_dispatcher, sync_perform
 from effect.fold import FoldError, fold_effect, sequence
-from effect.testing import SequenceDispatcher
-
-
-def _base_and(dispatcher):
-    """Compose base_dispatcher onto the given dispatcher."""
-    return ComposedDispatcher([dispatcher, base_dispatcher])
+from effect.testing import perform_sequence
 
 
 def test_fold_effect():
@@ -22,15 +15,13 @@ def test_fold_effect():
     """
     effs = [Effect('a'), Effect('b'), Effect('c')]
 
-    dispatcher = SequenceDispatcher([
+    dispatcher = [
         ('a', lambda i: 'Ei'),
         ('b', lambda i: 'Bee'),
         ('c', lambda i: 'Cee'),
-    ])
+    ]
     eff = fold_effect(operator.add, 'Nil', effs)
-
-    with dispatcher.consume():
-        result = sync_perform(_base_and(dispatcher), eff)
+    result = perform_sequence(dispatcher, eff)
     assert result == 'NilEiBeeCee'
 
 
@@ -50,15 +41,12 @@ def test_fold_effect_errors():
     """
     effs = [Effect('a'), Effect(Error(ZeroDivisionError('foo'))), Effect('c')]
 
-    dispatcher = SequenceDispatcher([
-        ('a', lambda i: 'Ei'),
-    ])
+    dispatcher = [('a', lambda i: 'Ei')]
 
     eff = fold_effect(operator.add, 'Nil', effs)
 
-    with dispatcher.consume():
-        with raises(FoldError) as excinfo:
-            sync_perform(_base_and(dispatcher), eff)
+    with raises(FoldError) as excinfo:
+        perform_sequence(dispatcher, eff)
     assert excinfo.value.accumulator == 'NilEi'
     assert excinfo.value.wrapped_exception[0] is ZeroDivisionError
     assert str(excinfo.value.wrapped_exception[1]) == 'foo'
@@ -67,14 +55,11 @@ def test_fold_effect_errors():
 def test_fold_effect_str():
     """str()ing a FoldError returns useful traceback/exception info."""
     effs = [Effect('a'), Effect(Error(ZeroDivisionError('foo'))), Effect('c')]
-    dispatcher = SequenceDispatcher([
-        ('a', lambda i: 'Ei'),
-    ])
+    dispatcher = [('a', lambda i: 'Ei')]
 
     eff = fold_effect(operator.add, 'Nil', effs)
-    with dispatcher.consume():
-        with raises(FoldError) as excinfo:
-            sync_perform(_base_and(dispatcher), eff)
+    with raises(FoldError) as excinfo:
+        perform_sequence(dispatcher, eff)
     assert str(excinfo.value).startswith(
         "<FoldError after accumulating 'NilEi'> Original traceback follows:\n")
     assert str(excinfo.value).endswith('ZeroDivisionError: foo')
@@ -83,15 +68,14 @@ def test_fold_effect_str():
 def test_sequence():
     """Collects each Effectful result into a list."""
     effs = [Effect('a'), Effect('b'), Effect('c')]
-    dispatcher = SequenceDispatcher([
+    dispatcher = [
         ('a', lambda i: 'Ei'),
         ('b', lambda i: 'Bee'),
         ('c', lambda i: 'Cee'),
-    ])
+    ]
     eff = sequence(effs)
 
-    with dispatcher.consume():
-        result = sync_perform(_base_and(dispatcher), eff)
+    result = perform_sequence(dispatcher, eff)
     assert result == ['Ei', 'Bee', 'Cee']
 
 
@@ -107,15 +91,12 @@ def test_sequence_error():
     """
     effs = [Effect('a'), Effect(Error(ZeroDivisionError('foo'))), Effect('c')]
 
-    dispatcher = SequenceDispatcher([
-        ('a', lambda i: 'Ei'),
-    ])
+    dispatcher = [('a', lambda i: 'Ei')]
 
     eff = sequence(effs)
 
-    with dispatcher.consume():
-        with raises(FoldError) as excinfo:
-            sync_perform(_base_and(dispatcher), eff)
+    with raises(FoldError) as excinfo:
+        perform_sequence(dispatcher, eff)
     assert excinfo.value.accumulator == ['Ei']
     assert excinfo.value.wrapped_exception[0] is ZeroDivisionError
     assert str(excinfo.value.wrapped_exception[1]) == 'foo'
