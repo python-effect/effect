@@ -82,8 +82,7 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
         used.
     """
     def fmt_log():
-        return '{{{\n%s\n}}}' % (
-            '\n'.join(['{}: {}'.format(*x) for x in log]),)
+        return '{{{\n%s\n}}}' % ('\n'.join(['%s: %s' % x for x in log]),)
 
     def dispatcher(intent):
         p = sequence(intent)
@@ -97,7 +96,7 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
         else:
             log.append(("NOT FOUND", intent))
             raise AssertionError(
-                "Performer not found: {}! Log follows:\n{}".format(
+                "Performer not found: %s! Log follows:\n%s" % (
                     intent, fmt_log()))
 
     if fallback_dispatcher is None:
