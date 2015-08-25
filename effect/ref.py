@@ -51,7 +51,7 @@ class Reference(object):
         return Effect(ModifyReference(ref=self, transformer=transformer))
 
     def __repr__(self):
-        return "<Reference({})>".format(self._value)
+        return "<Reference({}) at 0x{:x}>".format(self._value, id(self))
 
 
 @attr.s
