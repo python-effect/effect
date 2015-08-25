@@ -114,3 +114,13 @@ class SyncPerformerTests(TestCase):
         original.attr = 1
         wrapped = sync_performer(new_func)
         self.assertEqual(wrapped.__name__, 'sync_wrapper')
+
+    def test_kwargs(self):
+        """Additional kwargs are passed through."""
+        @sync_performer
+        def p(dispatcher, intent, extra):
+            return extra
+
+        dispatcher = lambda _: partial(p, extra='extra val')
+        result = sync_perform(dispatcher, Effect('foo'))
+        self.assertEqual(result, 'extra val')

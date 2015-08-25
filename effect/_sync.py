@@ -65,11 +65,11 @@ def sync_performer(f):
             return do_side_effect(foo)
     """
     @wraps(f)
-    def sync_wrapper(*args):
+    def sync_wrapper(*args, **kwargs):
         box = args[-1]
         pass_args = args[:-1]
         try:
-            box.succeed(f(*pass_args))
+            box.succeed(f(*pass_args, **kwargs))
         except:
             box.fail(sys.exc_info())
     return sync_wrapper
