@@ -45,7 +45,7 @@ A very quick example of using Effects:
 .. code:: python
 
     from __future__ import print_function
-    from effect import perform, sync_performer, Effect, TypeDispatcher
+    from effect import sync_perform, sync_performer, Effect, TypeDispatcher
 
     class ReadLine(object):
         def __init__(self, prompt):
@@ -65,14 +65,14 @@ A very quick example of using Effects:
             error=lambda e: print("sorry, there was an error. {}".format(e)))
 
         dispatcher = TypeDispatcher({ReadLine: perform_read_line})
-        perform(dispatcher, effect)
+        sync_perform(dispatcher, effect)
 
     if __name__ == '__main__':
         main()
 
 
 ``Effect`` takes what we call an ``intent``, which is any object. The
-``dispatcher`` argument to ``perform`` must have a ``performer`` function
+``dispatcher`` argument to ``sync_perform`` must have a ``performer`` function
 for your intent.
 
 This has a number of advantages. First, your unit tests for ``get_user_name``

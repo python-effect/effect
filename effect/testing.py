@@ -107,6 +107,64 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
         return sync_perform(dispatcher, eff)
 
 
+@object.__new__
+class _ANY(object):
+    def __eq__(self, o): return True
+    def __ne__(self, o): return False
+
+
+def parallel_sequence(parallel_seqs, fallback_dispatcher=None):
+    """
+    Convenience for expecting a ParallelEffects in an expected intent sequence,
+    as required by :func:`perform_sequence` or :obj:`SequenceDispatcher`.
+
+    This lets you verify that intents are performed in parallel in the
+    context of :func:`perform_sequence`. It returns a two-tuple as expected by
+    that function, so you can use it like this::
+
+        @do
+        def code_under_test():
+            r = yield Effect(SerialIntent('serial'))
+            r2 = yield parallel([Effect(MyIntent('a')),
+                                 Effect(OtherIntent('b'))])
+            yield do_return((r, r2))
+
+        def test_code():
+            seq = [
+                (SerialIntent('serial'), lambda i: 'result1'),
+                nested_parallel([
+                    [(MyIntent('a'), lambda i: 'a result')],
+                    [(OtherIntent('b'), lambda i: 'b result')]
+                ]),
+            ]
+            eff = code_under_test()
+            assert perform_sequence(seq, eff) == ('result1', 'result2')
+
+
+    The argument is expected to be a list of intent sequences, one for each
+    parallel effect expected. Each sequence will be performed with
+    :func:`perform_sequence` and the respective effect that's being run in
+    parallel. The order of the sequences must match that of the order of
+    parallel effects.
+
+    :param parallel_seqs: list of lists of (intent, performer), like
+        what :func:`perform_sequence` accepts.
+    :param fallback_dispatcher: an optional dispatcher to compose onto the
+        sequence dispatcher.
+    """
+    perf = partial(perform_sequence, fallback_dispatcher=fallback_dispatcher)
+    def performer(intent):
+        if len(intent.effects) != len(parallel_seqs):
+            raise AssertionError(
+                "Need one list in parallel_seqs per parallel effect. "
+                "Got %s effects and %s seqs.\n"
+                "Effects: %s\n"
+                "parallel_seqs: %s" % (len(intent.effects), len(parallel_seqs),
+                                       intent.effects, parallel_seqs))
+        return list(map(perf, parallel_seqs, intent.effects))
+    return (ParallelEffects(effects=_ANY), performer)
+
+
 @attr.s
 class Stub(object):
     """

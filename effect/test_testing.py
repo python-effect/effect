@@ -11,12 +11,15 @@ from testtools.matchers import (MatchesListwise, Equals, MatchesException,
                                 raises)
 
 from . import (
+    ComposedDispatcher,
     Constant,
     Effect,
     base_dispatcher,
     parallel,
-    sync_perform)
+    sync_perform,
+    sync_performer)
 from .do import do, do_return
+from .fold import FoldError, sequence
 from .testing import (
     ESConstant,
     ESError,
@@ -25,6 +28,7 @@ from .testing import (
     EQFDispatcher,
     SequenceDispatcher,
     fail_effect,
+    parallel_sequence,
     perform_sequence,
     resolve_effect,
     resolve_stubs)
@@ -403,3 +407,58 @@ def test_perform_sequence_log():
     expected = ("sequence: MyIntent(val='a')\n"
                 "NOT FOUND: OtherIntent(val='b')")
     assert expected in str(exc.value)
+
+
+def test_parallel_sequence():
+    """
+    Ensures that all parallel effects are found in the given intents, in
+    order, and returns the results associated with those intents.
+    """
+    seq = [
+        parallel_sequence([
+            [(1, lambda i: "one!")],
+            [(2, lambda i: "two!")],
+            [(3, lambda i: "three!")],
+        ])
+    ]
+    p = parallel([Effect(1), Effect(2), Effect(3)])
+    assert perform_sequence(seq, p) == ['one!', 'two!', 'three!']
+
+
+def test_parallel_sequence_fallback():
+    """
+    Accepts a ``fallback`` dispatcher that will be used when the sequence
+    doesn't contain an intent.
+    """
+    def dispatch_2(intent):
+        if intent == 2:
+            return sync_performer(lambda d, i: "two!")
+    fallback = ComposedDispatcher([dispatch_2, base_dispatcher])
+    seq = [
+        parallel_sequence([
+            [(1, lambda i: 'one!')],
+            [],  # only implicit effects in this slot
+            [(3, lambda i: 'three!')],
+        ],
+            fallback_dispatcher=fallback),
+    ]
+    p = parallel([Effect(1), Effect(2), Effect(3)])
+    assert perform_sequence(seq, p) == ['one!', 'two!', 'three!']
+
+
+def test_parallel_sequence_must_be_parallel():
+    """
+    If the sequences aren't run in parallel, the parallel_sequence won't
+    match and a FoldError of NoPerformerFoundError will be raised.
+    """
+    seq = [
+        parallel_sequence([
+            [(1, lambda i: "one!")],
+            [(2, lambda i: "two!")],
+            [(3, lambda i: "three!")],
+        ])
+    ]
+    p = sequence([Effect(1), Effect(2), Effect(3)])
+    with pytest.raises(FoldError) as excinfo:
+        perform_sequence(seq, p)
+    assert excinfo.value.wrapped_exception[0] is AssertionError
