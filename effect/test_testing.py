@@ -2,6 +2,10 @@
 Tests for the effect.testing module.
 """
 
+import attr
+
+import pytest
+
 from testtools import TestCase
 from testtools.matchers import (MatchesListwise, Equals, MatchesException,
                                 raises)
@@ -12,6 +16,7 @@ from . import (
     base_dispatcher,
     parallel,
     sync_perform)
+from .do import do, do_return
 from .testing import (
     ESConstant,
     ESError,
@@ -20,6 +25,7 @@ from .testing import (
     EQFDispatcher,
     SequenceDispatcher,
     fail_effect,
+    perform_sequence,
     resolve_effect,
     resolve_stubs)
 
@@ -324,7 +330,7 @@ class SequenceDispatcherTests(TestCase):
     def test_consumed_honors_changes(self):
         """
         `consumed` returns True if there are no more elements after performing
-        some..
+        some.
         """
         d = SequenceDispatcher([('foo', lambda i: 'bar')])
         sync_perform(d, Effect('foo'))
@@ -352,3 +358,46 @@ class SequenceDispatcherTests(TestCase):
                 pass
         e = self.assertRaises(AssertionError, failer)
         self.assertEqual(str(e), "Not all intents were performed: ['foo']")
+
+
+@attr.s
+class MyIntent(object):
+    val = attr.ib()
+
+@attr.s
+class OtherIntent(object):
+    val = attr.ib()
+
+def test_perform_sequence():
+    """perform_sequence pretty much acts like SequenceDispatcher by default."""
+
+    @do
+    def code_under_test():
+        r = yield Effect(MyIntent('a'))
+        r2 = yield Effect(OtherIntent('b'))
+        yield do_return((r, r2))
+
+    seq = [(MyIntent('a'), lambda i: 'result1'),
+           (OtherIntent('b'), lambda i: 'result2')]
+    eff = code_under_test()
+    assert perform_sequence(seq, eff) == ('result1', 'result2')
+
+
+def test_perform_sequence_log():
+    """
+    When an intent isn't found, a useful log of intents is included in the
+    exception message.
+    """
+    @do
+    def code_under_test():
+        r = yield Effect(MyIntent('a'))
+        r2 = yield Effect(OtherIntent('b'))
+        yield do_return((r, r2))
+
+    seq = [(MyIntent('a'), lambda i: 'result1')]
+    with pytest.raises(AssertionError) as exc:
+        perform_sequence(seq, code_under_test())
+
+    expected = ("sequence: MyIntent(val='a')\n"
+                "NOT FOUND: OtherIntent(val='b')")
+    assert expected in str(exc.value)

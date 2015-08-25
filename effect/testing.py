@@ -1,8 +1,7 @@
 """
 Various functions and dispatchers for testing effects.
 
-Usually the best way to test effects is by using :func:`effect.sync_perform`
-with a :obj:`SequenceDispatcher`.
+Usually the best way to test effects is by using :func:`perform_sequence`.
 """
 
 from __future__ import print_function
@@ -14,12 +13,13 @@ import sys
 import attr
 
 from ._base import Effect, guard, _Box, NoPerformerFoundError
-from ._sync import NotSynchronousError, sync_performer
-from ._intents import Constant, Error, Func, ParallelEffects
+from ._sync import NotSynchronousError, sync_perform, sync_performer
+from ._intents import Constant, Error, Func, ParallelEffects, base_dispatcher
 
 import six
 
 __all__ = [
+    'perform_sequence',
     'SequenceDispatcher',
     'EQDispatcher',
     'EQFDispatcher',
@@ -32,10 +32,86 @@ __all__ = [
 ]
 
 
+def perform_sequence(seq, eff, fallback_dispatcher=None):
+    """
+    Perform an Effect by looking up performers for intents in an ordered
+    "plan".
+
+    First, an example::
+
+        @do
+        def code_under_test():
+            r = yield Effect(MyIntent('a'))
+            r2 = yield Effect(OtherIntent('b'))
+            yield do_return((r, r2))
+
+        def test_code():
+            seq = [
+                (MyIntent('a'), lambda i: 'result1'),
+                (OtherIntent('b'), lambda i: 'result2')
+            ]
+            eff = code_under_test()
+            assert perform_sequence(seq, eff) == ('result1', 'result2')
+
+    Every time an intent is to be performed, it is checked against the next
+    item in the sequence, and the associated function is used to calculate its
+    result. Note that the objects used for intents must provide a meaningful
+    ``__eq__`` implementation, since they will be checked for equality. Using
+    something like `attrs`_ or `pyrsistent`_'s `PClass`_ is recommended for
+    your intents, since they will auto-generate __eq__ and many other methods
+    useful for immutable objects.
+
+    .. _`attrs`: https://pypi.python.org/pypi/attrs
+    .. _`pyrsistent`: https://pypi.python.org/pypi/pyrsistent
+    .. _`PClass`: http://pyrsistent.readthedocs.org/en/latest/api.html#pyrsistent.PClass
+
+    If an intent can't be found in the sequence or the fallback dispatcher, an
+    ``AssertionError`` is raised with a log of all intents that were performed
+    so far. Each item in the log starts with one of three prefixes:
+
+    - sequence: this intent was found in the sequence
+    - fallback: a performer for this intent was provided by the fallback
+        dispatcher
+    - NOT FOUND: no performer for this intent was found.
+
+    :param list sequence: Sequence of ``(intent, fn)``, where ``fn`` is a
+        function that should accept an intent and return a result.
+    :param Effect eff: The Effect to perform.
+    :param fallback_dispatcher: A dispatcher to use for intents that aren't
+        found in the sequence. if None is provided, ``base_dispatcher`` is
+        used.
+    """
+    def fmt_log():
+        return '{{{\n%s\n}}}' % (
+            '\n'.join(['{}: {}'.format(*x) for x in log]),)
+
+    def dispatcher(intent):
+        p = sequence(intent)
+        if p is not None:
+            log.append(("sequence", intent))
+            return p
+        p = fallback_dispatcher(intent)
+        if p is not None:
+            log.append(("fallback", intent))
+            return p
+        else:
+            log.append(("NOT FOUND", intent))
+            raise AssertionError(
+                "Performer not found: {}! Log follows:\n{}".format(
+                    intent, fmt_log()))
+
+    if fallback_dispatcher is None:
+        fallback_dispatcher = base_dispatcher
+    sequence = SequenceDispatcher(seq)
+    log = []
+    with sequence.consume():
+        return sync_perform(dispatcher, eff)
+
+
 @attr.s
 class Stub(object):
     """
-    DEPRECATED in favor of using :obj:`SequenceDispatcher`.
+    DEPRECATED in favor of using :func:`perform_sequence`.
 
 
     An intent which wraps another intent, to flag that the intent should
@@ -67,7 +143,7 @@ def resolve_effect(effect, result, is_error=False):
     Supply a result for an effect, allowing its callbacks to run.
 
     Note that is a pretty low-level testing utility; it's much better to use a
-    higher-level tool like :obj:`SequenceDispatcher` in your tests.
+    higher-level tool like :func:`perform_sequence` in your tests.
 
     The return value of the last callback is returned, unless any callback
     returns another Effect, in which case an Effect representing that
@@ -128,7 +204,7 @@ def fail_effect(effect, exception):
 
 def resolve_stub(dispatcher, effect):
     """
-    DEPRECATED in favor of obj:`SequenceDispatcher`.
+    DEPRECATED in favor of :func:`perform_sequence`.
 
     Automatically perform an effect, if its intent is a :obj:`Stub`.
 
@@ -161,7 +237,7 @@ def resolve_stub(dispatcher, effect):
 
 def resolve_stubs(dispatcher, effect):
     """
-    DEPRECATED in favor of obj:`SequenceDispatcher`.
+    DEPRECATED in favor of using :func:`perform_sequence`.
 
     Successively performs effects with resolve_stub until a non-Effect value,
     or an Effect with a non-stub intent is returned, and return that value.
@@ -198,7 +274,7 @@ class EQDispatcher(object):
     This dispatcher looks up intents by equality and performs them by returning
     an associated constant value.
 
-    This is sometimes useful, but :obj:`SequenceDispatcher` should be
+    This is sometimes useful, but :func:`perform_sequence` should be
     preferred, since it constrains the order of effects, which is usually
     important.
 
@@ -239,7 +315,7 @@ class EQFDispatcher(object):
     This dispatcher looks up intents by equality and performs them by invoking
     an associated function.
 
-    This is sometimes useful, but :obj:`SequenceDispatcher` should be
+    This is sometimes useful, but :func:`perform_sequence` should be
     preferred, since it constrains the order of effects, which is usually
     important.
 
@@ -281,17 +357,8 @@ class SequenceDispatcher(object):
     A dispatcher which steps through a sequence of (intent, func) tuples and
     runs ``func`` to perform intents in strict sequence.
 
-    So, if you expect to first perform an intent like ``MyIntent('a')`` and
-    then an intent like ``OtherIntent('b')``, you can create and use a
-    dispatcher like this::
-
-        sequence = SequenceDispatcher([
-            (MyIntent('a'), lambda i: 'my-intent-result'),
-            (OtherIntent('b'), lambda i: 'other-intent-result')
-        ])
-
-        with sequence.consume():
-            sync_perform(sequence, eff)
+    This is the dispatcher used by :func:`perform_sequence`. In general that
+    function should be used directly, instead of this dispatcher.
 
     It's important to use `with sequence.consume():` to ensure that all of the
     intents are performed. Otherwise, if your code has a bug that causes it to
