@@ -69,12 +69,12 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
     ``AssertionError`` is raised with a log of all intents that were performed
     so far. Each item in the log starts with one of three prefixes:
 
-    - sequence: this intent was found in the sequence
-    - fallback: a performer for this intent was provided by the fallback
-        dispatcher
-    - NOT FOUND: no performer for this intent was found.
+    * ``sequence``: this intent was found in the sequence
+    * ``fallback``: a performer for this intent was provided by the fallback
+      dispatcher
+    * ``NOT FOUND``: no performer for this intent was found.
 
-    :param list sequence: Sequence of ``(intent, fn)``, where ``fn`` is a
+    :param list sequence: List of ``(intent, fn)`` tuples, where ``fn`` is a
         function that should accept an intent and return a result.
     :param Effect eff: The Effect to perform.
     :param fallback_dispatcher: A dispatcher to use for intents that aren't

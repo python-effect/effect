@@ -14,4 +14,4 @@ project = u'Effect'
 copyright = u'2015, Christopher Armstrong'
 version = release = '0.9+'
 
-
+html_theme = 'sphinx_rtd_theme'
