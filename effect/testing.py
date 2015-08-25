@@ -161,7 +161,7 @@ def parallel_sequence(parallel_seqs, fallback_dispatcher=None):
                 "Effects: %s\n"
                 "parallel_seqs: %s" % (len(intent.effects), len(parallel_seqs),
                                        intent.effects, parallel_seqs))
-        return map(perf, parallel_seqs, intent.effects)
+        return list(map(perf, parallel_seqs, intent.effects))
     return (ParallelEffects(effects=_ANY), performer)
 
 
