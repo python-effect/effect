@@ -120,6 +120,8 @@ A quick tour, with definitions
   :func:`effect.sync_performer` or ``txeffect.deferred_performer`` from the
   `txeffect`_ package.
 
+.. _`txeffect`: https://pypi.python.org/pypi/txeffect
+
 There's a few main things you need to do to use Effect.
 
 - Define some intents to describe your side-effects (or use a library
