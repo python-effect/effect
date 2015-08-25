@@ -461,5 +461,4 @@ def test_parallel_sequence_must_be_parallel():
     p = sequence([Effect(1), Effect(2), Effect(3)])
     with pytest.raises(FoldError) as excinfo:
         perform_sequence(seq, p)
-    print excinfo.value
     assert excinfo.value.wrapped_exception[0] is AssertionError
