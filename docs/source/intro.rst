@@ -69,17 +69,19 @@ A (sometimes) nicer syntax is provided for adding callbacks, with the
             yield Effect(Print("Hello,", name))
 
 Finally, to actually perform these effects, they can be passed to
-:func:`effect.perform`, along with a dispatcher which looks up the performer
-based on the intent.
+:func:`effect.sync_perform`, along with a dispatcher which looks up the
+performer based on the intent.
 
 .. code:: python
+
+    from effect import sync_perform
 
     def main():
         eff = greet()
         dispatcher = ComposedDispatcher([
             TypeDispatcher({ReadLine: perform_read_line}),
             base_dispatcher])
-        perform(dispatcher, eff)
+        sync_perform(dispatcher, eff)
 
 This has a number of advantages. First, your unit tests for ``get_user_name``
 become simpler. You don't need to mock out or parameterize the ``raw_input``
@@ -115,7 +117,8 @@ A quick tour, with definitions
 - Box: An object that has ``succeed`` and ``fail`` methods for providing the
   result of an effect (potentially asynchronously). Usually you don't need
   to care about this, if you define your performers with
-  :func:`effect.sync_performer` or :func:`effect.twisted.deferred_performer`.
+  :func:`effect.sync_performer` or ``txeffect.deferred_performer`` from the
+  `txeffect`_ package.
 
 There's a few main things you need to do to use Effect.
 
@@ -126,11 +129,12 @@ There's a few main things you need to do to use Effect.
   ``Effect(HTTPRequest(...))`` and attach callbacks to them with
   :func:`Effect.on`.
 - As close as possible to the top-level of your application, perform your
-  effect(s) with :func:`effect.perform`.
-- You will need to pass a dispatcher to :func:`effect.perform`. You should create one
-  by creating a :class:`effect.TypeDispatcher` with your own performers (e.g. for
-  ``HTTPRequest``), and composing it with :obj:`effect.base_dispatcher` (which
-  has performers for built-in effects) using :class:`effect.ComposedDispatcher`.
+  effect(s) with :func:`effect.sync_perform`.
+- You will need to pass a dispatcher to :func:`effect.sync_perform`. You should
+  create one by creating a :class:`effect.TypeDispatcher` with your own
+  performers (e.g. for ``HTTPRequest``), and composing it with
+  :obj:`effect.base_dispatcher` (which has performers for built-in effects)
+  using :class:`effect.ComposedDispatcher`.
 
 
 Callback chains
