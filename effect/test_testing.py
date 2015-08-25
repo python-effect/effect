@@ -364,9 +364,11 @@ class SequenceDispatcherTests(TestCase):
 class MyIntent(object):
     val = attr.ib()
 
+
 @attr.s
 class OtherIntent(object):
     val = attr.ib()
+
 
 def test_perform_sequence():
     """perform_sequence pretty much acts like SequenceDispatcher by default."""

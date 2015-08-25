@@ -3,9 +3,7 @@ import operator
 
 from pytest import raises
 
-from effect import (
-    ComposedDispatcher, Effect, Error,
-    base_dispatcher, sync_perform)
+from effect import Effect, Error, base_dispatcher, sync_perform
 from effect.fold import FoldError, fold_effect, sequence
 from effect.testing import perform_sequence
 
