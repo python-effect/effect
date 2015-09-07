@@ -21,10 +21,11 @@ import six
 __all__ = [
     'perform_sequence',
     'SequenceDispatcher',
-    'EQDispatcher',
-    'EQFDispatcher',
+    'noop',
     'resolve_effect',
     'fail_effect',
+    'EQDispatcher',
+    'EQFDispatcher',
     'Stub',
     'ESConstant', 'ESError', 'ESFunc',
     'resolve_stubs',
@@ -453,3 +454,20 @@ class SequenceDispatcher(object):
             raise AssertionError(
                 "Not all intents were performed: {0}".format(
                     [x[0] for x in self.sequence]))
+
+
+def noop(intent):
+    """
+
+    Return None. This is just a handy way to make your intent sequences (as
+    used by :func:`perform_sequence`) more concise when the effects you're
+    expecting in a test don't return a result (and are instead only performed
+    for their side-effects)::
+
+        seq = [
+            (Prompt('Enter your name: '), lambda i: 'Chris')
+            (Greet('Chris'), noop),
+        ]
+
+    """
+    return None
