@@ -9,7 +9,7 @@ See https://effect.readthedocs.org/ for documentation.
 
 from __future__ import absolute_import
 
-from ._base import Effect, perform, NoPerformerFoundError, catch
+from ._base import Effect, perform, NoPerformerFoundError, catch, raise_
 from ._sync import (
     NotSynchronousError,
     sync_perform,
@@ -28,5 +28,5 @@ __all__ = [
     "Constant", "Error", "FirstError", "Func",
     "base_dispatcher",
     "TypeDispatcher", "ComposedDispatcher",
-    "catch",
+    "catch", "raise_",
 ]

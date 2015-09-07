@@ -167,7 +167,7 @@ def perform(dispatcher, effect):
 
 def catch(exc_type, callable):
     """
-    A helper for handling errors of a specific type.
+    A helper for handling errors of a specific type::
 
         eff.on(error=catch(SpecificException,
                            lambda exc_info: "got an error!"))
@@ -180,3 +180,17 @@ def catch(exc_type, callable):
             return callable(exc_info)
         six.reraise(*exc_info)
     return catcher
+
+
+def raise_(exception, tb=None):
+    """Simple convenience function to allow raising exceptions from lambdas.
+
+    This is slightly more convenient than ``six.reraise`` because it takes an
+    exception instance instead of needing the type separate from the instance.
+
+    :param exception: An exception *instance* (not an exception type).
+
+    - ``raise_(exc)`` is the same as ``raise exc``.
+    - ``raise_(exc, tb)`` is the same as ``raise type(exc), exc, tb``.
+    """
+    six.reraise(type(exception), exception, tb)
