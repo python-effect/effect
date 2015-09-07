@@ -150,7 +150,7 @@ def perform_error(dispatcher, intent):
     raise intent.exception
 
 
-@attr.s
+@attr.s(init=False)
 class Func(object):
     """
     An intent that returns the result of the specified function.
@@ -171,14 +171,23 @@ class Func(object):
     way.
 
     :param func: The function to call when this intent is performed.
+    :param args: Positional arguments to pass to the function.
+    :param kwargs: Keyword arguments to pass to the function.
     """
     func = attr.ib()
+    args = attr.ib()
+    kwargs = attr.ib()
+
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
 
 
 @sync_performer
 def perform_func(dispatcher, intent):
     """Performer for :class:`Func`."""
-    return intent.func()
+    return intent.func(*intent.args, **intent.kwargs)
 
 
 base_dispatcher = TypeDispatcher({

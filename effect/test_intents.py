@@ -7,6 +7,8 @@ import six
 from testtools import TestCase
 from testtools.matchers import Equals, MatchesListwise
 
+from pytest import raises
+
 from ._base import Effect
 from ._dispatcher import ComposedDispatcher, TypeDispatcher
 from ._intents import (
@@ -22,51 +24,40 @@ from .async import perform_parallel_async
 from .test_parallel_performers import EquitableException
 
 
-class IntentTests(TestCase):
-    """Tests for intents."""
+def test_perform_constant():
+    """perform_constant returns the result of a Constant."""
+    intent = Constant("foo")
+    result = sync_perform(
+        TypeDispatcher({Constant: perform_constant}),
+        Effect(intent))
+    assert result == "foo"
 
-    def test_perform_constant(self):
-        """
-        perform_constant returns the result of a Constant.
-        """
-        intent = Constant("foo")
-        result = sync_perform(
-            TypeDispatcher({Constant: perform_constant}),
-            Effect(intent))
-        self.assertEqual(result, "foo")
+def test_perform_error():
+    """perform_error raises the exception of an Error."""
+    intent = Error(ValueError("foo"))
+    with raises(ValueError):
+        sync_perform(TypeDispatcher({Error: perform_error}), Effect(intent))
 
-    def test_perform_error(self):
-        """
-        perform_error raises the exception of a Error.
-        """
-        intent = Error(ValueError("foo"))
-        self.assertRaises(
-            ValueError,
-            lambda: sync_perform(
-                TypeDispatcher({Error: perform_error}),
-                Effect(intent)))
+def test_perform_func():
+    """perform_func calls the function given in a Func."""
+    intent = Func(lambda: "foo")
+    result = sync_perform(
+        TypeDispatcher({Func: perform_func}),
+        Effect(intent))
+    assert result == "foo"
 
-    def test_perform_func(self):
-        """
-        perform_func calls the function given in a Func.
-        """
-        intent = Func(lambda: "foo")
-        result = sync_perform(
-            TypeDispatcher({Func: perform_func}),
-            Effect(intent))
-        self.assertEqual(result, "foo")
+def test_perform_func_args_kwargs():
+    """arbitrary positional and keyword arguments can be passed to Func."""
+    f = lambda *a, **kw: (a, kw)
+    intent = Func(f, 1, 2, key=3)
+    result = sync_perform(TypeDispatcher({Func: perform_func}), Effect(intent))
+    assert result == ((1, 2), {'key': 3})
 
-
-class ParallelTests(TestCase):
-    """Tests for :func:`parallel`."""
-
-    def test_first_error_str(self):
-        """FirstErrors have a pleasing format."""
-        fe = FirstError(exc_info=(ValueError, ValueError('foo'), None),
-                        index=150)
-        self.assertEqual(
-            str(fe),
-            '(index=150) ValueError: foo')
+def test_first_error_str():
+    """FirstErrors have a pleasing format."""
+    fe = FirstError(exc_info=(ValueError, ValueError('foo'), None),
+                    index=150)
+    assert str(fe) == '(index=150) ValueError: foo'
 
 
 class ParallelAllErrorsTests(TestCase):

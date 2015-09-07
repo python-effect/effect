@@ -1,5 +1,5 @@
 lint:
-	flake8 --ignore=E131,E301,E731,W503,E701,E704 --max-line-length=100 effect/
+	flake8 --ignore=E131,E301,E302,E731,W503,E701,E704 --max-line-length=100 effect/
 
 build-dist:
 	rm -rf dist
