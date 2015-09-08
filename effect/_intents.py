@@ -5,17 +5,13 @@ Standard intents and some of their performers.
 
 The :obj:`base_dispatcher` object in this module is a dispatcher which provides
 standard performers for intents which really only have one reasonable way to be
-performed, sunch as :class:`Func`, :class:`Error`, and
-:class:`Constant`.
-
-Other intents, such as :class:`ParallelEffects` and :class:`Delay`, need to
-have a performer specified elsewhere, since the performers are reliant on
-choices made by the application author. :module:`effect.twisted` provides a
-Twisted-specific dispatcher for these.
+performed, sunch as :class:`Func`, :class:`Error`, and :class:`Constant`.
 """
 
 
 from __future__ import print_function, absolute_import
+
+import time
 
 import attr
 
@@ -116,6 +112,12 @@ class Delay(object):
     :param float delay: The number of seconds to delay.
     """
     delay = attr.ib()
+
+
+@sync_performer
+def perform_delay_with_sleep(dispatcher, intent):
+    """Perform a :obj:`Delay` by calling ``time.sleep``."""
+    time.sleep(intent.delay)
 
 
 @attr.s

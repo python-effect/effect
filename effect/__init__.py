@@ -15,18 +15,22 @@ from ._sync import (
     sync_perform,
     sync_performer)
 from ._intents import (
-    Delay, ParallelEffects, parallel, parallel_all_errors,
-    Constant, Error, FirstError, Func,
+    Delay, perform_delay_with_sleep,
+    ParallelEffects, parallel, parallel_all_errors, FirstError,
+    Constant, Error, Func,
     base_dispatcher)
 from ._dispatcher import ComposedDispatcher, TypeDispatcher
 
 
 __all__ = [
-    "Effect", "perform", "NoPerformerFoundError",
-    "NotSynchronousError", "sync_perform", "sync_performer",
-    "Delay", "ParallelEffects", "parallel", "parallel_all_errors",
-    "Constant", "Error", "FirstError", "Func",
+    # Order here affects the order that these things show up in the API docs.
+    "Effect", "sync_perform", "sync_performer",
     "base_dispatcher",
     "TypeDispatcher", "ComposedDispatcher",
+    "Delay", "perform_delay_with_sleep",
+    "ParallelEffects", "parallel", "parallel_all_errors",
+    "Constant", "Error", "Func",
     "catch", "raise_",
+    "NoPerformerFoundError", "NotSynchronousError", "perform",
+    "FirstError",
 ]

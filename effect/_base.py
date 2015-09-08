@@ -86,7 +86,9 @@ class NoPerformerFoundError(Exception):
 
 def perform(dispatcher, effect):
     """
-    Perform an effect and invoke callbacks bound to it.
+    Perform an effect and invoke callbacks bound to it. You probably don't want
+    to use this. Instead, use :func:`sync_perform` (or, if you're using
+    Twisted, see the `txeffect`_ library).
 
     The dispatcher will be called with the intent, and is expected to return a
     performer (another callable). See :obj:`TypeDispatcher` and
@@ -109,10 +111,6 @@ def perform(dispatcher, effect):
     the result of the returned Effect becomes the result passed to the next
     callback. In the case of exceptions, the next error-callback will be called
     with a ``sys.exc_info()``-style tuple.
-
-    Note that this function does _not_ return the final result of the effect.
-    You may instead want to use :func:`.sync_perform` or
-    :func:`effect.twisted.perform`.
 
     :returns: None
 

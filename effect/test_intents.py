@@ -14,6 +14,7 @@ from ._dispatcher import ComposedDispatcher, TypeDispatcher
 from ._intents import (
     base_dispatcher,
     Constant, perform_constant,
+    Delay, perform_delay_with_sleep,
     Error, perform_error,
     Func, perform_func,
     FirstError,
@@ -32,11 +33,13 @@ def test_perform_constant():
         Effect(intent))
     assert result == "foo"
 
+
 def test_perform_error():
     """perform_error raises the exception of an Error."""
     intent = Error(ValueError("foo"))
     with raises(ValueError):
         sync_perform(TypeDispatcher({Error: perform_error}), Effect(intent))
+
 
 def test_perform_func():
     """perform_func calls the function given in a Func."""
@@ -53,11 +56,21 @@ def test_perform_func_args_kwargs():
     result = sync_perform(TypeDispatcher({Func: perform_func}), Effect(intent))
     assert result == ((1, 2), {'key': 3})
 
+
 def test_first_error_str():
     """FirstErrors have a pleasing format."""
     fe = FirstError(exc_info=(ValueError, ValueError('foo'), None),
                     index=150)
     assert str(fe) == '(index=150) ValueError: foo'
+
+
+def test_perform_delay_with_sleep(monkeypatch):
+    """:func:`perform_delay_with_sleep` calls time.sleep."""
+    calls = []
+    monkeypatch.setattr('time.sleep', calls.append)
+    disp = TypeDispatcher({Delay: perform_delay_with_sleep})
+    sync_perform(disp, Effect(Delay(3.7)))
+    assert calls == [3.7]
 
 
 class ParallelAllErrorsTests(TestCase):
