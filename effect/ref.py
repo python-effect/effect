@@ -23,7 +23,7 @@ class Reference(object):
         Reference is not interchangeable with the *result of* a call to
         Reference, since identity matters. If you want to create references in
         purely functional code, you can use the :obj:`effect.Func` intent:
-        `effect.Effect(effect.Func(Reference))`.
+        `effect.Effect(effect.Func(Reference, initial))`.
     """
 
     # TODO: Add modify_atomic that either uses a lock or a low-level
