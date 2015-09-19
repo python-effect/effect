@@ -74,6 +74,8 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
     * ``fallback``: a performer for this intent was provided by the fallback
       dispatcher
     * ``NOT FOUND``: no performer for this intent was found.
+    * ``NEXT EXPECTED``: the next item in the sequence, if there is one. This
+      will appear immediately after a ``NOT FOUND``.
 
     :param list sequence: List of ``(intent, fn)`` tuples, where ``fn`` is a
         function that should accept an intent and return a result.
@@ -83,7 +85,12 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
         used.
     """
     def fmt_log():
-        return '{{{\n%s\n}}}' % ('\n'.join(['%s: %s' % x for x in log]),)
+        next_item = ''
+        if len(sequence.sequence) > 0:
+            next_item = '\nNEXT EXPECTED: %s' % (sequence.sequence[0][0],)
+        return '{{{\n%s%s\n}}}' % (
+            '\n'.join('%s: %s' % x for x in log),
+            next_item)
 
     def dispatcher(intent):
         p = sequence(intent)
