@@ -103,7 +103,7 @@ Some talks have been given about Effect.
 
 .. _`Side Effects are a Public API`: https://www.youtube.com/watch?v=D37dc9EoFus
 .. _`Strange Loop`: https://thestrangeloop.com/
-.. _`Functional Programming in Python with Effect`: https://www.youtube.com/watch?v=fM5d_2BS6FY
+.. _`Functionalish Programming in Python with Effect`: https://www.youtube.com/watch?v=fM5d_2BS6FY
 .. _`Kiwi PyCon`: https://nzpug.org/
 
 
