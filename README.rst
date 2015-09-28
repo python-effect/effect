@@ -93,6 +93,15 @@ API in the `effect-examples`_ repository.
 
 
 
+Videos
+======
+
+Some talks have been given about Effect.
+
+- [Side Effects are a Public API](https://www.youtube.com/watch?v=D37dc9EoFus) by Chris Armstrong at [Strange Loop](https://thestrangeloop.com/) 2015-09-26
+- [Functionalish Programming in Python with Effect](https://www.youtube.com/watch?v=fM5d_2BS6FY) by Robert Collins at [Kiwi PyCon](https://nzpug.org/) 2015-09-05
+
+
 Thanks
 ======
 
