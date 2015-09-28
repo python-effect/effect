@@ -98,8 +98,13 @@ Videos
 
 Some talks have been given about Effect.
 
-- [Side Effects are a Public API](https://www.youtube.com/watch?v=D37dc9EoFus) by Chris Armstrong at [Strange Loop](https://thestrangeloop.com/) 2015-09-26
-- [Functionalish Programming in Python with Effect](https://www.youtube.com/watch?v=fM5d_2BS6FY) by Robert Collins at [Kiwi PyCon](https://nzpug.org/) 2015-09-05
+- `Side Effects are a Public API`_ by Chris Armstrong at `Strange Loop`_ (2015-09-26)
+- `Functionalish Programming in Python with Effect`_ by Robert Collins at `Kiwi PyCon`_ (2015-09-05)
+
+.. _`Side Effects are a Public API`: https://www.youtube.com/watch?v=D37dc9EoFus
+.. _`Strange Loop`: https://thestrangeloop.com/
+.. _`Functional Programming in Python with Effect`: https://www.youtube.com/watch?v=fM5d_2BS6FY
+.. _`Kiwi PyCon`: https://nzpug.org/
 
 
 Thanks
