@@ -36,6 +36,13 @@ def test_do_return():
     assert perf(f()) == "hello"
 
 
+def test_do_return_effect():
+    @do
+    def f():
+        yield do_return(Effect(Constant("hello")))
+    assert perf(f()) == "hello"
+
+
 def test_yield_effect():
     """Yielding an effect in @do results in the Effect's result."""
     @do
