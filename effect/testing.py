@@ -164,6 +164,7 @@ def parallel_sequence(parallel_seqs, fallback_dispatcher=None):
         sequence dispatcher.
     """
     perf = partial(perform_sequence, fallback_dispatcher=fallback_dispatcher)
+
     def performer(intent):
         if len(intent.effects) != len(parallel_seqs):
             raise AssertionError(
