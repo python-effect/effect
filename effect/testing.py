@@ -12,7 +12,7 @@ import sys
 
 import attr
 
-from ._base import Effect, guard, _Box, NoPerformerFoundError
+from ._base import Effect, guard, _Box, NoPerformerFoundError, raise_
 from ._sync import NotSynchronousError, sync_perform, sync_performer
 from ._intents import Constant, Error, Func, ParallelEffects, base_dispatcher
 
@@ -30,6 +30,9 @@ __all__ = [
     'ESConstant', 'ESError', 'ESFunc',
     'resolve_stubs',
     'resolve_stub',
+    'const',
+    'conste',
+    'intent_func',
 ]
 
 
@@ -465,7 +468,6 @@ class SequenceDispatcher(object):
 
 def noop(intent):
     """
-
     Return None. This is just a handy way to make your intent sequences (as
     used by :func:`perform_sequence`) more concise when the effects you're
     expecting in a test don't return a result (and are instead only performed
@@ -478,3 +480,62 @@ def noop(intent):
 
     """
     return None
+
+
+def const(value):
+    """
+    Return function that takes an argument but always return given `value`.
+    Useful when creating sequence used by :func:`perform_sequence`. For example,
+
+    >>> dt = datetime(1970, 1, 1)
+    >>> seq = [(Func(datetime.now), const(dt))]
+
+    :param value: This will be returned when called by returned function
+    :return: ``callable`` that takes an arg and always returns ``value``
+    """
+    return lambda intent: value
+
+
+def conste(excp):
+    """
+    Like :func:`const` but takes and exception and returns function that raises
+    the exception
+
+    :param excp: Exception that will be raised
+    :type: :obj:`Exception`
+    :return: ``callable`` that will raise given exception
+    """
+    return lambda intent: raise_(excp)
+
+
+def intent_func(fname):
+    """
+    Return function that returns Effect of tuple of fname and its args. Useful
+    in writing tests that expect intent based on args. For example, if you are
+    testing following function::
+
+        @do
+        def code_under_test(arg1, arg2, eff_returning_func=eff_returning_func):
+            r = yield Effect(MyIntent('a'))
+            r2 = yield eff_returning_func(arg1, arg2)
+            yield do_return((r, r2))
+
+    you will need to know the intents which ``eff_returning_func`` generates
+    to test this using :func:`perform_sequence`. You can avoid that by doing::
+
+        def test_code():
+            test_eff_func = intent_func("erf")
+            seq = [
+                (MyIntent('a'), const('result1')),
+                (("erf", 'a1', 'a2'), const('result2'))
+            ]
+            eff = code_under_test('a1', 'a2', eff_returning_func=test_eff_func)
+            assert perform_sequence(seq, eff) == ('result1', 'result2')
+
+    Here, the ``seq`` ensures that ``eff_returning_func`` is called with arguments
+    ``a1`` and ``a2``.
+
+    :param str fname: First member of intent tuple returned
+    :return: ``callable`` with multiple positional arguments
+    """
+    return lambda *a: Effect((fname,) + a)

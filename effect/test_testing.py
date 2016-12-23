@@ -27,7 +27,10 @@ from .testing import (
     EQDispatcher,
     EQFDispatcher,
     SequenceDispatcher,
+    const,
+    conste,
     fail_effect,
+    intent_func,
     parallel_sequence,
     perform_sequence,
     resolve_effect,
@@ -462,3 +465,30 @@ def test_parallel_sequence_must_be_parallel():
     with pytest.raises(FoldError) as excinfo:
         perform_sequence(seq, p)
     assert excinfo.value.wrapped_exception[0] is AssertionError
+
+
+def test_const():
+    """
+    :func:`const` takes an argument but returns fixed value
+    """
+    assert const(2)(MyIntent("whatever")) == 2
+    assert const("text")(OtherIntent("else")) == "text"
+
+
+def test_conste():
+    """
+    :func:`conste` takes an argument but always raises given exception
+    """
+    func = conste(ValueError("boo"))
+    with pytest.raises(ValueError):
+        func(MyIntent("yo"))
+
+
+def test_intent_func():
+    """
+    :func:`intent_func` returns function that returns Effect of tuple of passed arg
+    and its args.
+    """
+    func = intent_func("myfunc")
+    assert func(2, 3) == Effect(("myfunc", 2, 3))
+    assert func("text", 3, None) == Effect(("myfunc", "text", 3, None))
