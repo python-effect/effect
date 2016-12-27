@@ -3,13 +3,12 @@ sudo: false
 language: python
 python:
     - "2.7"
-    - "2.6"
     - "3.4"
     - "pypy"
 install:
     - pip install .
     - pip install -r dev-requirements.txt
-    - pip install sphinx
+    - pip install sphinx sphinx_rtd_theme
 script:
     - make lint
     - py.test
