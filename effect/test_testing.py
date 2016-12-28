@@ -21,13 +21,18 @@ from . import (
 from .do import do, do_return
 from .fold import FoldError, sequence
 from .testing import (
+    _ANY,
     ESConstant,
     ESError,
     ESFunc,
     EQDispatcher,
     EQFDispatcher,
     SequenceDispatcher,
+    const,
+    conste,
     fail_effect,
+    intent_func,
+    nested_sequence,
     parallel_sequence,
     perform_sequence,
     resolve_effect,
@@ -462,3 +467,61 @@ def test_parallel_sequence_must_be_parallel():
     with pytest.raises(FoldError) as excinfo:
         perform_sequence(seq, p)
     assert excinfo.value.wrapped_exception[0] is AssertionError
+
+
+def test_nested_sequence():
+    """
+    :func:`nested_sequence` returns sequence performer function for an intent
+    that wraps an effect.
+    """
+
+    @attr.s
+    class WrappedIntent(object):
+        effect = attr.ib()
+        value = attr.ib()
+
+    @do
+    def internal():
+        yield Effect(1)
+        yield Effect(2)
+        yield do_return("wrap")
+
+    @do
+    def code_under_test():
+        r = yield Effect(WrappedIntent(internal(), "field"))
+        r2 = yield Effect(MyIntent("a"))
+        yield do_return((r, r2))
+
+    seq = [
+        (WrappedIntent(_ANY, "field"), nested_sequence([(1, const("r1")), (2, const("r2"))])),
+        (MyIntent("a"), const("result2"))
+    ]
+    eff = code_under_test()
+    assert perform_sequence(seq, eff) == ('wrap', 'result2')
+
+
+def test_const():
+    """
+    :func:`const` takes an argument but returns fixed value
+    """
+    assert const(2)(MyIntent("whatever")) == 2
+    assert const("text")(OtherIntent("else")) == "text"
+
+
+def test_conste():
+    """
+    :func:`conste` takes an argument but always raises given exception
+    """
+    func = conste(ValueError("boo"))
+    with pytest.raises(ValueError):
+        func(MyIntent("yo"))
+
+
+def test_intent_func():
+    """
+    :func:`intent_func` returns function that returns Effect of tuple of passed arg
+    and its args.
+    """
+    func = intent_func("myfunc")
+    assert func(2, 3) == Effect(("myfunc", 2, 3))
+    assert func("text", 3, None) == Effect(("myfunc", "text", 3, None))

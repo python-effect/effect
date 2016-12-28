@@ -8,11 +8,12 @@ from __future__ import print_function
 
 from contextlib import contextmanager
 from functools import partial
+from operator import attrgetter
 import sys
 
 import attr
 
-from ._base import Effect, guard, _Box, NoPerformerFoundError
+from ._base import Effect, guard, _Box, NoPerformerFoundError, raise_
 from ._sync import NotSynchronousError, sync_perform, sync_performer
 from ._intents import Constant, Error, Func, ParallelEffects, base_dispatcher
 
@@ -20,8 +21,13 @@ import six
 
 __all__ = [
     'perform_sequence',
+    'parallel_sequence',
+    'nested_sequence',
     'SequenceDispatcher',
     'noop',
+    'const',
+    'conste',
+    'intent_func',
     'resolve_effect',
     'fail_effect',
     'EQDispatcher',
@@ -83,6 +89,7 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
     :param fallback_dispatcher: A dispatcher to use for intents that aren't
         found in the sequence. if None is provided, ``base_dispatcher`` is
         used.
+    :return: Result of performed sequence
     """
     def fmt_log():
         next_item = ''
@@ -159,6 +166,8 @@ def parallel_sequence(parallel_seqs, fallback_dispatcher=None):
         what :func:`perform_sequence` accepts.
     :param fallback_dispatcher: an optional dispatcher to compose onto the
         sequence dispatcher.
+    :return: (intent, performer) tuple as expected by :func:`perform_sequence`
+        where intent is ParallelEffects object
     """
     perf = partial(perform_sequence, fallback_dispatcher=fallback_dispatcher)
 
@@ -464,9 +473,45 @@ class SequenceDispatcher(object):
                     [x[0] for x in self.sequence]))
 
 
+def nested_sequence(seq, get_effect=attrgetter('effect'),
+                    fallback_dispatcher=base_dispatcher):
+    """
+    Return a function of Intent -> a that performs an effect retrieved from the
+    intent (by accessing its `effect` attribute, by default) with the given
+    intent-sequence.
+
+    A demonstration is best::
+
+        SequenceDispatcher([
+            (BoundFields(effect=mock.ANY, fields={...}),
+             nested_sequence([(SomeIntent(), perform_some_intent)]))
+        ])
+
+    The point is that sometimes you have an intent that wraps another effect,
+    and you want to ensure that the nested effects follow some sequence in the
+    context of that wrapper intent.
+
+    ``get_effect`` defaults to ``attrgetter('effect')``, so you can override it if
+    your intent stores its nested effect in a different attribute. Or, more
+    interestingly, if it's something other than a single effect, e.g. for
+    ParallelEffects see the :func:`parallel_sequence` function.
+
+    :param list seq: sequence of intents like :obj:`SequenceDispatcher` takes
+    :param get_effect: callable to get the inner effect from the wrapper
+        intent.
+    :param fallback_dispatcher: an optional dispatcher to compose onto the
+        sequence dispatcher.
+    :return: ``callable`` that can be used as performer of a wrapped intent
+    """
+    def performer(intent):
+        effect = get_effect(intent)
+        return perform_sequence(seq, effect, fallback_dispatcher=fallback_dispatcher)
+
+    return performer
+
+
 def noop(intent):
     """
-
     Return None. This is just a handy way to make your intent sequences (as
     used by :func:`perform_sequence`) more concise when the effects you're
     expecting in a test don't return a result (and are instead only performed
@@ -479,3 +524,62 @@ def noop(intent):
 
     """
     return None
+
+
+def const(value):
+    """
+    Return function that takes an argument but always return given `value`.
+    Useful when creating sequence used by :func:`perform_sequence`. For example,
+
+    >>> dt = datetime(1970, 1, 1)
+    >>> seq = [(Func(datetime.now), const(dt))]
+
+    :param value: This will be returned when called by returned function
+    :return: ``callable`` that takes an arg and always returns ``value``
+    """
+    return lambda intent: value
+
+
+def conste(excp):
+    """
+    Like :func:`const` but takes and exception and returns function that raises
+    the exception
+
+    :param excp: Exception that will be raised
+    :type: :obj:`Exception`
+    :return: ``callable`` that will raise given exception
+    """
+    return lambda intent: raise_(excp)
+
+
+def intent_func(fname):
+    """
+    Return function that returns Effect of tuple of fname and its args. Useful
+    in writing tests that expect intent based on args. For example, if you are
+    testing following function::
+
+        @do
+        def code_under_test(arg1, arg2, eff_returning_func=eff_returning_func):
+            r = yield Effect(MyIntent('a'))
+            r2 = yield eff_returning_func(arg1, arg2)
+            yield do_return((r, r2))
+
+    you will need to know the intents which ``eff_returning_func`` generates
+    to test this using :func:`perform_sequence`. You can avoid that by doing::
+
+        def test_code():
+            test_eff_func = intent_func("erf")
+            seq = [
+                (MyIntent('a'), const('result1')),
+                (("erf", 'a1', 'a2'), const('result2'))
+            ]
+            eff = code_under_test('a1', 'a2', eff_returning_func=test_eff_func)
+            assert perform_sequence(seq, eff) == ('result1', 'result2')
+
+    Here, the ``seq`` ensures that ``eff_returning_func`` is called with arguments
+    ``a1`` and ``a2``.
+
+    :param str fname: First member of intent tuple returned
+    :return: ``callable`` with multiple positional arguments
+    """
+    return lambda *a: Effect((fname,) + a)
