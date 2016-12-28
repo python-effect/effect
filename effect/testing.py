@@ -8,6 +8,7 @@ from __future__ import print_function
 
 from contextlib import contextmanager
 from functools import partial
+from operator import attrgetter
 import sys
 
 import attr
@@ -20,8 +21,13 @@ import six
 
 __all__ = [
     'perform_sequence',
+    'parallel_sequence',
+    'nested_sequence',
     'SequenceDispatcher',
     'noop',
+    'const',
+    'conste',
+    'intent_func',
     'resolve_effect',
     'fail_effect',
     'EQDispatcher',
@@ -30,9 +36,6 @@ __all__ = [
     'ESConstant', 'ESError', 'ESFunc',
     'resolve_stubs',
     'resolve_stub',
-    'const',
-    'conste',
-    'intent_func',
 ]
 
 
@@ -86,6 +89,7 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
     :param fallback_dispatcher: A dispatcher to use for intents that aren't
         found in the sequence. if None is provided, ``base_dispatcher`` is
         used.
+    :return: Result of performed sequence
     """
     def fmt_log():
         next_item = ''
@@ -162,6 +166,8 @@ def parallel_sequence(parallel_seqs, fallback_dispatcher=None):
         what :func:`perform_sequence` accepts.
     :param fallback_dispatcher: an optional dispatcher to compose onto the
         sequence dispatcher.
+    :return: (intent, performer) tuple as expected by :func:`perform_sequence`
+        where intent is ParallelEffects object
     """
     perf = partial(perform_sequence, fallback_dispatcher=fallback_dispatcher)
 
@@ -465,6 +471,43 @@ class SequenceDispatcher(object):
             raise AssertionError(
                 "Not all intents were performed: {0}".format(
                     [x[0] for x in self.sequence]))
+
+
+def nested_sequence(seq, get_effect=attrgetter('effect'),
+                    fallback_dispatcher=base_dispatcher):
+    """
+    Return a function of Intent -> a that performs an effect retrieved from the
+    intent (by accessing its `effect` attribute, by default) with the given
+    intent-sequence.
+
+    A demonstration is best::
+
+        SequenceDispatcher([
+            (BoundFields(effect=mock.ANY, fields={...}),
+             nested_sequence([(SomeIntent(), perform_some_intent)]))
+        ])
+
+    The point is that sometimes you have an intent that wraps another effect,
+    and you want to ensure that the nested effects follow some sequence in the
+    context of that wrapper intent.
+
+    ``get_effect`` defaults to ``attrgetter('effect')``, so you can override it if
+    your intent stores its nested effect in a different attribute. Or, more
+    interestingly, if it's something other than a single effect, e.g. for
+    ParallelEffects see the :func:`parallel_sequence` function.
+
+    :param list seq: sequence of intents like :obj:`SequenceDispatcher` takes
+    :param get_effect: callable to get the inner effect from the wrapper
+        intent.
+    :param fallback_dispatcher: an optional dispatcher to compose onto the
+        sequence dispatcher.
+    :return: ``callable`` that can be used as performer of a wrapped intent
+    """
+    def performer(intent):
+        effect = get_effect(intent)
+        return perform_sequence(seq, effect, fallback_dispatcher=fallback_dispatcher)
+
+    return performer
 
 
 def noop(intent):
