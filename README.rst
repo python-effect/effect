@@ -12,7 +12,7 @@ the effects (that is, IO or state manipulation) in your code. Documentation is
 available at https://effect.readthedocs.org/, and its PyPI page is
 https://pypi.python.org/pypi/effect.
 
-It `supports`_ both Python 2.6 and up, and 3.4 and up, as well as PyPy.
+It `supports`_ Python 2.7, 3.4 and 3.5 as well as PyPy.
 
 .. _`supports`: https://travis-ci.org/python-effect/effect
 
