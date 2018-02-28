@@ -70,9 +70,9 @@ def sequence(effects):
     """
     # Could be: folder = lambda acc, el: acc + [el]
     # But, for peformance:
-    l = []
+    result = []
 
     def folder(acc, el):
-        l.append(el)
-        return l
-    return fold_effect(folder, l, effects)
+        result.append(el)
+        return result
+    return fold_effect(folder, result, effects)
