@@ -12,7 +12,7 @@ from ._sync import sync_perform
 from ._test_utils import MatchesReraisedExcInfo, get_exc_info
 
 
-@attr.s
+@attr.s(hash=True)
 class EquitableException(Exception):
     message = attr.ib()
 

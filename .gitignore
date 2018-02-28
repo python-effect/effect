@@ -4,3 +4,4 @@ build/
 effect.egg-info/
 dist/
 *~
+.pytest_cache

@@ -87,7 +87,7 @@ def parallel_all_errors(effects):
     return Effect(ParallelEffects(list(effects)))
 
 
-@attr.s
+@attr.s(hash=True)
 class FirstError(Exception):
     """
     One of the effects in a :obj:`ParallelEffects` resulted in an error. This
