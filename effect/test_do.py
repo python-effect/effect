@@ -161,8 +161,13 @@ def test_stop_iteration_only_local():
         yield Effect(Constant('foo'))
 
     eff = f()
-    with raises(StopIteration):
-        perf(eff)
+    if sys.version_info > (3, 7):
+        # In Python 3.7, generators straight up aren't allowed to raise StopIteration any more
+        with raises(RuntimeError):
+            perf(eff)
+    else:
+        with raises(StopIteration):
+            perf(eff)
 
 
 @mark.skipif(not six.PY3, reason="Testing a Py3-specific feature")
