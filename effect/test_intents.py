@@ -21,7 +21,7 @@ from ._intents import (
     ParallelEffects, parallel_all_errors)
 from ._sync import sync_perform
 from ._test_utils import MatchesReraisedExcInfo, get_exc_info
-from .async import perform_parallel_async
+from .parallel_async import perform_parallel_async
 from .test_parallel_performers import EquitableException
 
 
