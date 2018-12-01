@@ -70,7 +70,7 @@ def test_yield_non_effect():
         perf(result)
     assert str(err_info.value).startswith(
         '@do functions must only yield Effects or results of '
-        'do_return. Got 1 from <generator object f at')
+        'do_return. Got 1 from <generator object')
 
 
 def test_raise_from_effect():
