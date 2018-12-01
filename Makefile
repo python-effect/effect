@@ -16,7 +16,7 @@ upload-dist:
 doc:
 	rm -rf docs/build
 	rm -rf docs/source/api
-	cd docs; sphinx-apidoc -e -o source/api ../effect ../setup.py ../examples ../effect/test_*.py
+	cd docs; sphinx-apidoc -e -o source/api ../effect ../setup.py ../examples ../effect/test_*.py ../effect/async.py
 	rm docs/source/api/modules.rst
 	rm docs/source/api/effect.rst
 	# can't use sed -i on both linux and mac, so...
