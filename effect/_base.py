@@ -116,8 +116,8 @@ def perform(dispatcher, effect):
 
     .. [#dispatcher] The dispatcher is passed because some performers need to
        make recursive calls to :func:`perform`, because they need to perform
-       other effects (see :func:`parallel` and :func:`.perform_parallel_async`
-       for an example of this).
+       other effects (see :func:`parallel` and
+       :func:`.parallel_async.perform_parallel_async` for an example of this).
 
     .. [#box] Without using one of those decorators, the performer is actually
        passed three arguments, not two: the dispatcher, the intent, and a

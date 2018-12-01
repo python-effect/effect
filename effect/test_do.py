@@ -70,7 +70,7 @@ def test_yield_non_effect():
         perf(result)
     assert str(err_info.value).startswith(
         '@do functions must only yield Effects or results of '
-        'do_return. Got 1 from <generator object f at')
+        'do_return. Got 1 from <generator object')
 
 
 def test_raise_from_effect():
@@ -161,8 +161,13 @@ def test_stop_iteration_only_local():
         yield Effect(Constant('foo'))
 
     eff = f()
-    with raises(StopIteration):
-        perf(eff)
+    if sys.version_info > (3, 7):
+        # In Python 3.7, generators straight up aren't allowed to raise StopIteration any more
+        with raises(RuntimeError):
+            perf(eff)
+    else:
+        with raises(StopIteration):
+            perf(eff)
 
 
 @mark.skipif(not six.PY3, reason="Testing a Py3-specific feature")

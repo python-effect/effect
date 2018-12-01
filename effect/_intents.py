@@ -26,7 +26,7 @@ class ParallelEffects(object):
     An effect intent that asks for a number of effects to be run in parallel,
     and for their results to be gathered up into a sequence.
 
-    :func:`effect.async.perform_parallel_async` can perform this Intent
+    :func:`effect.parallel_async.perform_parallel_async` can perform this Intent
     assuming all child effects have asynchronous performers.
     :func:`effect.threads.perform_parallel_with_pool` can perform blocking
     performers in a thread pool.

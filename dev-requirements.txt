@@ -1,3 +1,5 @@
 testtools
 flake8
 pytest
+sphinx
+sphinx-rtd-theme
