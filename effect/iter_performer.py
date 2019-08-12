@@ -1,27 +1,23 @@
-import typing as t
 from toolz import curry
 from itertools import chain
 from effect import Effect, sync_performer
 from effect.do import do
 
-T = t.TypeVar('T')
 
-
-def iterator_performer(xs: t.Iterable[T] = None) -> t.Tuple[t.Callable,
-                                                            t.Callable]:
+def iterator_performer(xs=None):
     """
     Returns performers for isolating iterator among other effects.
     For exemplary usages one may look into tests.
     """
     xs = xs if xs is not None else []
     @sync_performer
-    def performer(dispatcher, intent: T) -> None:
+    def performer(dispatcher, intent):
         """Chains yielded values and stores them in continuation"""
         nonlocal xs
         xs = chain(xs, [intent])
 
     @sync_performer
-    def retriever(dispatcher, intent: T) -> t.Iterable[T]:
+    def retriever(dispatcher, intent):
         """Provides retrieval of gathered values"""
         nonlocal xs
         return xs

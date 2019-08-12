@@ -1,5 +1,5 @@
-import typing as t
 import unittest
+from collections import namedtuple
 from toolz import curry
 from effect.do import do
 from effect import (Effect, sync_perform, sync_performer, TypeDispatcher,
@@ -8,9 +8,9 @@ from .iter_performer import (iterator_performer, iter_retriever,
                              iter_retriever__uncurried)
 
 
-Value = t.NamedTuple('Value', [('text', str)])
-RetrieveValues = t.NamedTuple('RetrieveValues', [])
-LaunchRockets = t.NamedTuple('LaunchRockets', [])
+Value = namedtuple('Value', ['text'])
+RetrieveValues = namedtuple('RetrieveValues', [])
+LaunchRockets = namedtuple('LaunchRockets', [])
 
 
 @sync_performer
@@ -34,7 +34,7 @@ def get_iter_dispatcher():
 value_retriever = iter_retriever(RetrieveValues)
 
 
-def sync_perform_iter(e: Effect):
+def sync_perform_iter(e):
     return sync_perform(get_iter_dispatcher(), e)
 
 
