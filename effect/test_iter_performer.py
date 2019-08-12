@@ -1,9 +1,9 @@
 import unittest
 from collections import namedtuple
 from toolz import curry
-from effect.do import do
 from effect import (Effect, sync_perform, sync_performer, TypeDispatcher,
                     ComposedDispatcher, base_dispatcher)
+from .do import do, do_return
 from .iter_performer import (iterator_performer, iter_retriever,
                              iter_retriever__uncurried)
 
@@ -52,7 +52,7 @@ class IteratorPerformerTestCase(unittest.TestCase):
             yield Effect(self.values_list[0])
             yield Effect(self.values_list[1])
             yield Effect(self.values_list[2])
-            return Effect(RetrieveValues())
+            yield do_return(Effect(RetrieveValues()))
         effect = f(42)
         yielded_values = list(sync_perform_iter(effect))
         self.assertEqual(self.values_list, yielded_values)
