@@ -1,5 +1,6 @@
 from toolz import curry
 from itertools import chain
+from functools import partial
 from effect import Effect, sync_performer
 from effect.do import do
 
@@ -11,34 +12,30 @@ def iterator_performer(xs=None):
     """
     xs = xs if xs is not None else []
     @sync_performer
-    def performer(dispatcher, intent):
+    def performer(xs, dispatcher, intent):
         """Chains yielded values and stores them in continuation"""
-        nonlocal xs
-        xs = chain(xs, [intent])
+        xs.append(intent)
 
     @sync_performer
-    def retriever(dispatcher, intent):
+    def retriever(xs, dispatcher, intent):
         """Provides retrieval of gathered values"""
-        nonlocal xs
         return xs
 
-    return performer, retriever
+    return partial(performer, xs), partial(retriever, xs)
 
 
 @curry
 def iter_retriever(retrieval_type, f):
     """Appends retrieval of values from continuation at the end of function"""
-    @curry
-    def aux(f, arg):
-        f = f(arg)
-        if callable(f):
-            return aux(f)
+    def perform(gen):
+        yield from gen
+        return Effect(retrieval_type())
 
-        def perform():
-            yield from f
-            return Effect(retrieval_type())
-        return do(perform)()
-    return aux(f)
+    @curry
+    def fixed_point(f, arg):
+        f = f(arg)
+        return (fixed_point if callable(f) else do(perform))(f)
+    return fixed_point(f)
 
 
 @curry
