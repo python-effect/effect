@@ -1,7 +1,7 @@
 from toolz import curry
 from functools import partial
 from effect import Effect, sync_performer
-from effect.do import do
+from effect.do import do, do_return
 
 
 def iterator_performer(xs=None):
@@ -27,8 +27,9 @@ def iterator_performer(xs=None):
 def iter_retriever(retrieval_type, f):
     """Appends retrieval of values from continuation at the end of function"""
     def perform(gen):
-        yield from gen
-        return Effect(retrieval_type())
+        for value in gen:
+            yield value
+        yield do_return(Effect(retrieval_type()))
 
     @curry
     def fixed_point(f, arg):
@@ -42,6 +43,7 @@ def iter_retriever__uncurried(retrieval_type, f):
     """Uncurried version of the above - much less generic!"""
     @do
     def wrapper(*args, **kwargs):
-        yield from f(*args, **kwargs)
-        return Effect(retrieval_type())
+        for value in f(*args, **kwargs):
+            yield value
+        yield do_return(Effect(retrieval_type()))
     return wrapper
