@@ -5,3 +5,6 @@ effect.egg-info/
 dist/
 *~
 .pytest_cache
+
+# vim
+*.sw[a-p]

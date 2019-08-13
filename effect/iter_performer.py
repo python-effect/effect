@@ -1,5 +1,4 @@
 from toolz import curry
-from itertools import chain
 from functools import partial
 from effect import Effect, sync_performer
 from effect.do import do
