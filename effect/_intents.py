@@ -8,9 +8,6 @@ standard performers for intents which really only have one reasonable way to be
 performed, sunch as :class:`Func`, :class:`Error`, and :class:`Constant`.
 """
 
-
-from __future__ import print_function, absolute_import
-
 import time
 
 import attr

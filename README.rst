@@ -44,7 +44,6 @@ A very quick example of using Effects:
 
 .. code:: python
 
-    from __future__ import print_function
     from effect import sync_perform, sync_performer, Effect, TypeDispatcher
 
     class ReadLine(object):

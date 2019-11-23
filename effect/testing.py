@@ -4,8 +4,6 @@ Various functions and dispatchers for testing effects.
 Usually the best way to test effects is by using :func:`perform_sequence`.
 """
 
-from __future__ import print_function
-
 from contextlib import contextmanager
 from functools import partial
 from operator import attrgetter

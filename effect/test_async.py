@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from testtools.testcase import TestCase
 
 from ._base import Effect, perform

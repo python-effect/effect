@@ -4,9 +4,6 @@ An imperative-looking notation for Effectful code.
 See :func:`do`.
 """
 
-
-from __future__ import print_function
-
 import types
 
 from . import Effect, Func

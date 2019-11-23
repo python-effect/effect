@@ -4,7 +4,6 @@ Use :obj:`effect.io.stdio_dispatcher` as a dispatcher for :obj:`Display` and
 :obj:`Prompt` that uses built-in Python standard io facilities.
 """
 
-from __future__ import print_function
 import attr
 
 from . import sync_performer, TypeDispatcher

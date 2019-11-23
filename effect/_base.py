@@ -1,6 +1,4 @@
 # -*- test-case-name: effect.test_base -*-
-from __future__ import print_function, absolute_import
-
 from functools import partial
 
 import attr
