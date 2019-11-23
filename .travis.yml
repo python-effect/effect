@@ -5,7 +5,7 @@ python:
     - "3.6"
     - "3.7"
     - "3.8"
-    - "pypy"
+    - "pypy3"
 install:
     - pip install .
     - pip install -r dev-requirements.txt
