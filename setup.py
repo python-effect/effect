@@ -12,7 +12,7 @@ setuptools.setup(
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        ],
+    ],
     packages=['effect'],
     install_requires=['attrs'],
 )

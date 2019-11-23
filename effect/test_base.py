@@ -1,6 +1,5 @@
 from __future__ import print_function, absolute_import
 
-import sys
 import traceback
 
 from testtools import TestCase

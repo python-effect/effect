@@ -1,6 +1,5 @@
 """Another sad little utility module."""
 
-import sys
 import traceback
 
 import attr
@@ -30,7 +29,7 @@ class MatchesException(object):
             return Mismatch('{} is not a {}'.format(other, expected_type))
         if other.args != self.expected.args:
             return Mismatch('{} has different arguments: {}.'.format(
-                    other.args, self.expected.args))
+                other.args, self.expected.args))
 
 
 @attr.s

@@ -7,7 +7,6 @@ See :func:`do`.
 
 from __future__ import print_function
 
-import sys
 import types
 
 from . import Effect, Func

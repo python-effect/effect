@@ -9,7 +9,6 @@ from __future__ import print_function
 from contextlib import contextmanager
 from functools import partial
 from operator import attrgetter
-import sys
 
 import attr
 

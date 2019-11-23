@@ -1,8 +1,7 @@
 import sys
 from functools import partial
 
-from py.test import raises as raises
-from py.test import mark
+from py.test import raises
 
 from . import (
     ComposedDispatcher, Constant, Effect, Error, TypeDispatcher,

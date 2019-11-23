@@ -1,5 +1,3 @@
-import sys
-
 from ._intents import FirstError
 from ._sync import sync_perform, sync_performer
 
