@@ -1,10 +1,11 @@
 from functools import partial
 
 from testtools import TestCase
-from testtools.matchers import MatchesException, raises
+from testtools.matchers import raises
 
 from ._base import Effect
 from ._sync import NotSynchronousError, sync_perform, sync_performer
+from ._test_utils import MatchesException
 
 
 def func_dispatcher(intent):
@@ -38,7 +39,7 @@ class SyncPerformTests(TestCase):
         sync_perform.
         """
         def fail(box):
-            box.fail((ValueError, ValueError("oh dear"), None))
+            box.fail(ValueError("oh dear"))
         self.assertThat(
             lambda: sync_perform(func_dispatcher, Effect(fail)),
             raises(ValueError('oh dear')))

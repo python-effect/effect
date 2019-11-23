@@ -28,9 +28,7 @@ def perform_parallel_async(dispatcher, intent, box):
             box.succeed(results)
 
     def fail(index, result):
-        box.fail((FirstError,
-                  FirstError(exc_info=result, index=index),
-                  result[2]))
+        box.fail(FirstError(exception=result, index=index))
 
     for index, effect in enumerate(effects):
         perform(

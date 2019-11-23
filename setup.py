@@ -16,4 +16,4 @@ setuptools.setup(
         ],
     packages=['effect'],
     install_requires=['six', 'attrs'],
-    )
+)

@@ -1,7 +1,5 @@
 import sys
 
-import six
-
 from ._intents import FirstError
 from ._sync import sync_perform, sync_performer
 
@@ -36,9 +34,6 @@ def perform_parallel_with_pool(pool, dispatcher, parallel_effects):
         index, effect = index_and_effect
         try:
             return sync_perform(dispatcher, effect)
-        except:
-            exc_info = sys.exc_info()
-            six.reraise(FirstError,
-                        FirstError(exc_info=exc_info, index=index),
-                        exc_info[2])
+        except Exception as e:
+            raise FirstError(exception=e, index=index)
     return pool.map(perform_child, enumerate(parallel_effects.effects))

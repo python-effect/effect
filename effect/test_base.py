@@ -4,10 +4,10 @@ import sys
 import traceback
 
 from testtools import TestCase
-from testtools.matchers import MatchesException, MatchesListwise
+from testtools.matchers import MatchesListwise
 
 from ._base import Effect, NoPerformerFoundError, catch, perform
-from ._test_utils import raise_
+from ._test_utils import MatchesException, raise_
 
 
 def func_dispatcher(intent):
@@ -75,8 +75,7 @@ class EffectPerformTests(TestCase):
         the error callback.
         """
         calls = []
-        intent = lambda box: box.fail(
-            (ValueError, ValueError('dispatched'), None))
+        intent = lambda box: box.fail(ValueError('dispatched'))
         perform(func_dispatcher, Effect(intent).on(error=calls.append))
         self.assertThat(
             calls,
@@ -85,7 +84,7 @@ class EffectPerformTests(TestCase):
 
     def test_dispatcher_raises(self):
         """
-        When a dispatcher raises an exception, the exc_info is passed to the
+        When a dispatcher raises an exception, the exception is passed to the
         error handler.
         """
         calls = []
@@ -101,7 +100,7 @@ class EffectPerformTests(TestCase):
 
     def test_performer_raises(self):
         """
-        When a performer raises an exception, the exc_info is passed to the
+        When a performer raises an exception, it is passed to the
         error handler.
         """
         calls = []
@@ -122,8 +121,7 @@ class EffectPerformTests(TestCase):
         the exception is passed to the next callback.
         """
         calls = []
-        intent = lambda box: box.fail(
-            (ValueError, ValueError('dispatched'), None))
+        intent = lambda box: box.fail(ValueError('dispatched'))
         perform(func_dispatcher,
                 Effect(intent)
                 .on(success=lambda box: calls.append("foo"))
@@ -146,7 +144,7 @@ class EffectPerformTests(TestCase):
                 .on(success=calls.append))
         self.assertEqual(calls, ["dispatched"])
 
-    def test_callback_sucecss_exception(self):
+    def test_callback_success_exception(self):
         """
         If a success callback raises an error, the exception is passed to the
         error callback.
@@ -169,8 +167,7 @@ class EffectPerformTests(TestCase):
         """
         calls = []
 
-        intent = lambda box: box.fail(
-            (ValueError, ValueError('dispatched'), None))
+        intent = lambda box: box.fail(ValueError('dispatched'))
 
         perform(func_dispatcher,
                 Effect(intent)
@@ -209,11 +206,10 @@ class EffectPerformTests(TestCase):
     def test_nested_effect_exception_passes_to_outer_error_handler(self):
         """
         If an inner effect raises an exception, it bubbles up and the
-        exc_info is passed to the outer effect's error handlers.
+        exception is passed to the outer effect's error handlers.
         """
         calls = []
-        intent = lambda box: box.fail(
-            (ValueError, ValueError('oh dear'), None))
+        intent = lambda box: box.fail(ValueError('oh dear'))
         perform(func_dispatcher,
                 Effect(lambda box: box.succeed(Effect(intent)))
                 .on(error=calls.append))
@@ -296,27 +292,26 @@ class CatchTests(TestCase):
 
     def test_caught(self):
         """
-        When the exception type matches the type in the ``exc_info`` tuple, the
+        When the exception type matches the type of the raised exception, the
         callable is invoked and its result is returned.
         """
         try:
             raise RuntimeError('foo')
-        except:
-            exc_info = sys.exc_info()
-        result = catch(RuntimeError, lambda e: ('caught', e))(exc_info)
-        self.assertEqual(result, ('caught', exc_info))
+        except Exception as e:
+            error = e
+        result = catch(RuntimeError, lambda e: ('caught', e))(error)
+        self.assertEqual(result, ('caught', error))
 
     def test_missed(self):
         """
-        When the exception type does not match the type in the ``exc_info``
-        tuple, the callable is not invoked and the original exception is
-        reraised.
+        When the exception type does not match the type of the raised exception,
+        the callable is not invoked and the original exception is reraised.
         """
         try:
             raise ZeroDivisionError('foo')
-        except:
-            exc_info = sys.exc_info()
+        except Exception as e:
+            error = e
         e = self.assertRaises(
             ZeroDivisionError,
-            lambda: catch(RuntimeError, lambda e: ('caught', e))(exc_info))
+            lambda: catch(RuntimeError, lambda e: ('caught', e))(error))
         self.assertEqual(str(e), 'foo')

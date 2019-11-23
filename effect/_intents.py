@@ -77,7 +77,7 @@ def parallel_all_errors(effects):
     :param effects: Effects which should be performed in parallel.
     :return: An Effect that results in a list of ``(is_error, result)`` tuples,
         where ``is_error`` is True if the child effect raised an exception, in
-        which case ``result`` will be an exc_info tuple. If ``is_error`` is
+        which case ``result`` will be the exception. If ``is_error`` is
         False, then ``result`` will just be the result as provided by the child
         effect.
     """
@@ -93,12 +93,12 @@ class FirstError(Exception):
     One of the effects in a :obj:`ParallelEffects` resulted in an error. This
     represents the first such error that occurred.
     """
-    exc_info = attr.ib()
+    exception = attr.ib()
     index = attr.ib()
 
     def __str__(self):
         return '(index=%s) %s: %s' % (
-            self.index, self.exc_info[0].__name__, self.exc_info[1])
+            self.index, type(self.exception).__name__, self.exception)
 
 
 @attr.s

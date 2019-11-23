@@ -53,7 +53,7 @@ class RetryTests(TestCase):
             lambda: raise_(RuntimeError("3")))
 
         def should_retry(e):
-            return ESConstant(str(e[1]) != "3")
+            return ESConstant(str(e) != "3")
 
         result = retry(ESFunc(func), should_retry)
         self.assertThat(lambda: resolve_stubs(base_dispatcher, result),

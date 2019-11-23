@@ -82,12 +82,12 @@ def test_raise_from_effect():
     def f():
         try:
             yield Effect(Error(ZeroDivisionError('foo')))
-        except:
-            got_error = sys.exc_info()
+        except Exception as e:
+            got_error = e
         yield do_return(got_error)
 
-    exc_type, exc, _ = perf(f())
-    assert exc_type is ZeroDivisionError
+    exc = perf(f())
+    assert type(exc) is ZeroDivisionError
     assert str(exc) == 'foo'
 
 

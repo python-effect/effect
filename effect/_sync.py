@@ -31,7 +31,7 @@ def sync_perform(dispatcher, effect):
     if successes:
         return successes[0]
     elif errors:
-        six.reraise(*errors[0])
+        raise errors[0]
     else:
         raise NotSynchronousError("Performing %r was not synchronous!"
                                   % (effect,))
@@ -70,6 +70,6 @@ def sync_performer(f):
         pass_args = args[:-1]
         try:
             box.succeed(f(*pass_args, **kwargs))
-        except:
-            box.fail(sys.exc_info())
+        except Exception as e:
+            box.fail(e)
     return sync_wrapper

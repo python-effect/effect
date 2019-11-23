@@ -251,7 +251,7 @@ def resolve_effect(effect, result, is_error=False):
 
     :param result: If ``is_error`` is False, this can be any object and will be
         treated as the result of the effect. If ``is_error`` is True, this must
-        be a three-tuple in the style of ``sys.exc_info``.
+        be an exception.
     """
     for i, (callback, errback) in enumerate(effect.callbacks):
         cb = errback if is_error else callback
@@ -263,7 +263,7 @@ def resolve_effect(effect, result, is_error=False):
                 result.intent,
                 callbacks=result.callbacks + effect.callbacks[i + 1:])
     if is_error:
-        six.reraise(*result)
+        raise result
     return result
 
 
@@ -273,8 +273,8 @@ def fail_effect(effect, exception):
     """
     try:
         raise exception
-    except:
-        return resolve_effect(effect, sys.exc_info(), is_error=True)
+    except Exception as e:
+        return resolve_effect(effect, e, is_error=True)
 
 
 def resolve_stub(dispatcher, effect):

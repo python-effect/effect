@@ -5,7 +5,7 @@ import traceback
 
 import attr
 
-from testtools.matchers import Equals
+from testtools.matchers import Equals, Mismatch
 
 
 @attr.s
@@ -20,6 +20,18 @@ class ReraisedTracebackMismatch(object):
                 + ''.join(self.got_tb)
                 + "\nbut it doesn't.")
 
+@attr.s
+class MatchesException(object):
+    expected = attr.ib()
+
+    def match(self, other):
+        expected_type = type(self.expected)
+        if type(other) is not expected_type:
+            return Mismatch('{} is not a {}'.format(other, expected_type))
+        if other.args != self.expected.args:
+            return Mismatch('{} has different arguments: {}.'.format(
+                    other.args, self.expected.args))
+
 
 @attr.s
 class MatchesReraisedExcInfo(object):
@@ -27,26 +39,18 @@ class MatchesReraisedExcInfo(object):
     expected = attr.ib()
 
     def match(self, actual):
-        valcheck = Equals(self.expected[1]).match(actual[1])
+        valcheck = Equals(self.expected.args).match(actual.args)
         if valcheck is not None:
             return valcheck
-        typecheck = Equals(self.expected[0]).match(actual[0])
+        typecheck = Equals(type(self.expected)).match(type(actual))
         if typecheck is not None:
             return typecheck
-        expected = traceback.format_exception(*self.expected)
-        new = traceback.format_exception(*actual)
+        expected = list(traceback.TracebackException.from_exception(self.expected).format())
+        new = list(traceback.TracebackException.from_exception(actual).format())
         tail_equals = lambda a, b: a == b[-len(a):]
         if not tail_equals(expected[1:], new[1:]):
             return ReraisedTracebackMismatch(expected_tb=expected,
                                              got_tb=new)
-
-
-def get_exc_info(exception):
-    """Get an exc_info tuple based on an exception instance."""
-    try:
-        raise exception
-    except:
-        return sys.exc_info()
 
 
 def raise_(e):
