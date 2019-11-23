@@ -17,7 +17,6 @@ from ._base import Effect, guard, _Box, NoPerformerFoundError, raise_
 from ._sync import NotSynchronousError, sync_perform, sync_performer
 from ._intents import Constant, Error, Func, ParallelEffects, base_dispatcher
 
-import six
 
 __all__ = [
     'perform_sequence',

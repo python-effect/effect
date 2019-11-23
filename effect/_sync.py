@@ -4,7 +4,6 @@
 Tools for dealing with Effects synchronously.
 """
 
-import six
 import sys
 
 from ._base import perform

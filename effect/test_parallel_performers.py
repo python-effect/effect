@@ -2,8 +2,6 @@ from functools import partial
 
 import attr
 
-import six
-
 from testtools.matchers import MatchesStructure, Equals
 
 from . import Effect, raise_

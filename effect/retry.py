@@ -1,7 +1,5 @@
 """Retrying effects."""
 
-import six
-
 from functools import partial
 
 

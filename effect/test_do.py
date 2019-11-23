@@ -4,8 +4,6 @@ from functools import partial
 from py.test import raises as raises
 from py.test import mark
 
-import six
-
 from . import (
     ComposedDispatcher, Constant, Effect, Error, TypeDispatcher,
     base_dispatcher, sync_perform, sync_performer)
@@ -170,7 +168,6 @@ def test_stop_iteration_only_local():
             perf(eff)
 
 
-@mark.skipif(not six.PY3, reason="Testing a Py3-specific feature")
 def test_py3_return():
     """The `return x` syntax in Py3 sets the result of the Effect to `x`."""
     from effect._test_do_py3 import py3_generator_with_return
