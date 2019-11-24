@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="effect",
-    version="1.0.0",
+    version="1.1.0",
     description="pure effects for Python",
     long_description=open("README.rst").read(),
     url="http://github.com/python-effect/effect/",
