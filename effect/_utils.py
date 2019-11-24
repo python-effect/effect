@@ -17,7 +17,7 @@ def wraps(original):
             wrapper.__doc__ = original.__doc__
             wrapper.__dict__.update(original.__dict__)
             wrapper.__module__ = original.__module__
-        except:
+        except Exception:
             pass
         return wrapper
 
