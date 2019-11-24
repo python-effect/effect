@@ -12,6 +12,7 @@ install:
     - pip install sphinx sphinx_rtd_theme
 script:
     - flake8
+    - env
     - black --check .
     - pytest
     - make doc
