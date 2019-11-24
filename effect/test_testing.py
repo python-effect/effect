@@ -18,7 +18,7 @@ from . import (
     sync_perform,
     sync_performer,
 )
-from .do import do, do_return
+from .do import do
 from .fold import FoldError, sequence
 from .testing import (
     _ANY,
@@ -397,7 +397,7 @@ def test_perform_sequence():
     def code_under_test():
         r = yield Effect(MyIntent("a"))
         r2 = yield Effect(OtherIntent("b"))
-        yield do_return((r, r2))
+        return (r, r2)
 
     seq = [
         (MyIntent("a"), lambda i: "result1"),
@@ -417,7 +417,7 @@ def test_perform_sequence_log():
     def code_under_test():
         r = yield Effect(MyIntent("a"))
         r2 = yield Effect(OtherIntent("b"))
-        yield do_return((r, r2))
+        return (r, r2)
 
     seq = [(MyIntent("a"), lambda i: "result1")]
     with pytest.raises(AssertionError) as exc:
@@ -505,13 +505,13 @@ def test_nested_sequence():
     def internal():
         yield Effect(1)
         yield Effect(2)
-        yield do_return("wrap")
+        return "wrap"
 
     @do
     def code_under_test():
         r = yield Effect(WrappedIntent(internal(), "field"))
         r2 = yield Effect(MyIntent("a"))
-        yield do_return((r, r2))
+        return (r, r2)
 
     seq = [
         (

@@ -48,7 +48,7 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
         def code_under_test():
             r = yield Effect(MyIntent('a'))
             r2 = yield Effect(OtherIntent('b'))
-            yield do_return((r, r2))
+            return (r, r2)
 
         def test_code():
             seq = [
@@ -142,7 +142,7 @@ def parallel_sequence(parallel_seqs, fallback_dispatcher=None):
             r = yield Effect(SerialIntent('serial'))
             r2 = yield parallel([Effect(MyIntent('a')),
                                  Effect(OtherIntent('b'))])
-            yield do_return((r, r2))
+            return (r, r2)
 
         def test_code():
             seq = [
@@ -576,7 +576,7 @@ def intent_func(fname):
         def code_under_test(arg1, arg2, eff_returning_func=eff_returning_func):
             r = yield Effect(MyIntent('a'))
             r2 = yield eff_returning_func(arg1, arg2)
-            yield do_return((r, r2))
+            return (r, r2)
 
     you will need to know the intents which ``eff_returning_func`` generates
     to test this using :func:`perform_sequence`. You can avoid that by doing::

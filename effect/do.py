@@ -5,6 +5,7 @@ See :func:`do`.
 """
 
 import types
+import warnings
 
 from . import Effect, Func
 from ._utils import wraps
@@ -18,19 +19,15 @@ def do(f):
         @do
         def foo():
             thing = yield Effect(Constant(1))
-            yield do_return('the result was %r' % (thing,))
+            return 'the result was %r' % (thing,)
 
         eff = foo()
         return eff.on(...)
 
     ``@do`` must decorate a generator function (not any other type of
-    iterator). Any yielded values must either be Effects or the result of a
-    :func:`do_return` call. The result of a yielded Effect will be passed back
-    into the generator as the result of the ``yield`` expression. Yielded
-    :func:`do_return` values will provide the ultimate result of the Effect
-    that is returned by the decorated function. Note that :func:`do_return` is
-    only necessary for Python 2 compatibility; return statements can be used
-    directly in Python 3-only code.
+    iterator). Any yielded values must be Effects. The result of a yielded Effect will be passed
+    back into the generator as the result of the ``yield`` expression. A returned value becomes the
+    ultimate result of the Effect that is returned by the decorated function.
 
     It's important to note that any generator function decorated by ``@do``
     will no longer return a generator, but instead it will return an Effect,
@@ -43,7 +40,7 @@ def do(f):
             try:
                 thing = yield Effect(Error(RuntimeError('foo')))
             except RuntimeError:
-                yield do_return('got a RuntimeError as expected')
+                return 'got a RuntimeError as expected'
 
     (This decorator is named for Haskell's ``do`` notation, which is similar in
     spirit).
@@ -77,15 +74,19 @@ def do_return(val):
     """
     Specify a return value for a @do function.
 
+    This is deprecated. Just use `return`.
+
     The result of this function must be yielded.  e.g.::
 
         @do
         def foo():
             yield do_return('hello')
-
-    If you're writing Python 3-only code, you don't need to use this function,
-    and can just use the `return` statement as normal.
     """
+    warnings.warn(
+        "do_return is deprecated. Just return as normal.",
+        DeprecationWarning,
+        stacklevel=1,
+    )
     return _ReturnSentinel(val)
 
 
@@ -119,6 +120,6 @@ def _do(result, generator, is_error):
         )
     else:
         raise TypeError(
-            "@do functions must only yield Effects or results of do_return. "
+            "@do functions must only yield Effects. "
             "Got %r from %r" % (val, generator)
         )

@@ -1,7 +1,7 @@
 import sys
 from functools import partial
 
-from py.test import raises
+from py.test import raises, warns
 
 from . import (
     ComposedDispatcher,
@@ -34,19 +34,25 @@ def test_do_return():
     """
     When a @do function yields a do_return, the given value becomes the
     eventual result.
+
+    This is deprecated.
     """
 
     @do
     def f():
         yield do_return("hello")
 
-    assert perf(f()) == "hello"
+    with warns(DeprecationWarning):
+        assert perf(f()) == "hello"
 
 
-def test_do_return_effect():
+def test_return_effect():
     @do
     def f():
-        yield do_return(Effect(Constant("hello")))
+        return Effect(Constant("hello"))
+        # this is a dumb trick we're playing on Python to make sure this function is a generator,
+        # even though we never want to yield anything.
+        yield
 
     assert perf(f()) == "hello"
 
@@ -57,7 +63,7 @@ def test_yield_effect():
     @do
     def f():
         x = yield Effect(Constant(3))
-        yield do_return(x)
+        return x
 
     perf(f()) == 3
 
@@ -83,8 +89,7 @@ def test_yield_non_effect():
     with raises(TypeError) as err_info:
         perf(result)
     assert str(err_info.value).startswith(
-        "@do functions must only yield Effects or results of "
-        "do_return. Got 1 from <generator object"
+        "@do functions must only yield Effects. Got 1 from <generator object"
     )
 
 
@@ -100,7 +105,7 @@ def test_raise_from_effect():
             yield Effect(Error(ZeroDivisionError("foo")))
         except Exception as e:
             got_error = e
-        yield do_return(got_error)
+        return got_error
 
     exc = perf(f())
     assert type(exc) is ZeroDivisionError
@@ -114,7 +119,7 @@ def test_works_with_sync_perform():
     @do
     def perform_myintent(dispatcher, myintent):
         result = yield Effect(Constant(1))
-        yield do_return(result + 1)
+        return result + 1
 
     class MyIntent(object):
         pass
@@ -133,7 +138,7 @@ def test_promote_metadata():
 
     def original(dispatcher, intent):
         """Original!"""
-        yield do_return(1)
+        return 1
 
     original.attr = 1
     wrapped = do(original)
@@ -166,7 +171,7 @@ def test_repeatable_effect():
     @do
     def f():
         x = yield Effect(Constant("foo"))
-        yield do_return(x)
+        return x
 
     eff = f()
     assert perf(eff) == "foo"
@@ -196,7 +201,11 @@ def test_stop_iteration_only_local():
 
 def test_py3_return():
     """The `return x` syntax in Py3 sets the result of the Effect to `x`."""
-    from effect._test_do_py3 import py3_generator_with_return
+
+    @do
+    def py3_generator_with_return():
+        yield Effect(Constant(1))
+        return 2  # noqa
 
     eff = py3_generator_with_return()
     assert perf(eff) == 2
