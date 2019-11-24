@@ -268,7 +268,7 @@ def resolve_effect(effect, result, is_error=False):
         is_error, result = guard(cb, result)
         if type(result) is Effect:
             return Effect(
-                result.intent, callbacks=result.callbacks + effect.callbacks[i + 1:]
+                result.intent, callbacks=result.callbacks + effect.callbacks[i + 1 :]
             )
     if is_error:
         raise result
