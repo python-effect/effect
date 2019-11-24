@@ -13,9 +13,9 @@ class PerformParallelAsyncTests(TestCase, ParallelPerformerTestsMixin):
 
     def setUp(self):
         super(PerformParallelAsyncTests, self).setUp()
-        self.dispatcher = ComposedDispatcher([
-            base_dispatcher,
-            TypeDispatcher({ParallelEffects: perform_parallel_async})])
+        self.dispatcher = ComposedDispatcher(
+            [base_dispatcher, TypeDispatcher({ParallelEffects: perform_parallel_async})]
+        )
 
     def test_out_of_order(self):
         """
@@ -25,17 +25,22 @@ class PerformParallelAsyncTests(TestCase, ParallelPerformerTestsMixin):
         """
         result = []
         boxes = [None] * 2
-        eff = parallel([
-            Effect(lambda box: boxes.__setitem__(0, box)),
-            Effect(lambda box: boxes.__setitem__(1, box)),
-        ])
+        eff = parallel(
+            [
+                Effect(lambda box: boxes.__setitem__(0, box)),
+                Effect(lambda box: boxes.__setitem__(1, box)),
+            ]
+        )
         perform(
-            ComposedDispatcher([
-                TypeDispatcher({ParallelEffects: perform_parallel_async}),
-                func_dispatcher,
-            ]),
-            eff.on(success=result.append, error=print))
-        boxes[1].succeed('a')
+            ComposedDispatcher(
+                [
+                    TypeDispatcher({ParallelEffects: perform_parallel_async}),
+                    func_dispatcher,
+                ]
+            ),
+            eff.on(success=result.append, error=print),
+        )
+        boxes[1].succeed("a")
         self.assertEqual(result, [])
-        boxes[0].succeed('b')
-        self.assertEqual(result[0], ['b', 'a'])
+        boxes[0].succeed("b")
+        self.assertEqual(result[0], ["b", "a"])

@@ -19,7 +19,8 @@ class Bouncer(object):
         if self.work is not None:
             raise RuntimeError(
                 "Already specified work %r, refusing to set to (%r %r %r)"
-                % (self.work, func, args, kwargs))
+                % (self.work, func, args, kwargs)
+            )
         self.work = (func, args, kwargs)
         if self._asynchronous:
             trampoline(func, *args, **kwargs)

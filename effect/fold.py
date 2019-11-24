@@ -11,17 +11,21 @@ class FoldError(Exception):
     :ivar accumulator: The data accumulated so far, before the failing Effect.
     :ivar wrapped_exception: The original exception raised by the failing Effect.
     """
+
     def __init__(self, accumulator, wrapped_exception):
         self.accumulator = accumulator
         self.wrapped_exception = wrapped_exception
 
     def __str__(self):
-        tb_lines = traceback.TracebackException.from_exception(self.wrapped_exception).format()
-        tb = ''.join(tb_lines)
-        st = (
-            "<FoldError after accumulating %r> Original traceback follows:\n%s"
-            % (self.accumulator, tb))
-        return st.rstrip('\n')
+        tb_lines = traceback.TracebackException.from_exception(
+            self.wrapped_exception
+        ).format()
+        tb = "".join(tb_lines)
+        st = "<FoldError after accumulating %r> Original traceback follows:\n%s" % (
+            self.accumulator,
+            tb,
+        )
+        return st.rstrip("\n")
 
 
 def fold_effect(f, initial, effects):
@@ -54,8 +58,9 @@ def fold_effect(f, initial, effects):
         raise FoldError(acc, e)
 
     def folder(acc, element):
-        return acc.on(lambda r: element.on(lambda r2: f(r, r2),
-                                           error=lambda e: failed(r, e)))
+        return acc.on(
+            lambda r: element.on(lambda r2: f(r, r2), error=lambda e: failed(r, e))
+        )
 
     return reduce(folder, effects, Effect(Constant(initial)))
 
@@ -74,4 +79,5 @@ def sequence(effects):
     def folder(acc, el):
         result.append(el)
         return result
+
     return fold_effect(folder, result, effects)

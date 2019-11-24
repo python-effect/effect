@@ -33,14 +33,14 @@ class Effect(object):
         If a callback returns an :obj:`Effect`, the result of that
         :obj:`Effect` will be passed to the next callback.
         """
-        return Effect(self.intent,
-                      callbacks=self.callbacks + [(success, error)])
+        return Effect(self.intent, callbacks=self.callbacks + [(success, error)])
 
 
 class _Box(object):
     """
     An object into which an effect dispatcher can place a result.
     """
+
     def __init__(self, cont):
         """
         :param callable cont: Called with (bool is_error, result)
@@ -119,13 +119,14 @@ def perform(dispatcher, effect):
        ``box.succeed(result)`` or ``box.fail(exc)``, where ``exc`` is
        an exception. Decorators like :func:`sync_performer` simply abstract this away.
     """
+
     def _run_callbacks(bouncer, chain, result):
         is_error, value = result
 
         if type(value) is Effect:
             bouncer.bounce(
-                _perform,
-                Effect(value.intent, callbacks=value.callbacks + chain))
+                _perform, Effect(value.intent, callbacks=value.callbacks + chain)
+            )
             return
 
         if not chain:
@@ -146,8 +147,8 @@ def perform(dispatcher, effect):
                 performer(
                     dispatcher,
                     effect.intent,
-                    _Box(partial(bouncer.bounce,
-                                 _run_callbacks, effect.callbacks)))
+                    _Box(partial(bouncer.bounce, _run_callbacks, effect.callbacks)),
+                )
         except Exception as e:
             _run_callbacks(bouncer, effect.callbacks, (True, e))
 
@@ -164,10 +165,12 @@ def catch(exc_type, callable):
     If any exception other than a ``SpecificException`` is thrown, it will be
     ignored by this handler and propogate further down the chain of callbacks.
     """
+
     def catcher(error):
         if isinstance(error, exc_type):
             return callable(error)
         raise error
+
     return catcher
 
 

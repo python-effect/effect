@@ -1,4 +1,3 @@
-
 import operator
 
 from pytest import raises
@@ -15,16 +14,16 @@ def test_fold_effect():
     :func:`fold_effect` folds the given function over the results of the
     effects.
     """
-    effs = [Effect('a'), Effect('b'), Effect('c')]
+    effs = [Effect("a"), Effect("b"), Effect("c")]
 
     dispatcher = [
-        ('a', lambda i: 'Ei'),
-        ('b', lambda i: 'Bee'),
-        ('c', lambda i: 'Cee'),
+        ("a", lambda i: "Ei"),
+        ("b", lambda i: "Bee"),
+        ("c", lambda i: "Cee"),
     ]
-    eff = fold_effect(operator.add, 'Nil', effs)
+    eff = fold_effect(operator.add, "Nil", effs)
     result = perform_sequence(dispatcher, eff)
-    assert result == 'NilEiBeeCee'
+    assert result == "NilEiBeeCee"
 
 
 def test_fold_effect_empty():
@@ -41,43 +40,46 @@ def test_fold_effect_errors():
     When one of the effects in the folding list fails, a FoldError is raised
     with the accumulator so far.
     """
-    effs = [Effect('a'), Effect(Error(ZeroDivisionError('foo'))), Effect('c')]
+    effs = [Effect("a"), Effect(Error(ZeroDivisionError("foo"))), Effect("c")]
 
-    dispatcher = [('a', lambda i: 'Ei')]
+    dispatcher = [("a", lambda i: "Ei")]
 
-    eff = fold_effect(operator.add, 'Nil', effs)
+    eff = fold_effect(operator.add, "Nil", effs)
 
     with raises(FoldError) as excinfo:
         perform_sequence(dispatcher, eff)
-    assert excinfo.value.accumulator == 'NilEi'
-    assert_that(excinfo.value.wrapped_exception, MatchesException(ZeroDivisionError('foo')))
+    assert excinfo.value.accumulator == "NilEi"
+    assert_that(
+        excinfo.value.wrapped_exception, MatchesException(ZeroDivisionError("foo"))
+    )
 
 
 def test_fold_effect_str():
     """str()ing a FoldError returns useful traceback/exception info."""
-    effs = [Effect('a'), Effect(Error(ZeroDivisionError('foo'))), Effect('c')]
-    dispatcher = [('a', lambda i: 'Ei')]
+    effs = [Effect("a"), Effect(Error(ZeroDivisionError("foo"))), Effect("c")]
+    dispatcher = [("a", lambda i: "Ei")]
 
-    eff = fold_effect(operator.add, 'Nil', effs)
+    eff = fold_effect(operator.add, "Nil", effs)
     with raises(FoldError) as excinfo:
         perform_sequence(dispatcher, eff)
     assert str(excinfo.value).startswith(
-        "<FoldError after accumulating 'NilEi'> Original traceback follows:\n")
-    assert str(excinfo.value).endswith('ZeroDivisionError: foo')
+        "<FoldError after accumulating 'NilEi'> Original traceback follows:\n"
+    )
+    assert str(excinfo.value).endswith("ZeroDivisionError: foo")
 
 
 def test_sequence():
     """Collects each Effectful result into a list."""
-    effs = [Effect('a'), Effect('b'), Effect('c')]
+    effs = [Effect("a"), Effect("b"), Effect("c")]
     dispatcher = [
-        ('a', lambda i: 'Ei'),
-        ('b', lambda i: 'Bee'),
-        ('c', lambda i: 'Cee'),
+        ("a", lambda i: "Ei"),
+        ("b", lambda i: "Bee"),
+        ("c", lambda i: "Cee"),
     ]
     eff = sequence(effs)
 
     result = perform_sequence(dispatcher, eff)
-    assert result == ['Ei', 'Bee', 'Cee']
+    assert result == ["Ei", "Bee", "Cee"]
 
 
 def test_sequence_empty():
@@ -90,13 +92,15 @@ def test_sequence_error():
     Allows :obj:`FoldError` to be raised when an Effect fails. The list
     accumulated so far is the `accumulator` value in the :obj:`FoldError`.
     """
-    effs = [Effect('a'), Effect(Error(ZeroDivisionError('foo'))), Effect('c')]
+    effs = [Effect("a"), Effect(Error(ZeroDivisionError("foo"))), Effect("c")]
 
-    dispatcher = [('a', lambda i: 'Ei')]
+    dispatcher = [("a", lambda i: "Ei")]
 
     eff = sequence(effs)
 
     with raises(FoldError) as excinfo:
         perform_sequence(dispatcher, eff)
-    assert excinfo.value.accumulator == ['Ei']
-    assert_that(excinfo.value.wrapped_exception, MatchesException(ZeroDivisionError('foo')))
+    assert excinfo.value.accumulator == ["Ei"]
+    assert_that(
+        excinfo.value.wrapped_exception, MatchesException(ZeroDivisionError("foo"))
+    )

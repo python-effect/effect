@@ -12,6 +12,7 @@ class TypeDispatcher(object):
 
     :param mapping: mapping of intent type to performer
     """
+
     mapping = attr.ib()
 
     def __call__(self, intent):

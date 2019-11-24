@@ -12,8 +12,10 @@ def func_dispatcher(intent):
     Simple effect dispatcher that takes callables taking a box,
     and calls them with the given box.
     """
+
     def performer(dispatcher, intent, box):
         intent(box)
+
     return performer
 
 
@@ -31,10 +33,8 @@ class EffectPerformTests(TestCase):
         eff = Effect(intent).on(error=calls.append)
         perform(dispatcher, eff)
         self.assertThat(
-            calls,
-            MatchesListwise([
-                MatchesException(NoPerformerFoundError(intent))
-            ]))
+            calls, MatchesListwise([MatchesException(NoPerformerFoundError(intent))])
+        )
 
     def test_dispatcher(self):
         """
@@ -62,9 +62,9 @@ class EffectPerformTests(TestCase):
           effect's callback
         """
         calls = []
-        intent = lambda box: box.succeed('dispatched')
+        intent = lambda box: box.succeed("dispatched")
         perform(func_dispatcher, Effect(intent).on(calls.append))
-        self.assertEqual(calls, ['dispatched'])
+        self.assertEqual(calls, ["dispatched"])
 
     def test_error_with_callback(self):
         """
@@ -72,12 +72,11 @@ class EffectPerformTests(TestCase):
         the error callback.
         """
         calls = []
-        intent = lambda box: box.fail(ValueError('dispatched'))
+        intent = lambda box: box.fail(ValueError("dispatched"))
         perform(func_dispatcher, Effect(intent).on(error=calls.append))
         self.assertThat(
-            calls,
-            MatchesListwise([
-                MatchesException(ValueError('dispatched'))]))
+            calls, MatchesListwise([MatchesException(ValueError("dispatched"))])
+        )
 
     def test_dispatcher_raises(self):
         """
@@ -85,14 +84,11 @@ class EffectPerformTests(TestCase):
         error handler.
         """
         calls = []
-        eff = Effect('meaningless').on(error=calls.append)
-        dispatcher = lambda i: raise_(ValueError('oh dear'))
+        eff = Effect("meaningless").on(error=calls.append)
+        dispatcher = lambda i: raise_(ValueError("oh dear"))
         perform(dispatcher, eff)
         self.assertThat(
-            calls,
-            MatchesListwise([
-                MatchesException(ValueError('oh dear'))
-            ])
+            calls, MatchesListwise([MatchesException(ValueError("oh dear"))])
         )
 
     def test_performer_raises(self):
@@ -101,15 +97,12 @@ class EffectPerformTests(TestCase):
         error handler.
         """
         calls = []
-        eff = Effect('meaningless').on(error=calls.append)
-        performer = lambda d, i, box: raise_(ValueError('oh dear'))
+        eff = Effect("meaningless").on(error=calls.append)
+        performer = lambda d, i, box: raise_(ValueError("oh dear"))
         dispatcher = lambda i: performer
         perform(dispatcher, eff)
         self.assertThat(
-            calls,
-            MatchesListwise([
-                MatchesException(ValueError('oh dear'))
-            ])
+            calls, MatchesListwise([MatchesException(ValueError("oh dear"))])
         )
 
     def test_success_propagates_effect_exception(self):
@@ -118,15 +111,16 @@ class EffectPerformTests(TestCase):
         the exception is passed to the next callback.
         """
         calls = []
-        intent = lambda box: box.fail(ValueError('dispatched'))
-        perform(func_dispatcher,
-                Effect(intent)
-                .on(success=lambda box: calls.append("foo"))
-                .on(error=calls.append))
+        intent = lambda box: box.fail(ValueError("dispatched"))
+        perform(
+            func_dispatcher,
+            Effect(intent)
+            .on(success=lambda box: calls.append("foo"))
+            .on(error=calls.append),
+        )
         self.assertThat(
-            calls,
-            MatchesListwise([
-                MatchesException(ValueError('dispatched'))]))
+            calls, MatchesListwise([MatchesException(ValueError("dispatched"))])
+        )
 
     def test_error_propagates_effect_result(self):
         """
@@ -135,10 +129,12 @@ class EffectPerformTests(TestCase):
         """
         calls = []
         intent = lambda box: box.succeed("dispatched")
-        perform(func_dispatcher,
-                Effect(intent)
-                .on(error=lambda box: calls.append("foo"))
-                .on(success=calls.append))
+        perform(
+            func_dispatcher,
+            Effect(intent)
+            .on(error=lambda box: calls.append("foo"))
+            .on(success=calls.append),
+        )
         self.assertEqual(calls, ["dispatched"])
 
     def test_callback_success_exception(self):
@@ -148,14 +144,15 @@ class EffectPerformTests(TestCase):
         """
         calls = []
 
-        perform(func_dispatcher,
-                Effect(lambda box: box.succeed("foo"))
-                .on(success=lambda _: raise_(ValueError("oh dear")))
-                .on(error=calls.append))
+        perform(
+            func_dispatcher,
+            Effect(lambda box: box.succeed("foo"))
+            .on(success=lambda _: raise_(ValueError("oh dear")))
+            .on(error=calls.append),
+        )
         self.assertThat(
-            calls,
-            MatchesListwise([
-                MatchesException(ValueError('oh dear'))]))
+            calls, MatchesListwise([MatchesException(ValueError("oh dear"))])
+        )
 
     def test_callback_error_exception(self):
         """
@@ -164,16 +161,17 @@ class EffectPerformTests(TestCase):
         """
         calls = []
 
-        intent = lambda box: box.fail(ValueError('dispatched'))
+        intent = lambda box: box.fail(ValueError("dispatched"))
 
-        perform(func_dispatcher,
-                Effect(intent)
-                .on(error=lambda _: raise_(ValueError("oh dear")))
-                .on(error=calls.append))
+        perform(
+            func_dispatcher,
+            Effect(intent)
+            .on(error=lambda _: raise_(ValueError("oh dear")))
+            .on(error=calls.append),
+        )
         self.assertThat(
-            calls,
-            MatchesListwise([
-                MatchesException(ValueError('oh dear'))]))
+            calls, MatchesListwise([MatchesException(ValueError("oh dear"))])
+        )
 
     def test_effects_returning_effects(self):
         """
@@ -182,10 +180,11 @@ class EffectPerformTests(TestCase):
         - the result of that is returned.
         """
         calls = []
-        perform(func_dispatcher,
-                Effect(lambda box: box.succeed(
-                    Effect(lambda box: calls.append("foo")))))
-        self.assertEqual(calls, ['foo'])
+        perform(
+            func_dispatcher,
+            Effect(lambda box: box.succeed(Effect(lambda box: calls.append("foo")))),
+        )
+        self.assertEqual(calls, ["foo"])
 
     def test_effects_returning_effects_returning_effects(self):
         """
@@ -194,11 +193,17 @@ class EffectPerformTests(TestCase):
         returned from the outermost effect's perform.
         """
         calls = []
-        perform(func_dispatcher,
-                Effect(lambda box: box.succeed(
-                    Effect(lambda box: box.succeed(
-                        Effect(lambda box: calls.append("foo")))))))
-        self.assertEqual(calls, ['foo'])
+        perform(
+            func_dispatcher,
+            Effect(
+                lambda box: box.succeed(
+                    Effect(
+                        lambda box: box.succeed(Effect(lambda box: calls.append("foo")))
+                    )
+                )
+            ),
+        )
+        self.assertEqual(calls, ["foo"])
 
     def test_nested_effect_exception_passes_to_outer_error_handler(self):
         """
@@ -206,14 +211,14 @@ class EffectPerformTests(TestCase):
         exception is passed to the outer effect's error handlers.
         """
         calls = []
-        intent = lambda box: box.fail(ValueError('oh dear'))
-        perform(func_dispatcher,
-                Effect(lambda box: box.succeed(Effect(intent)))
-                .on(error=calls.append))
+        intent = lambda box: box.fail(ValueError("oh dear"))
+        perform(
+            func_dispatcher,
+            Effect(lambda box: box.succeed(Effect(intent))).on(error=calls.append),
+        )
         self.assertThat(
-            calls,
-            MatchesListwise([
-                MatchesException(ValueError('oh dear'))]))
+            calls, MatchesListwise([MatchesException(ValueError("oh dear"))])
+        )
 
     def test_bounced(self):
         """
@@ -224,6 +229,7 @@ class EffectPerformTests(TestCase):
         def out_of_order(box):
             box.succeed("foo")
             calls.append("bar")
+
         perform(func_dispatcher, Effect(out_of_order).on(success=calls.append))
         self.assertEqual(calls, ["bar", "foo"])
 
@@ -235,9 +241,13 @@ class EffectPerformTests(TestCase):
 
         def get_stack(_):
             calls.append(traceback.extract_stack())
-        perform(func_dispatcher,
-                Effect(lambda box: box.succeed(None))
-                .on(success=get_stack).on(success=get_stack))
+
+        perform(
+            func_dispatcher,
+            Effect(lambda box: box.succeed(None))
+            .on(success=get_stack)
+            .on(success=get_stack),
+        )
         self.assertEqual(calls[0], calls[1])
 
     def test_effect_bounced(self):
@@ -251,8 +261,9 @@ class EffectPerformTests(TestCase):
             calls.append(traceback.extract_stack())
             box.succeed(None)
 
-        perform(func_dispatcher,
-                Effect(get_stack).on(success=lambda _: Effect(get_stack)))
+        perform(
+            func_dispatcher, Effect(get_stack).on(success=lambda _: Effect(get_stack))
+        )
         self.assertEqual(calls[0], calls[1])
 
     def test_asynchronous_callback_invocation(self):
@@ -264,8 +275,8 @@ class EffectPerformTests(TestCase):
         boxes = []
         eff = Effect(boxes.append).on(success=results.append)
         perform(func_dispatcher, eff)
-        boxes[0].succeed('foo')
-        self.assertEqual(results, ['foo'])
+        boxes[0].succeed("foo")
+        self.assertEqual(results, ["foo"])
 
     def test_asynchronous_callback_bounced(self):
         """
@@ -280,7 +291,7 @@ class EffectPerformTests(TestCase):
         boxes = []
         eff = Effect(boxes.append).on(success=get_stack).on(success=get_stack)
         perform(func_dispatcher, eff)
-        boxes[0].succeed('foo')
+        boxes[0].succeed("foo")
         self.assertEqual(calls[0], calls[1])
 
 
@@ -293,11 +304,11 @@ class CatchTests(TestCase):
         callable is invoked and its result is returned.
         """
         try:
-            raise RuntimeError('foo')
+            raise RuntimeError("foo")
         except Exception as e:
             error = e
-        result = catch(RuntimeError, lambda e: ('caught', e))(error)
-        self.assertEqual(result, ('caught', error))
+        result = catch(RuntimeError, lambda e: ("caught", e))(error)
+        self.assertEqual(result, ("caught", error))
 
     def test_missed(self):
         """
@@ -305,10 +316,11 @@ class CatchTests(TestCase):
         the callable is not invoked and the original exception is reraised.
         """
         try:
-            raise ZeroDivisionError('foo')
+            raise ZeroDivisionError("foo")
         except Exception as e:
             error = e
         e = self.assertRaises(
             ZeroDivisionError,
-            lambda: catch(RuntimeError, lambda e: ('caught', e))(error))
-        self.assertEqual(str(e), 'foo')
+            lambda: catch(RuntimeError, lambda e: ("caught", e))(error),
+        )
+        self.assertEqual(str(e), "foo")

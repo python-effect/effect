@@ -24,7 +24,7 @@ def retry(effect, should_retry):
 
     def try_():
         return effect.on(
-            error=lambda e: should_retry(e).on(
-                success=partial(maybe_retry, e)))
+            error=lambda e: should_retry(e).on(success=partial(maybe_retry, e))
+        )
 
     return try_()

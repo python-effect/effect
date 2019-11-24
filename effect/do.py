@@ -48,22 +48,23 @@ def do(f):
     (This decorator is named for Haskell's ``do`` notation, which is similar in
     spirit).
     """
+
     @wraps(f)
     def do_wrapper(*args, **kwargs):
-
         def doit():
             gen = f(*args, **kwargs)
             if not isinstance(gen, types.GeneratorType):
                 raise TypeError(
-                    "%r is not a generator function. It returned %r."
-                    % (f, gen))
+                    "%r is not a generator function. It returned %r." % (f, gen)
+                )
             return _do(None, gen, False)
 
-        fname = getattr(f, '__name__', None)
+        fname = getattr(f, "__name__", None)
         if fname is not None:
-            doit.__name__ = 'do_' + fname
+            doit.__name__ = "do_" + fname
 
         return Effect(Func(doit))
+
     return do_wrapper
 
 
@@ -108,13 +109,16 @@ def _do(result, generator, is_error):
             # set to the return value. So we'll return that value as the
             # ultimate result of the effect. Python 2 doesn't have the 'value'
             # attribute of StopIteration, so we'll fall back to None.
-            return getattr(stop, 'value', None)
+            return getattr(stop, "value", None)
     if type(val) is _ReturnSentinel:
         return val.result
     elif type(val) is Effect:
-        return val.on(success=lambda r: _do(r, generator, False),
-                      error=lambda e: _do(e, generator, True))
+        return val.on(
+            success=lambda r: _do(r, generator, False),
+            error=lambda e: _do(e, generator, True),
+        )
     else:
         raise TypeError(
             "@do functions must only yield Effects or results of do_return. "
-            "Got %r from %r" % (val, generator))
+            "Got %r from %r" % (val, generator)
+        )

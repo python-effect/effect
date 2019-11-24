@@ -10,6 +10,7 @@ def wraps(original):
     This is like :func:`functools.wraps`, except you can wrap non-functions
     without blowing up.
     """
+
     def wraps_decorator(wrapper):
         try:
             wrapper.__name__ = original.__name__
@@ -19,4 +20,5 @@ def wraps(original):
         except:
             pass
         return wrapper
+
     return wraps_decorator

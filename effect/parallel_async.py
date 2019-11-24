@@ -33,6 +33,5 @@ def perform_parallel_async(dispatcher, intent, box):
     for index, effect in enumerate(effects):
         perform(
             dispatcher,
-            effect.on(
-                success=partial(succeed, index),
-                error=partial(fail, index)))
+            effect.on(success=partial(succeed, index), error=partial(fail, index)),
+        )

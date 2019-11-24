@@ -16,22 +16,24 @@ from ._intents import Constant, Error, Func, ParallelEffects, base_dispatcher
 
 
 __all__ = [
-    'perform_sequence',
-    'parallel_sequence',
-    'nested_sequence',
-    'SequenceDispatcher',
-    'noop',
-    'const',
-    'conste',
-    'intent_func',
-    'resolve_effect',
-    'fail_effect',
-    'EQDispatcher',
-    'EQFDispatcher',
-    'Stub',
-    'ESConstant', 'ESError', 'ESFunc',
-    'resolve_stubs',
-    'resolve_stub',
+    "perform_sequence",
+    "parallel_sequence",
+    "nested_sequence",
+    "SequenceDispatcher",
+    "noop",
+    "const",
+    "conste",
+    "intent_func",
+    "resolve_effect",
+    "fail_effect",
+    "EQDispatcher",
+    "EQFDispatcher",
+    "Stub",
+    "ESConstant",
+    "ESError",
+    "ESFunc",
+    "resolve_stubs",
+    "resolve_stub",
 ]
 
 
@@ -87,13 +89,12 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
         used.
     :return: Result of performed sequence
     """
+
     def fmt_log():
-        next_item = ''
+        next_item = ""
         if len(sequence.sequence) > 0:
-            next_item = '\nNEXT EXPECTED: %s' % (sequence.sequence[0][0],)
-        return '{{{\n%s%s\n}}}' % (
-            '\n'.join('%s: %s' % x for x in log),
-            next_item)
+            next_item = "\nNEXT EXPECTED: %s" % (sequence.sequence[0][0],)
+        return "{{{\n%s%s\n}}}" % ("\n".join("%s: %s" % x for x in log), next_item)
 
     def dispatcher(intent):
         p = sequence(intent)
@@ -107,8 +108,8 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
         else:
             log.append(("NOT FOUND", intent))
             raise AssertionError(
-                "Performer not found: %s! Log follows:\n%s" % (
-                    intent, fmt_log()))
+                "Performer not found: %s! Log follows:\n%s" % (intent, fmt_log())
+            )
 
     if fallback_dispatcher is None:
         fallback_dispatcher = base_dispatcher
@@ -120,8 +121,11 @@ def perform_sequence(seq, eff, fallback_dispatcher=None):
 
 @object.__new__
 class _ANY(object):
-    def __eq__(self, o): return True
-    def __ne__(self, o): return False
+    def __eq__(self, o):
+        return True
+
+    def __ne__(self, o):
+        return False
 
 
 def parallel_sequence(parallel_seqs, fallback_dispatcher=None):
@@ -173,9 +177,16 @@ def parallel_sequence(parallel_seqs, fallback_dispatcher=None):
                 "Need one list in parallel_seqs per parallel effect. "
                 "Got %s effects and %s seqs.\n"
                 "Effects: %s\n"
-                "parallel_seqs: %s" % (len(intent.effects), len(parallel_seqs),
-                                       intent.effects, parallel_seqs))
+                "parallel_seqs: %s"
+                % (
+                    len(intent.effects),
+                    len(parallel_seqs),
+                    intent.effects,
+                    parallel_seqs,
+                )
+            )
         return list(map(perf, parallel_seqs, intent.effects))
+
     return (ParallelEffects(effects=_ANY), performer)
 
 
@@ -191,6 +202,7 @@ class Stub(object):
     :class:`Stub` is intentionally not performable by any default
     mechanism.
     """
+
     intent = attr.ib()
 
 
@@ -256,8 +268,8 @@ def resolve_effect(effect, result, is_error=False):
         is_error, result = guard(cb, result)
         if type(result) is Effect:
             return Effect(
-                result.intent,
-                callbacks=result.callbacks + effect.callbacks[i + 1:])
+                result.intent, callbacks=result.callbacks + effect.callbacks[i + 1 :]
+            )
     if is_error:
         raise result
     return result
@@ -292,18 +304,16 @@ def resolve_stub(dispatcher, effect):
         if len(result_slot) == 0:
             raise NotSynchronousError(
                 "Performer %r was not synchronous during stub resolution for "
-                "effect %r"
-                % (performer, effect))
+                "effect %r" % (performer, effect)
+            )
         if len(result_slot) > 1:
             raise RuntimeError(
                 "Pathological error (too many box results) while running "
-                "performer %r for effect %r"
-                % (performer, effect))
-        return resolve_effect(effect, result_slot[0][1],
-                              is_error=result_slot[0][0])
+                "performer %r for effect %r" % (performer, effect)
+            )
+        return resolve_effect(effect, result_slot[0][1], is_error=result_slot[0][0])
     else:
-        raise TypeError("resolve_stub can only resolve stubs, not %r"
-                        % (effect,))
+        raise TypeError("resolve_stub can only resolve stubs, not %r" % (effect,))
 
 
 def resolve_stubs(dispatcher, effect):
@@ -323,14 +333,15 @@ def resolve_stubs(dispatcher, effect):
         if type(effect.intent) is Stub:
             effect = resolve_stub(dispatcher, effect)
         elif type(effect.intent) is ParallelEffects:
-            if not all(isinstance(x.intent, Stub)
-                       for x in effect.intent.effects):
+            if not all(isinstance(x.intent, Stub) for x in effect.intent.effects):
                 break
             else:
                 effect = resolve_effect(
                     effect,
-                    list(map(partial(resolve_stubs, dispatcher),
-                             effect.intent.effects)))
+                    list(
+                        map(partial(resolve_stubs, dispatcher), effect.intent.effects)
+                    ),
+                )
         else:
             break
 
@@ -369,6 +380,7 @@ class EQDispatcher(object):
 
     :param list mapping: A sequence of tuples of (intent, result).
     """
+
     mapping = attr.ib()
 
     def __call__(self, intent):
@@ -413,6 +425,7 @@ class EQFDispatcher(object):
 
     :param list mapping: A sequence of two-tuples of (intent, function).
     """
+
     mapping = attr.ib()
 
     def __call__(self, intent):
@@ -442,6 +455,7 @@ class SequenceDispatcher(object):
 
     :param list sequence: Sequence of (intent, fn).
     """
+
     sequence = attr.ib()
 
     def __call__(self, intent):
@@ -466,11 +480,14 @@ class SequenceDispatcher(object):
         if not self.consumed():
             raise AssertionError(
                 "Not all intents were performed: {0}".format(
-                    [x[0] for x in self.sequence]))
+                    [x[0] for x in self.sequence]
+                )
+            )
 
 
-def nested_sequence(seq, get_effect=attrgetter('effect'),
-                    fallback_dispatcher=base_dispatcher):
+def nested_sequence(
+    seq, get_effect=attrgetter("effect"), fallback_dispatcher=base_dispatcher
+):
     """
     Return a function of Intent -> a that performs an effect retrieved from the
     intent (by accessing its `effect` attribute, by default) with the given
@@ -499,6 +516,7 @@ def nested_sequence(seq, get_effect=attrgetter('effect'),
         sequence dispatcher.
     :return: ``callable`` that can be used as performer of a wrapped intent
     """
+
     def performer(intent):
         effect = get_effect(intent)
         return perform_sequence(seq, effect, fallback_dispatcher=fallback_dispatcher)

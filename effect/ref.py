@@ -5,8 +5,13 @@ from ._dispatcher import TypeDispatcher
 from ._sync import sync_performer
 
 __all__ = [
-    'Reference', 'ReadReference', 'ModifyReference', 'perform_read_reference',
-    'perform_modify_reference', 'reference_dispatcher']
+    "Reference",
+    "ReadReference",
+    "ModifyReference",
+    "perform_read_reference",
+    "perform_modify_reference",
+    "reference_dispatcher",
+]
 
 
 class Reference(object):
@@ -93,6 +98,6 @@ def perform_modify_reference(dispatcher, intent):
     return new_value
 
 
-reference_dispatcher = TypeDispatcher({
-    ReadReference: perform_read_reference,
-    ModifyReference: perform_modify_reference})
+reference_dispatcher = TypeDispatcher(
+    {ReadReference: perform_read_reference, ModifyReference: perform_modify_reference}
+)

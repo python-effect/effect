@@ -10,9 +10,12 @@ install:
     - pip install .
     - pip install -r dev-requirements.txt
     - pip install sphinx sphinx_rtd_theme
+    # black isn't installing on pypy3, so just skip it
+    - 'if [ "$TRAVIS_PYTHON_VERSION" != "pypy3" ]; then pip install black; fi'
 script:
     - flake8
-    - py.test
+    - 'if [ "$TRAVIS_PYTHON_VERSION" != "pypy3" ]; then black --check .; fi'
+    - pytest
     - make doc
 
 notifications:
