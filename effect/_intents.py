@@ -78,9 +78,10 @@ def parallel_all_errors(effects):
         False, then ``result`` will just be the result as provided by the child
         effect.
     """
-    effects = [effect.on(success=lambda r: (False, r),
-                         error=lambda e: (True, e))
-               for effect in effects]
+    effects = [
+        effect.on(success=lambda r: (False, r), error=lambda e: (True, e))
+        for effect in effects
+    ]
     return Effect(ParallelEffects(list(effects)))
 
 
@@ -90,12 +91,16 @@ class FirstError(Exception):
     One of the effects in a :obj:`ParallelEffects` resulted in an error. This
     represents the first such error that occurred.
     """
+
     exception = attr.ib()
     index = attr.ib()
 
     def __str__(self):
-        return '(index=%s) %s: %s' % (
-            self.index, type(self.exception).__name__, self.exception)
+        return "(index=%s) %s: %s" % (
+            self.index,
+            type(self.exception).__name__,
+            self.exception,
+        )
 
 
 @attr.s
@@ -108,6 +113,7 @@ class Delay(object):
 
     :param float delay: The number of seconds to delay.
     """
+
     delay = attr.ib()
 
 
@@ -124,6 +130,7 @@ class Constant(object):
 
     :param result: The object which the Effect will result in.
     """
+
     result = attr.ib()
 
 
@@ -140,6 +147,7 @@ class Error(object):
 
     :param BaseException exception: Exception instance to raise.
     """
+
     exception = attr.ib()
 
 
@@ -173,6 +181,7 @@ class Func(object):
     :param args: Positional arguments to pass to the function.
     :param kwargs: Keyword arguments to pass to the function.
     """
+
     func = attr.ib()
     args = attr.ib()
     kwargs = attr.ib()
@@ -189,8 +198,6 @@ def perform_func(dispatcher, intent):
     return intent.func(*intent.args, **intent.kwargs)
 
 
-base_dispatcher = TypeDispatcher({
-    Constant: perform_constant,
-    Error: perform_error,
-    Func: perform_func,
-})
+base_dispatcher = TypeDispatcher(
+    {Constant: perform_constant, Error: perform_error, Func: perform_func,}
+)

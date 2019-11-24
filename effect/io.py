@@ -12,12 +12,14 @@ from . import sync_performer, TypeDispatcher
 @attr.s
 class Display(object):
     """Display some text to the user."""
+
     output = attr.ib()
 
 
 @attr.s
 class Prompt(object):
     """Get some input from the user, with a prompt."""
+
     prompt = attr.ib()
 
 
@@ -35,7 +37,6 @@ def perform_get_input_raw_input(dispatcher, intent):
     return input(intent.prompt)
 
 
-stdio_dispatcher = TypeDispatcher({
-    Display: perform_display_print,
-    Prompt: perform_get_input_raw_input,
-})
+stdio_dispatcher = TypeDispatcher(
+    {Display: perform_display_print, Prompt: perform_get_input_raw_input,}
+)

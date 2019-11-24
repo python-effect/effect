@@ -8,27 +8,42 @@ See https://effect.readthedocs.org/ for documentation.
 """
 
 from ._base import Effect, perform, NoPerformerFoundError, catch, raise_
-from ._sync import (
-    NotSynchronousError,
-    sync_perform,
-    sync_performer)
+from ._sync import NotSynchronousError, sync_perform, sync_performer
 from ._intents import (
-    Delay, perform_delay_with_sleep,
-    ParallelEffects, parallel, parallel_all_errors, FirstError,
-    Constant, Error, Func,
-    base_dispatcher)
+    Delay,
+    perform_delay_with_sleep,
+    ParallelEffects,
+    parallel,
+    parallel_all_errors,
+    FirstError,
+    Constant,
+    Error,
+    Func,
+    base_dispatcher,
+)
 from ._dispatcher import ComposedDispatcher, TypeDispatcher
 
 
 __all__ = [
     # Order here affects the order that these things show up in the API docs.
-    "Effect", "sync_perform", "sync_performer",
+    "Effect",
+    "sync_perform",
+    "sync_performer",
     "base_dispatcher",
-    "TypeDispatcher", "ComposedDispatcher",
-    "Delay", "perform_delay_with_sleep",
-    "ParallelEffects", "parallel", "parallel_all_errors",
-    "Constant", "Error", "Func",
-    "catch", "raise_",
-    "NoPerformerFoundError", "NotSynchronousError", "perform",
+    "TypeDispatcher",
+    "ComposedDispatcher",
+    "Delay",
+    "perform_delay_with_sleep",
+    "ParallelEffects",
+    "parallel",
+    "parallel_all_errors",
+    "Constant",
+    "Error",
+    "Func",
+    "catch",
+    "raise_",
+    "NoPerformerFoundError",
+    "NotSynchronousError",
+    "perform",
     "FirstError",
 ]

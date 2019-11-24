@@ -30,8 +30,7 @@ def sync_perform(dispatcher, effect):
     elif errors:
         raise errors[0]
     else:
-        raise NotSynchronousError("Performing %r was not synchronous!"
-                                  % (effect,))
+        raise NotSynchronousError("Performing %r was not synchronous!" % (effect,))
 
 
 def sync_performer(f):
@@ -61,6 +60,7 @@ def sync_performer(f):
         def perform_foo(dispatcher, foo):
             return do_side_effect(foo)
     """
+
     @wraps(f)
     def sync_wrapper(*args, **kwargs):
         box = args[-1]
@@ -69,4 +69,5 @@ def sync_performer(f):
             box.succeed(f(*pass_args, **kwargs))
         except Exception as e:
             box.fail(e)
+
     return sync_wrapper

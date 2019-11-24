@@ -34,4 +34,5 @@ def perform_parallel_with_pool(pool, dispatcher, parallel_effects):
             return sync_perform(dispatcher, effect)
         except Exception as e:
             raise FirstError(exception=e, index=index)
+
     return pool.map(perform_child, enumerate(parallel_effects.effects))

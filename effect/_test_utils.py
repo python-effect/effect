@@ -13,11 +13,14 @@ class ReraisedTracebackMismatch(object):
     got_tb = attr.ib()
 
     def describe(self):
-        return ("The reference traceback:\n"
-                + ''.join(self.expected_tb)
-                + "\nshould match the tail end of the received traceback:\n"
-                + ''.join(self.got_tb)
-                + "\nbut it doesn't.")
+        return (
+            "The reference traceback:\n"
+            + "".join(self.expected_tb)
+            + "\nshould match the tail end of the received traceback:\n"
+            + "".join(self.got_tb)
+            + "\nbut it doesn't."
+        )
+
 
 @attr.s
 class MatchesException(object):
@@ -26,10 +29,11 @@ class MatchesException(object):
     def match(self, other):
         expected_type = type(self.expected)
         if type(other) is not expected_type:
-            return Mismatch('{} is not a {}'.format(other, expected_type))
+            return Mismatch("{} is not a {}".format(other, expected_type))
         if other.args != self.expected.args:
-            return Mismatch('{} has different arguments: {}.'.format(
-                other.args, self.expected.args))
+            return Mismatch(
+                "{} has different arguments: {}.".format(other.args, self.expected.args)
+            )
 
 
 @attr.s
@@ -44,12 +48,13 @@ class MatchesReraisedExcInfo(object):
         typecheck = Equals(type(self.expected)).match(type(actual))
         if typecheck is not None:
             return typecheck
-        expected = list(traceback.TracebackException.from_exception(self.expected).format())
+        expected = list(
+            traceback.TracebackException.from_exception(self.expected).format()
+        )
         new = list(traceback.TracebackException.from_exception(actual).format())
-        tail_equals = lambda a, b: a == b[-len(a):]
+        tail_equals = lambda a, b: a == b[-len(a) :]
         if not tail_equals(expected[1:], new[1:]):
-            return ReraisedTracebackMismatch(expected_tb=expected,
-                                             got_tb=new)
+            return ReraisedTracebackMismatch(expected_tb=expected, got_tb=new)
 
 
 def raise_(e):

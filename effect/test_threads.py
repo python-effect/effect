@@ -17,6 +17,6 @@ class ParallelPoolPerformerTests(TestCase, ParallelPerformerTestsMixin):
         super(ParallelPoolPerformerTests, self).setUp()
         self.pool = ThreadPool()
         self.p_performer = partial(perform_parallel_with_pool, self.pool)
-        self.dispatcher = ComposedDispatcher([
-            base_dispatcher,
-            TypeDispatcher({ParallelEffects: self.p_performer})])
+        self.dispatcher = ComposedDispatcher(
+            [base_dispatcher, TypeDispatcher({ParallelEffects: self.p_performer})]
+        )

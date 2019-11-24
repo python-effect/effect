@@ -23,9 +23,7 @@ class ParallelPerformerTestsMixin(object):
         When given an empty list of effects, ``perform_parallel_async`` returns
         an empty list synchronusly.
         """
-        result = sync_perform(
-            self.dispatcher,
-            parallel([]))
+        result = sync_perform(self.dispatcher, parallel([]))
         self.assertEqual(result, [])
 
     def test_parallel(self):
@@ -34,28 +32,26 @@ class ParallelPerformerTestsMixin(object):
         same order that they were passed to parallel.
         """
         result = sync_perform(
-            self.dispatcher,
-            parallel([Effect(Constant('a')),
-                      Effect(Constant('b'))]))
-        self.assertEqual(result, ['a', 'b'])
+            self.dispatcher, parallel([Effect(Constant("a")), Effect(Constant("b"))])
+        )
+        self.assertEqual(result, ["a", "b"])
 
     def test_error(self):
         """
         When given an effect that results in a Error,
         ``perform_parallel_async`` result in ``FirstError``.
         """
-        expected_exc = EquitableException(message='foo')
+        expected_exc = EquitableException(message="foo")
         reraise = partial(raise_, expected_exc)
         try:
-            sync_perform(
-                self.dispatcher,
-                parallel([Effect(Func(reraise))]))
+            sync_perform(self.dispatcher, parallel([Effect(Func(reraise))]))
         except FirstError as fe:
             self.assertThat(
                 fe,
                 MatchesStructure(
-                    index=Equals(0),
-                    exception=MatchesReraisedExcInfo(expected_exc)))
+                    index=Equals(0), exception=MatchesReraisedExcInfo(expected_exc)
+                ),
+            )
         else:
             self.fail("sync_perform should have raised FirstError.")
 
@@ -64,18 +60,19 @@ class ParallelPerformerTestsMixin(object):
         The ``index`` of a :obj:`FirstError` is the index of the effect that
         failed in the list.
         """
-        expected_exc = EquitableException(message='foo')
+        expected_exc = EquitableException(message="foo")
         reraise = partial(raise_, expected_exc)
         try:
             sync_perform(
                 self.dispatcher,
-                parallel([
-                    Effect(Constant(1)),
-                    Effect(Func(reraise)),
-                    Effect(Constant(2))]))
+                parallel(
+                    [Effect(Constant(1)), Effect(Func(reraise)), Effect(Constant(2))]
+                ),
+            )
         except FirstError as fe:
             self.assertThat(
                 fe,
                 MatchesStructure(
-                    index=Equals(1),
-                    exception=MatchesReraisedExcInfo(expected_exc)))
+                    index=Equals(1), exception=MatchesReraisedExcInfo(expected_exc)
+                ),
+            )
