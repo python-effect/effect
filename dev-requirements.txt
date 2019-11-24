@@ -1,3 +1,4 @@
+black
 testtools
 flake8
 pytest
