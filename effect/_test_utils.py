@@ -52,7 +52,7 @@ class MatchesReraisedExcInfo(object):
             traceback.TracebackException.from_exception(self.expected).format()
         )
         new = list(traceback.TracebackException.from_exception(actual).format())
-        tail_equals = lambda a, b: a == b[-len(a) :]
+        tail_equals = lambda a, b: a == b[-len(a):]
         if not tail_equals(expected[1:], new[1:]):
             return ReraisedTracebackMismatch(expected_tb=expected, got_tb=new)
 

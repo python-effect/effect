@@ -38,5 +38,5 @@ def perform_get_input_raw_input(dispatcher, intent):
 
 
 stdio_dispatcher = TypeDispatcher(
-    {Display: perform_display_print, Prompt: perform_get_input_raw_input,}
+    {Display: perform_display_print, Prompt: perform_get_input_raw_input}
 )

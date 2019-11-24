@@ -199,5 +199,5 @@ def perform_func(dispatcher, intent):
 
 
 base_dispatcher = TypeDispatcher(
-    {Constant: perform_constant, Error: perform_error, Func: perform_func,}
+    {Constant: perform_constant, Error: perform_error, Func: perform_func}
 )

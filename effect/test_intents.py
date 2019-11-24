@@ -86,7 +86,7 @@ class ParallelAllErrorsTests(TestCase):
 
         dispatcher = ComposedDispatcher(
             [
-                TypeDispatcher({ParallelEffects: perform_parallel_async,}),
+                TypeDispatcher({ParallelEffects: perform_parallel_async}),
                 base_dispatcher,
             ]
         )
