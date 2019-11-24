@@ -1,15 +1,11 @@
-from __future__ import print_function, absolute_import
-
 from functools import partial
-
-import six
 
 from testtools import TestCase
 from testtools.matchers import Equals, MatchesListwise
 
 from pytest import raises
 
-from ._base import Effect
+from ._base import Effect, raise_
 from ._dispatcher import ComposedDispatcher, TypeDispatcher
 from ._intents import (
     base_dispatcher,
@@ -20,7 +16,7 @@ from ._intents import (
     FirstError,
     ParallelEffects, parallel_all_errors)
 from ._sync import sync_perform
-from ._test_utils import MatchesReraisedExcInfo, get_exc_info
+from ._test_utils import MatchesReraisedExcInfo
 from .parallel_async import perform_parallel_async
 from .test_parallel_performers import EquitableException
 
@@ -59,8 +55,7 @@ def test_perform_func_args_kwargs():
 
 def test_first_error_str():
     """FirstErrors have a pleasing format."""
-    fe = FirstError(exc_info=(ValueError, ValueError('foo'), None),
-                    index=150)
+    fe = FirstError(ValueError('foo'), index=150)
     assert str(fe) == '(index=150) ValueError: foo'
 
 
@@ -78,13 +73,13 @@ class ParallelAllErrorsTests(TestCase):
 
     def test_parallel_all_errors(self):
         """
-        Exceptions raised from child effects get turned into (True, exc_info)
+        Exceptions raised from child effects get turned into (True, exc)
         results.
         """
-        exc_info1 = get_exc_info(EquitableException(message='foo'))
-        reraise1 = partial(six.reraise, *exc_info1)
-        exc_info2 = get_exc_info(EquitableException(message='bar'))
-        reraise2 = partial(six.reraise, *exc_info2)
+        exc1 = EquitableException(message='foo')
+        reraise1 = partial(raise_, exc1)
+        exc2 = EquitableException(message='bar')
+        reraise2 = partial(raise_, exc2)
 
         dispatcher = ComposedDispatcher([
             TypeDispatcher({
@@ -99,8 +94,8 @@ class ParallelAllErrorsTests(TestCase):
             sync_perform(dispatcher, eff),
             MatchesListwise([
                 MatchesListwise([Equals(True),
-                                 MatchesReraisedExcInfo(exc_info1)]),
+                                 MatchesReraisedExcInfo(exc1)]),
                 Equals((False, 1)),
                 MatchesListwise([Equals(True),
-                                 MatchesReraisedExcInfo(exc_info2)]),
+                                 MatchesReraisedExcInfo(exc2)]),
             ]))

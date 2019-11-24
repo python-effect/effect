@@ -4,9 +4,7 @@ Use :obj:`effect.io.stdio_dispatcher` as a dispatcher for :obj:`Display` and
 :obj:`Prompt` that uses built-in Python standard io facilities.
 """
 
-from __future__ import print_function
 import attr
-from six.moves import input
 
 from . import sync_performer, TypeDispatcher
 
@@ -32,8 +30,7 @@ def perform_display_print(dispatcher, intent):
 @sync_performer
 def perform_get_input_raw_input(dispatcher, intent):
     """
-    Perform a :obj:`Prompt` intent by using ``raw_input`` (or ``input`` on
-    Python 3).
+    Perform a :obj:`Prompt` intent by using ``input``.
     """
     return input(intent.prompt)
 

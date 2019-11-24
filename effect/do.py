@@ -4,10 +4,6 @@ An imperative-looking notation for Effectful code.
 See :func:`do`.
 """
 
-
-from __future__ import print_function
-
-import sys
 import types
 
 from . import Effect, Func
@@ -95,7 +91,7 @@ def do_return(val):
 def _do(result, generator, is_error):
     try:
         if is_error:
-            val = generator.throw(*result)
+            val = generator.throw(result)
         else:
             val = generator.send(result)
     except StopIteration as stop:
@@ -104,8 +100,7 @@ def _do(result, generator, is_error):
         # case where some other code is raising StopIteration up through this
         # generator, in which case we shouldn't really treat it like a function
         # return -- it could quite easily hide bugs.
-        tb = sys.exc_info()[2]
-        if tb.tb_next:
+        if stop.__traceback__.tb_next:
             raise
         else:
             # Python 3 allows you to use `return val` in a generator, which

@@ -7,8 +7,6 @@ have the general benefits of purely functional code).
 See https://effect.readthedocs.org/ for documentation.
 """
 
-from __future__ import absolute_import
-
 from ._base import Effect, perform, NoPerformerFoundError, catch, raise_
 from ._sync import (
     NotSynchronousError,

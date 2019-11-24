@@ -9,15 +9,14 @@ class FoldError(Exception):
     Raised when one of the Effects passed to :func:`fold_effect` fails.
 
     :ivar accumulator: The data accumulated so far, before the failing Effect.
-    :ivar wrapped_exception: The exc_info tuple representing the original
-        exception raised by the failing Effect.
+    :ivar wrapped_exception: The original exception raised by the failing Effect.
     """
     def __init__(self, accumulator, wrapped_exception):
         self.accumulator = accumulator
         self.wrapped_exception = wrapped_exception
 
     def __str__(self):
-        tb_lines = traceback.format_exception(*self.wrapped_exception)
+        tb_lines = traceback.TracebackException.from_exception(self.wrapped_exception).format()
         tb = ''.join(tb_lines)
         st = (
             "<FoldError after accumulating %r> Original traceback follows:\n%s"

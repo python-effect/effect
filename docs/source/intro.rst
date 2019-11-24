@@ -47,7 +47,7 @@ the ``on`` method:
     def greet():
         return get_user_name().on(
             success=lambda r: Effect(Print("Hello,", r)),
-            error=lambda exc_info: Effect(Print("There was an error!", exc_info[1])))
+            error=lambda exc: Effect(Print("There was an error!", exc)))
 
 
 (Here we assume another intent, ``Print``, which shows some text to the user.)

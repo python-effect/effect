@@ -1,13 +1,7 @@
 # -*- test-case-name: effect.test_base -*-
-from __future__ import print_function, absolute_import
-
-import sys
-
 from functools import partial
 
 import attr
-
-import six
 
 from ._continuation import trampoline
 
@@ -34,8 +28,7 @@ class Effect(object):
         The result of the Effect will be passed to the first callback. Any
         callbacks added afterwards will receive the result of the previous
         callback. Normal return values are passed on to the next ``success``
-        callback, and exceptions are passed to the next ``error`` callback
-        as a ``sys.exc_info()`` tuple.
+        callback, and exceptions are passed to the next ``error`` callback.
 
         If a callback returns an :obj:`Effect`, the result of that
         :obj:`Effect` will be passed to the next callback.
@@ -62,7 +55,7 @@ class _Box(object):
 
     def fail(self, result):
         """
-        Indicate that the effect has failed. result must be an exc_info tuple.
+        Indicate that the effect has failed. result must be an exception.
         """
         self._cont((True, result))
 
@@ -71,13 +64,13 @@ def guard(f, *args, **kwargs):
     """
     Run a function.
 
-    Return (is_error, result), where is_error is a boolean indicating whether
-    it raised an exception. In that case result will be ``sys.exc_info()``.
+    Return (is_error, result), where ``is_error`` is a boolean indicating whether
+    it raised an exception. In that case, ``result`` will be an exception.
     """
     try:
         return (False, f(*args, **kwargs))
-    except:
-        return (True, sys.exc_info())
+    except Exception as e:
+        return (True, e)
 
 
 class NoPerformerFoundError(Exception):
@@ -110,7 +103,7 @@ def perform(dispatcher, effect):
     or return another Effect, which will be recursively performed, such that
     the result of the returned Effect becomes the result passed to the next
     callback. In the case of exceptions, the next error-callback will be called
-    with a ``sys.exc_info()``-style tuple.
+    with the exception instance.
 
     :returns: None
 
@@ -123,9 +116,8 @@ def perform(dispatcher, effect):
        passed three arguments, not two: the dispatcher, the intent, and a
        "box". The box is an object that lets the performer provide the result,
        optionally asynchronously. To provide the result, use
-       ``box.succeed(result)`` or ``box.fail(exc_info)``, where ``exc_info`` is
-       a ``sys.exc_info()``-style tuple. Decorators like :func:`sync_performer`
-       simply abstract this away.
+       ``box.succeed(result)`` or ``box.fail(exc)``, where ``exc`` is
+       an exception. Decorators like :func:`sync_performer` simply abstract this away.
     """
     def _run_callbacks(bouncer, chain, result):
         is_error, value = result
@@ -156,8 +148,7 @@ def perform(dispatcher, effect):
                     effect.intent,
                     _Box(partial(bouncer.bounce,
                                  _run_callbacks, effect.callbacks)))
-        except:
-            e = sys.exc_info()
+        except Exception as e:
             _run_callbacks(bouncer, effect.callbacks, (True, e))
 
     trampoline(_perform, effect)
@@ -168,27 +159,24 @@ def catch(exc_type, callable):
     A helper for handling errors of a specific type::
 
         eff.on(error=catch(SpecificException,
-                           lambda exc_info: "got an error!"))
+                           lambda exc: "got an error!"))
 
     If any exception other than a ``SpecificException`` is thrown, it will be
     ignored by this handler and propogate further down the chain of callbacks.
     """
-    def catcher(exc_info):
-        if isinstance(exc_info[1], exc_type):
-            return callable(exc_info)
-        six.reraise(*exc_info)
+    def catcher(error):
+        if isinstance(error, exc_type):
+            return callable(error)
+        raise error
     return catcher
 
 
-def raise_(exception, tb=None):
-    """Simple convenience function to allow raising exceptions from lambdas.
-
-    This is slightly more convenient than ``six.reraise`` because it takes an
-    exception instance instead of needing the type separate from the instance.
+def raise_(exception):
+    """Simple convenience function to allow raising exceptions as an expression,
+    useful in lambdas.
 
     :param exception: An exception *instance* (not an exception type).
 
-    - ``raise_(exc)`` is the same as ``raise exc``.
-    - ``raise_(exc, tb)`` is the same as ``raise type(exc), exc, tb``.
+    ``raise_(exc)`` is the same as ``raise exc``.
     """
-    six.reraise(type(exception), exception, tb)
+    raise exception

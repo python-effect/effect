@@ -1,7 +1,5 @@
 """Retrying effects."""
 
-import six
-
 from functools import partial
 
 
@@ -14,7 +12,7 @@ def retry(effect, should_retry):
     will fail with the most recent error from func.
 
     :param effect.Effect effect: Any effect.
-    :param should_retry: A function which should take an exc_info tuple as an
+    :param should_retry: A function which should take an exception as an
         argument and return an effect of bool.
     """
 
@@ -22,7 +20,7 @@ def retry(effect, should_retry):
         if retry_allowed:
             return try_()
         else:
-            six.reraise(*error)
+            raise error
 
     def try_():
         return effect.on(

@@ -2,10 +2,12 @@
 import operator
 
 from pytest import raises
+from testtools.assertions import assert_that
 
 from effect import Effect, Error, base_dispatcher, sync_perform
 from effect.fold import FoldError, fold_effect, sequence
 from effect.testing import perform_sequence
+from ._test_utils import MatchesException
 
 
 def test_fold_effect():
@@ -48,8 +50,7 @@ def test_fold_effect_errors():
     with raises(FoldError) as excinfo:
         perform_sequence(dispatcher, eff)
     assert excinfo.value.accumulator == 'NilEi'
-    assert excinfo.value.wrapped_exception[0] is ZeroDivisionError
-    assert str(excinfo.value.wrapped_exception[1]) == 'foo'
+    assert_that(excinfo.value.wrapped_exception, MatchesException(ZeroDivisionError('foo')))
 
 
 def test_fold_effect_str():
@@ -98,5 +99,4 @@ def test_sequence_error():
     with raises(FoldError) as excinfo:
         perform_sequence(dispatcher, eff)
     assert excinfo.value.accumulator == ['Ei']
-    assert excinfo.value.wrapped_exception[0] is ZeroDivisionError
-    assert str(excinfo.value.wrapped_exception[1]) == 'foo'
+    assert_that(excinfo.value.wrapped_exception, MatchesException(ZeroDivisionError('foo')))

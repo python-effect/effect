@@ -4,8 +4,6 @@ Dispatcher!
 
 import attr
 
-from six.moves import filter
-
 
 @attr.s
 class TypeDispatcher(object):

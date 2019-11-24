@@ -7,8 +7,7 @@ import attr
 import pytest
 
 from testtools import TestCase
-from testtools.matchers import (MatchesListwise, Equals, MatchesException,
-                                raises)
+from testtools.matchers import MatchesListwise, Equals, raises
 
 from . import (
     ComposedDispatcher,
@@ -37,6 +36,7 @@ from .testing import (
     perform_sequence,
     resolve_effect,
     resolve_stubs)
+from ._test_utils import MatchesException
 
 
 class ResolveEffectTests(TestCase):
@@ -123,7 +123,7 @@ class ResolveEffectTests(TestCase):
                 'result'),
             MatchesListwise([
                 Equals('handled'),
-                MatchesException(ZeroDivisionError)]))
+                MatchesException(ZeroDivisionError('division by zero'))]))
 
     def test_raise_if_final_result_is_error(self):
         """
@@ -466,7 +466,7 @@ def test_parallel_sequence_must_be_parallel():
     p = sequence([Effect(1), Effect(2), Effect(3)])
     with pytest.raises(FoldError) as excinfo:
         perform_sequence(seq, p)
-    assert excinfo.value.wrapped_exception[0] is AssertionError
+    assert type(excinfo.value.wrapped_exception) is AssertionError
 
 
 def test_nested_sequence():

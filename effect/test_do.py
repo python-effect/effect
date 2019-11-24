@@ -1,10 +1,7 @@
 import sys
 from functools import partial
 
-from py.test import raises as raises
-from py.test import mark
-
-import six
+from py.test import raises
 
 from . import (
     ComposedDispatcher, Constant, Effect, Error, TypeDispatcher,
@@ -82,12 +79,12 @@ def test_raise_from_effect():
     def f():
         try:
             yield Effect(Error(ZeroDivisionError('foo')))
-        except:
-            got_error = sys.exc_info()
+        except Exception as e:
+            got_error = e
         yield do_return(got_error)
 
-    exc_type, exc, _ = perf(f())
-    assert exc_type is ZeroDivisionError
+    exc = perf(f())
+    assert type(exc) is ZeroDivisionError
     assert str(exc) == 'foo'
 
 
@@ -170,7 +167,6 @@ def test_stop_iteration_only_local():
             perf(eff)
 
 
-@mark.skipif(not six.PY3, reason="Testing a Py3-specific feature")
 def test_py3_return():
     """The `return x` syntax in Py3 sets the result of the Effect to `x`."""
     from effect._test_do_py3 import py3_generator_with_return

@@ -1,6 +1,3 @@
-lint:
-	flake8 --ignore=E131,E301,E302,E731,W503,E701,E704,E722 --max-line-length=100 effect/
-
 build-dist:
 	rm -rf dist
 	python setup.py sdist bdist_wheel
