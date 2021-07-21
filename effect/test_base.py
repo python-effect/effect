@@ -107,7 +107,7 @@ class EffectPerformTests(TestCase):
 
     def test_success_propagates_effect_exception(self):
         """
-        If an succes callback is specified, but a exception result occurs,
+        If an success callback is specified, but a exception result occurs,
         the exception is passed to the next callback.
         """
         calls = []
@@ -124,7 +124,7 @@ class EffectPerformTests(TestCase):
 
     def test_error_propagates_effect_result(self):
         """
-        If an error callback is specified, but a succesful result occurs,
+        If an error callback is specified, but a successful result occurs,
         the success is passed to the next callback.
         """
         calls = []

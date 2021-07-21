@@ -163,7 +163,7 @@ def catch(exc_type, callable):
                            lambda exc: "got an error!"))
 
     If any exception other than a ``SpecificException`` is thrown, it will be
-    ignored by this handler and propogate further down the chain of callbacks.
+    ignored by this handler and propagate further down the chain of callbacks.
     """
 
     def catcher(error):
