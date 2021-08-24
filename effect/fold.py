@@ -73,7 +73,7 @@ def sequence(effects):
         fails.
     """
     # Could be: folder = lambda acc, el: acc + [el]
-    # But, for peformance:
+    # But, for performance:
     result = []
 
     def folder(acc, el):
