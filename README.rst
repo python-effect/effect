@@ -124,12 +124,6 @@ but now has contributions from the following people:
 .. _`Tom Prince`: https://github.com/tomprince
 
 
-IRC
-===
-
-There is a ``#python-effect`` IRC channel on irc.freenode.net.
-
-
 See Also
 ========
 
