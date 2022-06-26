@@ -105,16 +105,6 @@ Some talks have been given about Effect.
 .. _`Functionalish Programming in Python with Effect`: https://www.youtube.com/watch?v=fM5d_2BS6FY
 .. _`Kiwi PyCon`: https://nzpug.org/
 
-
-Thanks
-======
-
-Thanks to Rackspace for allowing me to work on this project, and having an
-*excellent* `open source employee contribution policy`_
-
-.. _`open source employee contribution policy`: https://www.rackspace.com/blog/rackspaces-policy-on-contributing-to-open-source/
-
-
 Authors
 =======
 
